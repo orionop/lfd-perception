@@ -6,6 +6,7 @@ __pycache__/
 # ----- secrets / personal config -----
 .claude/settings.local.json
 vlutters_confirmation_letter.txt
+Docs/vlutters_confirmation_letter.txt
 *.env
 .env
 .env.*
@@ -35,8 +36,11 @@ dado_repo/
 *.pickle
 *.zip
 lfdws_t001/
+Data/lfdws_t001/
 16apr_pipeline/
+Data/16apr_pipeline/
 pipeline_update/
+Data/pipeline_update/
 test_output/
 frames_jpg/
 
@@ -59,6 +63,10 @@ writeup.toc
 writeup.fls
 writeup.fdb_latexmk
 writeup.synctex.gz
+Docs/writeup.aux
+Docs/writeup.log
+Docs/writeup.out
+Docs/writeup.toc
 
 # ----- per-trial CSVs (large; produced by the lab's export, kept off git) -----
 # (Existing trial_002 CSVs were committed before this rule and are kept.)

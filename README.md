@@ -1,115 +1,68 @@
-# ROS 2 Bag → CSV Pipeline (RLBD)
+# RLBD — Robot Learning from Demonstration
 
-> **University of Twente / NAKAMA Robotics Lab**
-> Remote collaboration: Robot Learning from Demonstration
+Vision module for the lab's ROS 2 LfD pipeline. Given a demonstration bag
+(robot pose, gripper, force/torque, ZED RGB), it identifies the task-relevant
+objects per interaction phase and writes a JSON sidecar consumable by
+downstream LfD code.
 
-## Overview
-
-Extracts ROS 2 bag files (MCAP format) into per-topic CSVs + combined merged CSV.
-Images (if any) are saved as PNGs with filename references in the CSV.
-
-### Repo Structure
+## Layout
 
 ```
-.
-├── bag_to_csv.py              # Mark's original exporter (reference)
-├── unbag_pipeline.py          # Main pipeline script (use this)
-├── lfdws_trial_002/           # Trial data from the lab
-│   ├── lfdws_trial_002/       # Bag folder
-│   │   ├── lfdws_trial_002_0.mcap   # [INPUT]  Raw bag data
-│   │   ├── metadata.yaml             # [INPUT]  Bag metadata
-│   │   ├── *.csv                      # [OUTPUT] Per-topic + merged CSVs
-│   │   └── *.pickle                   # [OUTPUT] Pickled data
-│   └── src/                   # Lab ROS2 node configs (bota_driver, etc.)
-└── README.md
+Code/        Python scripts (pipeline + figure generators)
+Docs/        Writeup PDF/source, setup notes, failure-mode log
+Data/        Trial data (gitignored except small legacy CSV)
+figures/     Generated figures used by the writeup
 ```
 
----
+Model checkpoints (`*.pth`, `*.pt`) and Python venvs (`.venv_*/`) live at
+the repo root, are gitignored, and must be created locally.
 
-## Setup on Lab PC (Ubuntu 24.04 + ROS 2 Jazzy)
+## Setup
 
-### First-time setup
+Three Python environments are used (versions and reasons documented in
+`CLAUDE.md`):
+
+- `.venv_analysis` — Python 3.9, pandas/numpy/matplotlib
+- `.venv_sam2` — Python 3.11, SAM 2 + torch with MPS
+- `.venv_dado` — Python 3.11, transformers (DINOv2 + Depth-Anything)
+
+Checkpoints:
+
+- SAM 1 ViT-H: `sam_vit_h_4b8939.pth`
+  (`https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth`)
+- SAM 2.1 Hiera-L: `sam2.1_hiera_large.pt`
+  (`Code/download_sam2_ckpt.py` fetches it)
+
+## End-to-end run on a bag
+
+Run from the repo root. `<trial>` is a bag folder exported by the lab's
+`ros2_unbag` pipeline.
 
 ```bash
-# 1. Install MCAP storage plugin (usually bundled with Jazzy, but just in case)
-sudo apt install ros-jazzy-rosbag2-storage-mcap -y
-
-# 2. Clone repo
-cd ~/Desktop/anurag_ws
-git clone https://github.com/orionop/utwente.git rlbd
-cd rlbd
-
-# 3. Source ROS 2 Jazzy
-source /opt/ros/jazzy/setup.bash
-
-# 4. Create venv (inherits ROS2 system packages)
-python3 -m venv --system-site-packages venv
-source venv/bin/activate
-
-# 5. Install pip dependencies
-pip install pillow numpy
+.venv_analysis/bin/python Code/analyze_demo.py --trial <trial>
+.venv_sam2/bin/python Code/prepare_sam2_frames.py \
+    --src <trial>/zed_zed_node_rgb_color_rect_image_compressed \
+    --dst frames_jpg
+.venv_sam2/bin/python Code/propagate_demo.py \
+    --trial <trial> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg
+.venv_sam2/bin/python Code/propagate_cup.py \
+    --trial <trial> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg
+.venv_analysis/bin/python Code/build_sidecar.py
 ```
 
-### Run pipeline
+Output bundle in `figures/identify/`: `objects.json`, `objects_summary.csv`,
+per-frame overlays, and a stitched MP4.
+
+## Writeup
 
 ```bash
-# Every new terminal session, run these first:
-cd ~/Desktop/anurag_ws/rlbd
-source /opt/ros/jazzy/setup.bash
-source venv/bin/activate
-
-# Run the pipeline
-python3 unbag_pipeline.py --path ./lfdws_trial_002/lfdws_trial_002
+pdflatex -output-directory=Docs Docs/writeup.tex
 ```
 
-### Push results back to GitHub (from lab PC)
+(Run twice to resolve references.)
 
-```bash
-cd ~/Desktop/anurag_ws/rlbd
-git add -A
-git commit -m "pipeline output from lab PC"
-git push origin main
-```
+## More
 
----
-
-## Pull latest on either device
-
-```bash
-# Mac (from repo root)
-cd "/Users/anuragx/Desktop/Fall 2027/utwente"
-git pull origin main
-
-# Lab PC
-cd ~/Desktop/anurag_ws/rlbd
-git pull origin main
-```
-
----
-
-## Quick test command (Lab PC — full copy-paste block)
-
-```bash
-cd ~/Desktop/anurag_ws/rlbd && \
-git pull origin main && \
-source /opt/ros/jazzy/setup.bash && \
-source venv/bin/activate && \
-python3 unbag_pipeline.py --path ./lfdws_trial_002/lfdws_trial_002
-```
-
----
-
-## Output
-
-- Per-topic CSVs written to the bag folder
-- Combined merged CSV written to the bag folder
-- Images (if any image topics) saved as PNGs
-- `topics_map.json` mapping CSV files to original topic names
-
-## Notes
-
-- Every new terminal session: re-source ROS 2 and activate venv before running
-- Deactivate venv: `deactivate`
-- Tested on: **ROS 2 Jazzy Jalisco** (Ubuntu 24.04)
-- Input bag: 2 topics — `/bota_post/wrench_body_compensated` (WrenchStamped) + `/NS_1/franka_robot_state_broadcaster/current_pose` (PoseStamped)
-- No custom message types needed — uses standard `geometry_msgs`
+- `CLAUDE.md` — full pipeline notes, hard-coded knobs, conventions.
+- `Docs/FAILURE_MODES.md` — what does not work yet on the current trial.
+- `Docs/setup_info.md` — legacy ROS 2 / bag-export setup notes.

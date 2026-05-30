@@ -15,15 +15,27 @@ Data flow: the lab runs `ros2_unbag` + an in-house merge script on each bag, pro
 
 When asked about "the pipeline," the second meaning is current.
 
+## Repo layout
+
+```
+Code/        Python scripts (pipeline + figure generators)
+Docs/        writeup.tex / .pdf, FAILURE_MODES.md, setup_info.md, reference PDFs
+Data/        trial folders + legacy CSV (mostly gitignored)
+figures/     generated artifacts referenced by writeup.tex (kept at root)
+```
+
+Run everything from the repo root — scripts and `writeup.tex` use cwd-relative
+paths to `figures/...` and `Data/...`. Moving `figures/` would break both.
+
 ## Three Python venvs, one repo
 
 Different stages need different Python versions / package sets. Each venv is gitignored and dedicated:
 
 | Venv | Python | Used by | Notes |
 |---|---|---|---|
-| `.venv_analysis` | 3.9 (miniforge) | `analyze_demo.py`, `mask_area_plot.py`, `force_overlay.py`, `build_sidecar.py` | Pandas/numpy/matplotlib only. The miniforge base had a numpy/pandas ABI mismatch; this venv was created clean to work around it. |
-| `.venv_sam2` | 3.11 (`/Users/anuragx/.local/bin/python3.11`) | `propagate_demo.py`, `propagate_cup.py`, `identify_objects.py`, `prepare_sam2_frames.py` | SAM 2 requires Python ≥3.10. Includes torch 2.12 with MPS, plus `sam2` from GitHub, plus pandas (added late — was the cause of one crash). |
-| `.venv_dado` | 3.11 | `_dado_inference.py` (invoked via `run_dado.py`) | DINOv2 + Depth-Anything-V2 via `transformers`. The DADO orchestrator (`run_dado.py`) creates this venv if missing. |
+| `.venv_analysis` | 3.9 (miniforge) | `Code/analyze_demo.py`, `Code/mask_area_plot.py`, `Code/force_overlay.py`, `Code/build_sidecar.py` | Pandas/numpy/matplotlib only. The miniforge base had a numpy/pandas ABI mismatch; this venv was created clean to work around it. |
+| `.venv_sam2` | 3.11 | `Code/propagate_demo.py`, `Code/propagate_cup.py`, `Code/identify_objects.py`, `Code/prepare_sam2_frames.py` | SAM 2 requires Python ≥3.10. Includes torch 2.12 with MPS, plus `sam2` from GitHub, plus pandas (added late — was the cause of one crash). |
+| `.venv_dado` | 3.11 | `Code/_dado_inference.py` (invoked via `Code/run_dado.py`) | DINOv2 + Depth-Anything-V2 via `transformers`. The DADO orchestrator (`Code/run_dado.py`) creates this venv if missing. |
 
 Do not unify them. Mixing SAM 2 deps into the analysis venv breaks pandas; mixing pandas into the DADO venv is fine but pointless.
 
@@ -33,32 +45,32 @@ Assuming a bag has been exported into `<trial_dir>/` with the standard layout:
 
 ```bash
 # 1. event detection + timeline figure (Result A) + raw event-frame strip (Result B)
-.venv_analysis/bin/python analyze_demo.py --trial <trial_dir>
+.venv_analysis/bin/python Code/analyze_demo.py --trial <trial_dir>
 
 # 2. convert PNG frames to zero-padded JPGs (SAM 2 video predictor requirement)
-.venv_sam2/bin/python prepare_sam2_frames.py \
+.venv_sam2/bin/python Code/prepare_sam2_frames.py \
     --src <trial_dir>/zed_zed_node_rgb_color_rect_image_compressed \
     --dst frames_jpg
 
 # 3. propagate the grasped object (carrot) forward from the grasp event
-.venv_sam2/bin/python propagate_demo.py \
+.venv_sam2/bin/python Code/propagate_demo.py \
     --trial <trial_dir> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg
 
 # 4. propagate the contact-receiving object (cup) bidirectionally from the press
-.venv_sam2/bin/python propagate_cup.py \
+.venv_sam2/bin/python Code/propagate_cup.py \
     --trial <trial_dir> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg
 
 # 5. compose the JSON sidecar + summary CSV + merged overlay MP4 from steps 3+4
-.venv_analysis/bin/python build_sidecar.py
+.venv_analysis/bin/python Code/build_sidecar.py
 
 # optional figures
-.venv_analysis/bin/python mask_area_plot.py
-.venv_analysis/bin/python force_overlay.py
-.venv_sam2/bin/python make_propagation_figure.py
-.venv_dado/bin/python _dado_inference.py    # only after run_dado.py has set up .venv_dado
+.venv_analysis/bin/python Code/mask_area_plot.py
+.venv_analysis/bin/python Code/force_overlay.py
+.venv_sam2/bin/python Code/make_propagation_figure.py
+.venv_dado/bin/python Code/_dado_inference.py    # only after Code/run_dado.py set up .venv_dado
 ```
 
-`identify_objects.py` was the intended single-script end-to-end, but it OOMs on M3 Pro (18 GB unified memory) when both SAM 2 objects share one model state. The working pattern is the separate `propagate_demo.py` + `propagate_cup.py` + `build_sidecar.py` chain above. The JSON contract is identical either way.
+`Code/identify_objects.py` was the intended single-script end-to-end, but it OOMs on M3 Pro (18 GB unified memory) when both SAM 2 objects share one model state. The working pattern is the separate `Code/propagate_demo.py` + `Code/propagate_cup.py` + `Code/build_sidecar.py` chain above. The JSON contract is identical either way.
 
 ## Model checkpoints (not in git)
 
@@ -69,10 +81,10 @@ Both must sit in the repo root for the scripts' default `--ckpt` paths.
 
 ## Trial data layout (what scripts assume)
 
-A trial directory is structured exactly as Mark's `ros2_unbag` export:
+Trial directories live under `Data/` and are structured exactly as Mark's `ros2_unbag` export:
 
 ```
-<trial>/
+Data/<trial>/
 ├── <trial>_0.csv                                            # merged, dot-separated, topic-prefixed
 ├── metadata.yaml
 ├── config_unbag_to_*.json                                   # ros2_unbag configs
@@ -85,23 +97,31 @@ A trial directory is structured exactly as Mark's `ros2_unbag` export:
 
 The merged CSV's image column is the literal PNG filename (without `.png`). Per-topic subfolders are redundant with the merged CSV; scripts read only the merged CSV + PNG folder.
 
-`lfdws_t001/` is the only trial currently present. `lfdws_trial_002/` is an older 2-topic trial without images.
+`Data/lfdws_t001/` is the only image-bearing trial currently present (gitignored, ~530 MB). `Data/lfdws_trial_002/` is an older 2-topic trial without images.
 
 ## Hard-coded knobs you will hit
 
 Three places where the current code is tuned to `lfdws_t001` specifically and will need attention when the second bag arrives:
 
-- `ROLE_SEEDS` in `identify_objects.py` and the `SEED_POINT_FRAC*` constants in `propagate_demo.py` / `propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection, which requires ZED-to-base extrinsics that Mark has not sent yet.
-- `GRASP_IMG_ID` / `PRESS_IMG_ID` constants in the propagation scripts — image-timestamp seeds. `identify_objects.py` derives these from the CSV via `detect_events`, so future bags work without changing constants there.
-- Event-detection thresholds in `analyze_demo.py` (`detect_events`) — midpoint between open/closed gripper width, and force-peak restricted to the gripper-closed window. Will fail on demos with multiple pick-and-place cycles or no force contact.
+- `ROLE_SEEDS` in `Code/identify_objects.py` and the `SEED_POINT_FRAC*` constants in `Code/propagate_demo.py` / `Code/propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection, which requires ZED-to-base extrinsics that Mark has not sent yet.
+- `GRASP_IMG_ID` / `PRESS_IMG_ID` constants in the propagation scripts — image-timestamp seeds. `Code/identify_objects.py` derives these from the CSV via `detect_events`, so future bags work without changing constants there.
+- Event-detection thresholds in `Code/analyze_demo.py` (`detect_events`) — midpoint between open/closed gripper width, and force-peak restricted to the gripper-closed window. Will fail on demos with multiple pick-and-place cycles or no force contact.
 
-See `FAILURE_MODES.md` for the full honest inventory.
+See `Docs/FAILURE_MODES.md` for the full honest inventory.
 
 ## What the writeup is
 
-`writeup.tex` / `writeup.pdf` is the running progress doc Anurag sends Mark. Original 4 pages were sent on 2026-05-28; pages 5-9 were appended later. **Do not edit the original 4 pages** — only append after the existing content. Compile with `pdflatex writeup.tex` (run twice to resolve refs). `.aux` / `.log` / `.out` are byproducts that can be left alone; only `writeup.tex` and `writeup.pdf` matter.
+`Docs/writeup.tex` / `Docs/writeup.pdf` is the running progress doc Anurag sends Mark. Original 4 pages were sent on 2026-05-28; pages 5-9 were appended later. **Do not edit the original 4 pages** — only append after the existing content. Compile from the repo root:
+
+```bash
+pdflatex -output-directory=Docs Docs/writeup.tex
+```
+
+Run twice to resolve refs. `.aux` / `.log` / `.out` are byproducts that can be left alone; only `writeup.tex` and `writeup.pdf` matter.
 
 ## What scripts are doing at a high level
+
+(All under `Code/`.)
 
 - `analyze_demo.py` — event detection from the merged CSV; produces `figures/timeline.png` and `figures/event_frames.png`.
 - `segment_events.py` — SAM 1 ViT-H on the three event frames with configurable point prompts.
