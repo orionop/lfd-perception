@@ -10,6 +10,13 @@ it's tracking. But:
 This script embeds each (frame, obj_id) mask crop with a frozen DINOv2
 backbone, then clusters the embeddings to assign stable object identities.
 
+Crop tightening:
+  - the bbox in objects_summary.csv was derived from the propagation
+    overlay PNG and includes background pixels. We recover the actual
+    mask (by colour-distance vs source) and crop to the mask's tight
+    bbox, then black out non-mask pixels inside the crop. This makes
+    DINOv2 embed the object itself, not the surrounding table.
+
 Reads:
     figures/identify/objects_summary.csv
 
@@ -101,22 +108,61 @@ def main():
     proc = AutoImageProcessor.from_pretrained(DINO_ID)
     model = AutoModel.from_pretrained(DINO_ID).to(device).eval()
 
+    # mask colours per role (from build_sidecar.py overlay convention)
+    ROLE_COLOR = {"grasped": "green", "contact_receiver": "magenta"}
+
+    def recover_mask(overlay_path, src_bgr, role):
+        """Return a tight boolean mask of the role-coloured pixels in overlay."""
+        ov = cv2.imread(overlay_path)
+        if ov is None or src_bgr is None or ov.shape != src_bgr.shape:
+            return None
+        diff = ov.astype(int) - src_bgr.astype(int)
+        if ROLE_COLOR.get(role) == "green":
+            return diff[..., 1] > 40
+        if ROLE_COLOR.get(role) == "magenta":
+            return (diff[..., 0] > 40) & (diff[..., 2] > 40)
+        return None
+
     crops = []
     sample_meta = []
+    n_skipped_no_mask = 0
     for i, s in enumerate(samples):
         path = os.path.join(args.img_dir, s["img_filename"])
         bgr = cv2.imread(path)
         if bgr is None:
             continue
-        x0, y0, x1, y1 = s["bbox"]
-        crop = bgr[y0:y1, x0:x1]
+        # Find the per-frame overlay PNG: build_sidecar wrote them with the
+        # naming f<idx:04d>_<img_filename>. Find the one matching this frame.
+        ov_dir = os.path.join(os.path.dirname(args.summary_csv), "overlays")
+        ov_name = None
+        if os.path.isdir(ov_dir):
+            cand = f"f{s['frame_idx']:04d}_{s['img_filename']}"
+            if os.path.exists(os.path.join(ov_dir, cand)):
+                ov_name = cand
+        if ov_name is None:
+            # fall back to the loose bbox crop (no tightening possible)
+            x0, y0, x1, y1 = s["bbox"]
+            crop = bgr[y0:y1, x0:x1]
+        else:
+            m = recover_mask(os.path.join(ov_dir, ov_name), bgr, s["role"])
+            if m is None or m.sum() < 100:
+                n_skipped_no_mask += 1
+                continue
+            ys, xs = np.where(m)
+            x0, x1 = int(xs.min()), int(xs.max()) + 1
+            y0, y1 = int(ys.min()), int(ys.max()) + 1
+            crop = bgr[y0:y1, x0:x1].copy()
+            # black out background inside the tight crop
+            local_mask = m[y0:y1, x0:x1]
+            crop[~local_mask] = 0
         if crop.size == 0:
             continue
         crops.append(crop)
         sample_meta.append(s)
         if (i + 1) % 20 == 0:
             print(f"  [crop] {i+1}/{len(samples)}", flush=True)
-    print(f"[crop] kept {len(crops)} valid crops", flush=True)
+    print(f"[crop] kept {len(crops)} tight crops "
+          f"(skipped {n_skipped_no_mask} with no recoverable mask)", flush=True)
 
     # embed in small batches
     embeddings = []

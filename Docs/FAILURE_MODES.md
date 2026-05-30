@@ -50,14 +50,31 @@ and not pretend the pipeline is more polished than it is.
 
 ## C. Pipeline / engineering limitations
 
-### C1. Seed points are hand-picked image fractions
-- `ROLE_SEEDS` in `identify_objects.py` uses hard-coded image fractions
-  (0.70, 0.30) for the grasped object and (0.55, 0.65) for the contact
-  receiver. These were tuned on `lfdws_t001` and will likely fail on a new
-  scene with a different camera pose.
-- **Fix:** project the end-effector pose into the image as the prompt.
-  Blocked on ZED-to-base extrinsics + intrinsics + URDF — not in the data
-  currently shared. **To request in next sync.**
+### C1. Seed points: hand-tuned defaults, vision-only auto-seed fallback
+- The hard-coded image fractions (e.g. `(0.70, 0.30)` for the grasped
+  object) were tuned on `lfdws_t001` and would fail on a new scene with a
+  different camera pose.
+- **Partial fix in place:** `Code/auto_seed.py` runs SAM's automatic mask
+  generator on each event frame and writes a seed point to
+  `figures/identify/auto_seeds.csv`. Both `Code/propagate_demo.py` and
+  `Code/propagate_cup.py` now consume that CSV when present and fall back
+  to the hard-coded defaults otherwise. Cup seeds come out clean. The
+  carrot seed in this trial lands on the gripper finger (514, 54), so the
+  early carrot mask is degraded — see A4.
+- **Proper fix:** project the end-effector pose into the image as the
+  prompt. Blocked on ZED intrinsics + ZED-to-base extrinsics + URDF.
+  **To request in next sync.**
+
+### A4. Auto-seed carrot drift
+- On `lfdws_t001` the vision-only auto-seed for the grasped role lands on
+  the gripper finger rather than on the carrot body. SAM 2 then
+  propagates the gripper finger for the first ~50 frames and only drifts
+  onto the carrot once the gripper moves.
+- **Cause:** at the grasp event the gripper occupies the
+  upper-centre region the role prior favours, and is more "object-like"
+  to DINOv2 than the partially-occluded carrot tip.
+- **Fix:** end-effector projection (see C1). Until then, tightening the
+  role prior to "below the gripper opening" would help.
 
 ### C2. Only forward propagation for the grasped object
 - The grasped-object seed is at the grasp event (~frame 250). Frames 0–249
@@ -68,12 +85,16 @@ and not pretend the pipeline is more polished than it is.
   to the system. Acceptable for downstream LfD (which cares about
   interaction phases), but flag for completeness.
 
-### C3. Object identity not preserved across episodes
+### C3. Object identity across episodes
 - Within one demo, obj_id=1 is the carrot and obj_id=2 is the cup.
-- Across demos, there is no mechanism to say "the same physical carrot was
-  used in trial 001 and trial 005". If downstream needs that, it would
-  require visual-feature matching across episodes (e.g. DINOv2
-  nearest-neighbour on bbox crops) — not currently implemented.
+- **Partial fix in place:** `Code/object_identity.py` embeds per-frame
+  mask crops with frozen DINOv2 and clusters them. Crops are now
+  tightened to the actual mask (background blacked out inside the crop)
+  to avoid table pixels dominating the embedding. At distance threshold
+  0.6 it returns 3 clusters on this trial (close to the true count of
+  two; the over-merging is driven by the gripper-finger drift in A4).
+- Across demos still needs the same script run on the merged
+  sidecar; not yet exercised against multiple bags.
 
 ### C4. Force-direction overlay is uncalibrated
 - `force_overlay.py` fits a base->image linear map from the carrot mask
@@ -82,13 +103,19 @@ and not pretend the pipeline is more polished than it is.
   geometric measurement.
 - **Fix:** real ZED intrinsics + base-to-camera transform from the lab side.
 
-### C5. Hand-tuned event thresholds
-- Gripper width threshold = midpoint of (open, closed). Force-contact event
-  = peak of baseline-subtracted magnitude restricted to the held window.
-  These worked here; they will fail on demos with no force contact, or
-  with multiple pick-and-place cycles in a single bag.
-- **Fix:** generalise to multi-event detection (find local extrema, not just
-  the global one) when more diverse demos arrive.
+### C5. Hand-tuned event thresholds — multi-event detector in place
+- Gripper width threshold = midpoint of (open, closed). Force-contact
+  event = peak of baseline-subtracted magnitude restricted to the held
+  window. The original single-event detector returned exactly one of each;
+  it would silently lose information on multi-cycle bags.
+- **Fix in place:** `Code/multi_event.py` returns *all* threshold
+  crossings + *all* local force-magnitude peaks above baseline and groups
+  them into interaction cycles. On `lfdws_t001` it finds one cycle with
+  one grasp, one release, and four force peaks (vs. the single global peak
+  the original detector returned). The single-event detector in
+  `analyze_demo.py` remains for the writeup's "first version" results;
+  downstream code that needs multi-cycle handling should consume
+  `figures/identify/events_multi.json`.
 
 ## D. Things we cannot evaluate from this trial alone
 

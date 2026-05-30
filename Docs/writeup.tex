@@ -293,20 +293,20 @@ what the end-effector projection will look like once real ZED-to-base
 extrinsics are available, we fit a coarse linear base-to-image map
 ($\mathbb{R}^4 \rightarrow \mathbb{R}^2$) from the carrot-mask centroids over
 time and use it to draw the force-reaction arrow on the press frame
-(Figure~\ref{fig:force}). The fit has RMSE $58$\,px (the carrot itself is
-$\sim 150$\,px wide), so the arrow direction is suggestive rather than
-geometric. The exercise is included to make explicit that, until real
-intrinsics + extrinsics arrive, this overlay is a sanity check, not a
-measurement.
+(Figure~\ref{fig:force}). With the latest (auto-seeded) propagation,
+the fit improved from RMSE $58$\,px (hand-seeded run) to $23$\,px over
+$240$ paired points --- still uncalibrated, but consistent enough that the
+projected arrow now stays within the press region. Real intrinsics +
+extrinsics would replace this approximation with a geometric projection.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/force_overlay_press.png}
 \caption{Press frame with carrot mask (green), cup mask (magenta), and the
 force-reaction arrow (red), drawn through an uncalibrated linear base-to-image
-fit. The arrow direction is informative only to the extent that the linear fit
-is; the fit RMSE of $58$\,px is annotated on the image. Real ZED-to-base
-extrinsics would replace this approximation with a geometric projection.}
+fit. Fit RMSE = $23$\,px over $240$ carrot-centroid points (down from $58$\,px
+with the original hand-seeded propagation). Real ZED-to-base extrinsics would
+replace this approximation with a geometric projection.}
 \label{fig:force}
 \end{figure}
 
@@ -352,11 +352,23 @@ Recorded here so they are visible to downstream readers; a more detailed list
 is kept in \texttt{FAILURE\_MODES.md} in the repository.
 
 \begin{itemize}[noitemsep]
-  \item \textbf{Seed points are hand-fractioned.} The image-relative seed
-        coordinates for SAM\,2 (e.g.\ $(0.70, 0.30)$ for the grasped object
-        in this scene) are tuned to the carrot trial. They are placeholders
-        for end-effector projection, which requires ZED intrinsics +
-        ZED-to-base extrinsics + the gripper/tool frame from the URDF.
+  \item \textbf{Seed points: hand-fractioned defaults, auto-seed fallback.}
+        The image-relative defaults in the propagation scripts (e.g.\
+        $(0.70, 0.30)$ for the grasped object) are tuned to this trial.
+        When \texttt{Code/auto\_seed.py} produces
+        \texttt{figures/identify/\allowbreak auto\_seeds.csv}, both
+        propagation scripts now consume it automatically; otherwise they
+        fall back to the hard-coded defaults. The current auto-seed is a
+        vision-only heuristic and is the source of the carrot drift below.
+        Both routes are placeholders for end-effector projection, which
+        requires ZED intrinsics + ZED-to-base extrinsics + the gripper/tool
+        frame from the URDF.
+  \item \textbf{Auto-seed drift on the grasped object.} On this trial the
+        auto-seed for the grasped role landed on the gripper finger
+        ($(514, 54)$ in a $960\times540$ frame), not on the carrot body, so
+        the early propagation locks onto the gripper and the carrot mask
+        only stabilises once the gripper moves. The cup auto-seed is clean.
+        End-effector projection will replace the vision-only heuristic.
   \item \textbf{Carrot is not tracked during reach.} Forward propagation
         starts at the grasp; frames before grasp have no carrot mask. The
         cup is propagated bidirectionally so it is masked throughout.
@@ -383,10 +395,13 @@ hand-tuning per trial:
         border-distance and a small role prior (\textit{grasped} prefers
         upper-centre, \textit{contact\_receiver} prefers lower-centre),
         and writes the chosen seed point to
-        \texttt{figures/identify/auto\_seeds.csv}. On the carrot trial it
-        recovers a clean cup seed and a gripper-finger seed near the
-        carrot; tightening the role priors and feeding the CSV into the
-        propagation scripts is the next iteration.
+        \texttt{figures/identify/auto\_seeds.csv}. Both
+        \texttt{Code/propagate\_demo.py} and \texttt{Code/propagate\_cup.py}
+        now read this CSV automatically when it exists, falling back to the
+        hard-coded defaults otherwise --- so a fresh bag goes through the
+        pipeline with no per-trial constants to edit. On the carrot trial
+        it recovers a clean cup seed and a gripper-finger seed near the
+        carrot (see Honest Limitations).
   \item \texttt{Code/multi\_event.py} --- generalises event detection to
         find \emph{all} grasps, releases, and force-magnitude peaks above a
         baseline, then groups them into interaction cycles. On
@@ -397,10 +412,15 @@ hand-tuning per trial:
   \item \texttt{Code/object\_identity.py} --- embeds per-frame mask crops
         with frozen DINOv2 and clusters the embeddings to assign stable
         object identities across phases (and, in future, across episodes).
-        Current limitation noted below: the per-frame bounding boxes from
-        \texttt{build\_sidecar.py} are loose, so crops contain enough
-        background that clustering merges everything; tightening the crop
-        to the actual mask before embedding is the fix and is straightforward.
+        Crops are now tightened to the actual mask: the colour-coded
+        overlay PNG is parsed back into a boolean mask, the crop is taken
+        at the mask's bounding box, and the background inside the crop is
+        blacked out so the embedding sees the object rather than the table.
+        On this trial, $25$ sample crops at distance threshold $0.6$ yield
+        $3$ stable identities (the carrot+gripper ensemble, a partial-cup
+        cluster, and a partial-carrot cluster). Closer to the true count
+        of two; remaining over-merging is dominated by the gripper-finger
+        drift noted in Honest Limitations.
   \item \texttt{Code/trial\_report.py} --- builds a single PDF per trial
         (\texttt{Docs/reports/report\_<trial>.pdf}) containing the summary
         table, the event list, the press-frame sidecar excerpt, and every

@@ -29,8 +29,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
-DEMO_CSV = "lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
-IMG_DIR = "lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
+DEMO_CSV = "Data/lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
+IMG_DIR = "Data/lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
 PRESS_IMG_TS = 1779192196405413163
 CARROT_SUMMARY = "figures/propagation_summary.csv"
 CUP_SUMMARY = "figures/propagation_cup_summary.csv"

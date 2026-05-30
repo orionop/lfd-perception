@@ -25,8 +25,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
-DEMO_CSV = "lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
-SRC_IMG_DIR = "lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
+DEMO_CSV = "Data/lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
+SRC_IMG_DIR = "Data/lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
 CARROT_CSV = "figures/propagation_summary.csv"
 CUP_CSV = "figures/propagation_cup_summary.csv"
 OUT_DIR = "figures/identify"
@@ -149,7 +149,7 @@ def main():
             lut[(oid, int(r["frame_idx"]))] = r
 
     sidecar = {
-        "trial_dir": "lfdws_t001/lfdws_t001",
+        "trial_dir": "Data/lfdws_t001/lfdws_t001",
         "csv": DEMO_CSV,
         "image_dir": SRC_IMG_DIR,
         "events": events,

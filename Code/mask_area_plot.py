@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-DEMO_CSV = "lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
+DEMO_CSV = "Data/lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
 POSE_TS = "NS_1.franka_robot_state_broadcaster.current_pose.timestamp"
 IMG = "zed.zed_node.rgb.color.rect.image.compressed"
 

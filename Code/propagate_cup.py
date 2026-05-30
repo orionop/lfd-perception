@@ -29,6 +29,16 @@ PRESS_IMG_ID = 1779192196405413163  # from analyze_demo.py — force-contact eve
 SEED_POINT_FRAC_CUP = (0.55, 0.65)
 
 
+def load_auto_seed(csv_path, role):
+    if not os.path.exists(csv_path):
+        return None
+    with open(csv_path) as f:
+        for row in csv.DictReader(f):
+            if row.get("role") == role:
+                return (row["img_id"], float(row["seed_x"]), float(row["seed_y"]))
+    return None
+
+
 def pick_device():
     if torch.backends.mps.is_available():
         return "mps"
@@ -53,6 +63,9 @@ def main():
     ap.add_argument("--cfg", default="configs/sam2.1/sam2.1_hiera_l.yaml")
     ap.add_argument("--out", default="figures/propagation_cup")
     ap.add_argument("--threads", type=int, default=10)
+    ap.add_argument("--auto_seeds_csv", default="figures/identify/auto_seeds.csv",
+                    help="if present, use contact_receiver-role row from this CSV "
+                         "as the seed; else fall back to PRESS_IMG_ID + SEED_POINT_FRAC_CUP")
     args = ap.parse_args()
 
     torch.set_num_threads(args.threads)
@@ -64,15 +77,27 @@ def main():
     jpg_frames = sorted([f for f in os.listdir(args.jpg_dir) if f.endswith(".jpg")])
     assert len(jpg_frames) == len(png_frames)
 
-    seed_name = f"{PRESS_IMG_ID}.png"
-    if seed_name not in png_frames:
-        print(f"[fatal] seed frame {seed_name} not found", flush=True)
-        sys.exit(1)
-    seed_idx = png_frames.index(seed_name)
     probe = cv2.imread(os.path.join(img_dir, png_frames[0]))
     H, W = probe.shape[:2]
-    px = SEED_POINT_FRAC_CUP[0] * W
-    py = SEED_POINT_FRAC_CUP[1] * H
+    auto = load_auto_seed(args.auto_seeds_csv, "contact_receiver")
+    if auto is not None:
+        img_id_str, px, py = auto
+        seed_name = f"{img_id_str}.png"
+        if seed_name not in png_frames:
+            print(f"[fatal] auto-seed frame {seed_name} not found", flush=True)
+            sys.exit(1)
+        seed_idx = png_frames.index(seed_name)
+        print(f"[seed-src] AUTO from {args.auto_seeds_csv} (role=contact_receiver)",
+              flush=True)
+    else:
+        seed_name = f"{PRESS_IMG_ID}.png"
+        if seed_name not in png_frames:
+            print(f"[fatal] hard-coded seed frame {seed_name} not found", flush=True)
+            sys.exit(1)
+        seed_idx = png_frames.index(seed_name)
+        px = SEED_POINT_FRAC_CUP[0] * W
+        py = SEED_POINT_FRAC_CUP[1] * H
+        print(f"[seed-src] HARD-CODED (no {args.auto_seeds_csv})", flush=True)
     print(f"[setup] image {W}x{H}, cup seed at ({px:.0f},{py:.0f}), frame {seed_idx}",
           flush=True)
 

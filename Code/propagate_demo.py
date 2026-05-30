@@ -16,6 +16,7 @@ Usage:
         --ckpt sam2.1_hiera_large.pt
 """
 import argparse
+import csv
 import os
 import sys
 import time
@@ -24,6 +25,18 @@ import cv2
 import numpy as np
 import torch
 from sam2.build_sam import build_sam2_video_predictor
+
+
+def load_auto_seed(csv_path, role):
+    """Return (img_id_str, px, py) for the given role from auto_seeds.csv,
+    or None if not present."""
+    if not os.path.exists(csv_path):
+        return None
+    with open(csv_path) as f:
+        for row in csv.DictReader(f):
+            if row.get("role") == role:
+                return (row["img_id"], float(row["seed_x"]), float(row["seed_y"]))
+    return None
 
 IMG_DIR_NAME = "zed_zed_node_rgb_color_rect_image_compressed"
 JPG_DIR_DEFAULT = "frames_jpg"
@@ -66,6 +79,9 @@ def main():
     ap.add_argument("--cfg", default="configs/sam2.1/sam2.1_hiera_l.yaml")
     ap.add_argument("--out", default="figures/propagation")
     ap.add_argument("--threads", type=int, default=10)
+    ap.add_argument("--auto_seeds_csv", default="figures/identify/auto_seeds.csv",
+                    help="if present, use grasped-role row from this CSV as the seed; "
+                         "falls back to hard-coded GRASP_IMG_ID + SEED_POINT_FRAC")
     args = ap.parse_args()
 
     torch.set_num_threads(args.threads)
@@ -85,19 +101,30 @@ def main():
     assert len(jpg_frames) == len(png_frames), \
         f"mismatch: {len(jpg_frames)} jpgs vs {len(png_frames)} pngs"
 
-    # Locate seed frame index (same ordering: sorted by ns timestamp)
-    seed_name = f"{GRASP_IMG_ID}.png"
-    if seed_name not in png_frames:
-        print(f"[fatal] seed frame {seed_name} not found", flush=True)
-        sys.exit(1)
-    seed_idx = png_frames.index(seed_name)
-    print(f"[setup] seed = frame {seed_idx}/{len(png_frames)} ({seed_name})", flush=True)
-
-    # Probe one image for size
+    # Resolve seed (auto-CSV if available, else hard-coded fallback)
     probe = cv2.imread(os.path.join(img_dir, png_frames[0]))
     H, W = probe.shape[:2]
-    px = SEED_POINT_FRAC[0] * W
-    py = SEED_POINT_FRAC[1] * H
+    auto = load_auto_seed(args.auto_seeds_csv, "grasped")
+    if auto is not None:
+        img_id_str, px, py = auto
+        seed_name = f"{img_id_str}.png"
+        if seed_name not in png_frames:
+            print(f"[fatal] auto-seed frame {seed_name} not found", flush=True)
+            sys.exit(1)
+        seed_idx = png_frames.index(seed_name)
+        print(f"[seed-src] AUTO from {args.auto_seeds_csv} (role=grasped)",
+              flush=True)
+    else:
+        seed_name = f"{GRASP_IMG_ID}.png"
+        if seed_name not in png_frames:
+            print(f"[fatal] hard-coded seed frame {seed_name} not found", flush=True)
+            sys.exit(1)
+        seed_idx = png_frames.index(seed_name)
+        px = SEED_POINT_FRAC[0] * W
+        py = SEED_POINT_FRAC[1] * H
+        print(f"[seed-src] HARD-CODED (no {args.auto_seeds_csv})", flush=True)
+    print(f"[setup] seed = frame {seed_idx}/{len(png_frames)} ({seed_name})",
+          flush=True)
     print(f"[setup] image {W}x{H}, seed point ({px:.0f},{py:.0f})", flush=True)
 
     device = pick_device()

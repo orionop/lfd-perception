@@ -17,7 +17,7 @@ import numpy as np
 
 CARROT_CSV = "figures/propagation_summary.csv"
 CUP_CSV = "figures/propagation_cup_summary.csv"
-SRC_IMG_DIR = "lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
+SRC_IMG_DIR = "Data/lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
 OUT_PATH = "figures/propagation_both_strip.png"
 
 MILESTONES = [
