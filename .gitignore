@@ -67,6 +67,9 @@ Docs/writeup.aux
 Docs/writeup.log
 Docs/writeup.out
 Docs/writeup.toc
+Docs/figures_tex/*.aux
+Docs/figures_tex/*.log
+Docs/figures_tex/*.out
 
 # ----- per-trial CSVs (large; produced by the lab's export, kept off git) -----
 # (Existing trial_002 CSVs were committed before this rule and are kept.)

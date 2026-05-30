@@ -5,6 +5,15 @@ Vision module for the lab's ROS 2 LfD pipeline. Given a demonstration bag
 objects per interaction phase and writes a JSON sidecar consumable by
 downstream LfD code.
 
+## Pipeline
+
+![Pipeline overview](figures/pipeline.png)
+
+Proprioceptive event detection on the merged CSV identifies the grasp, press,
+and release moments. Each event indexes the corresponding ZED frame, which
+seeds SAM 2 (frozen) with a point prompt. Bidirectional video propagation
+yields per-frame, role-tagged masks aggregated into a JSON sidecar.
+
 ## Layout
 
 ```

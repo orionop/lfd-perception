@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Remote collaboration with **Mark Vlutters (m.vlutters@utwente.nl)** at University of Twente / NAKAMA Robotics Lab. The primary deliverable (from `vlutters_confirmation_letter.txt`) is a **vision system that identifies task-relevant objects in robot-demonstration data, integrated into the lab's ROS 2 LfD pipeline**. The lab records bags on a Franka FR3 with a Bota wrist F/T sensor, a Franka gripper, and a ZED RGB camera. Mark owns data collection and export; Anurag owns the downstream vision module.
+Remote collaboration with University of Twente / NAKAMA Robotics Lab. The primary deliverable is a **vision system that identifies task-relevant objects in robot-demonstration data, integrated into the lab's ROS 2 LfD pipeline**. The lab records bags on a Franka FR3 with a Bota wrist F/T sensor, a Franka gripper, and a ZED RGB camera. The lab owns data collection and export; this repo owns the downstream vision module.
 
-Data flow: the lab runs `ros2_unbag` + an in-house merge script on each bag, producing a single pose-synchronised CSV (`<trial>_0.csv`) and per-topic subfolders alongside a ZED PNG folder. We consume that output — we do not maintain the export side anymore. The schema is fixed (`lfdws_t001_0.csv` is the spec; see Mark's 2026-05-21 email).
+Data flow: the lab runs `ros2_unbag` + an in-house merge script on each bag, producing a single pose-synchronised CSV (`<trial>_0.csv`) and per-topic subfolders alongside a ZED PNG folder. We consume that output — we do not maintain the export side anymore. The schema is fixed (`lfdws_t001_0.csv` is the spec).
 
 ## Two parallel codebases in this repo
 
-1. **Legacy bag-extraction tooling** — `bag_to_csv.py` (Mark's original) and `unbag_pipeline.py` (Anurag's replacement, since superseded by `ros2_unbag` on Mark's side). Kept for reference; not the deliverable.
+1. **Legacy bag-extraction tooling** — `bag_to_csv.py` (the lab's original) and `unbag_pipeline.py` (a Python replacement, since superseded by `ros2_unbag` on the lab's side). Kept for reference; not the deliverable.
 2. **Current vision pipeline** — the `analyze_demo.py` → `segment_events.py` → `propagate_*.py` → `build_sidecar.py` chain, working from the exported CSV+PNGs.
 
 When asked about "the pipeline," the second meaning is current.
@@ -81,7 +81,7 @@ Both must sit in the repo root for the scripts' default `--ckpt` paths.
 
 ## Trial data layout (what scripts assume)
 
-Trial directories live under `Data/` and are structured exactly as Mark's `ros2_unbag` export:
+Trial directories live under `Data/` and are structured exactly as the lab's `ros2_unbag` export:
 
 ```
 Data/<trial>/
@@ -103,7 +103,7 @@ The merged CSV's image column is the literal PNG filename (without `.png`). Per-
 
 Three places where the current code is tuned to `lfdws_t001` specifically and will need attention when the second bag arrives:
 
-- `ROLE_SEEDS` in `Code/identify_objects.py` and the `SEED_POINT_FRAC*` constants in `Code/propagate_demo.py` / `Code/propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection, which requires ZED-to-base extrinsics that Mark has not sent yet.
+- `ROLE_SEEDS` in `Code/identify_objects.py` and the `SEED_POINT_FRAC*` constants in `Code/propagate_demo.py` / `Code/propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection, which requires ZED-to-base extrinsics that the lab has not sent yet.
 - `GRASP_IMG_ID` / `PRESS_IMG_ID` constants in the propagation scripts — image-timestamp seeds. `Code/identify_objects.py` derives these from the CSV via `detect_events`, so future bags work without changing constants there.
 - Event-detection thresholds in `Code/analyze_demo.py` (`detect_events`) — midpoint between open/closed gripper width, and force-peak restricted to the gripper-closed window. Will fail on demos with multiple pick-and-place cycles or no force contact.
 
@@ -111,7 +111,7 @@ See `Docs/FAILURE_MODES.md` for the full honest inventory.
 
 ## What the writeup is
 
-`Docs/writeup.tex` / `Docs/writeup.pdf` is the running progress doc Anurag sends Mark. Original 4 pages were sent on 2026-05-28; pages 5-9 were appended later. **Do not edit the original 4 pages** — only append after the existing content. Compile from the repo root:
+`Docs/writeup.tex` / `Docs/writeup.pdf` is the running progress doc shared with the lab. The original 4 pages are the first version; later sections append updates. **Do not edit the original 4 pages** — only append after the existing content. Compile from the repo root:
 
 ```bash
 pdflatex -output-directory=Docs Docs/writeup.tex
@@ -126,7 +126,7 @@ Run twice to resolve refs. `.aux` / `.log` / `.out` are byproducts that can be l
 - `analyze_demo.py` — event detection from the merged CSV; produces `figures/timeline.png` and `figures/event_frames.png`.
 - `segment_events.py` — SAM 1 ViT-H on the three event frames with configurable point prompts.
 - `propagate_demo.py` / `propagate_cup.py` — SAM 2 video predictor seeded at one proprioceptive event, writes per-frame overlays + summary CSV + MP4 for one object.
-- `build_sidecar.py` — pure post-processing: reads both propagation CSVs and produces the Mark-facing JSON (`figures/identify/objects.json`) + per-frame combined overlays + MP4.
+- `build_sidecar.py` — pure post-processing: reads both propagation CSVs and produces the the lab-facing JSON (`figures/identify/objects.json`) + per-frame combined overlays + MP4.
 - `identify_objects.py` — intended one-shot end-to-end (currently OOMs on this hardware; see above).
 - `combined_strip.py` / `make_propagation_figure.py` / `mask_area_plot.py` / `force_overlay.py` — figure generators for the writeup.
 - `run_dado.py` + `_dado_inference.py` — DADO-style label-free baseline (DINOv2 attention × Depth-Anything depth). Negative-result figure for the writeup.
@@ -139,4 +139,6 @@ Run twice to resolve refs. `.aux` / `.log` / `.out` are byproducts that can be l
 - **No deletions**: don't `rm` scratch / diagnostic / temp files. Leave them in place; let Anurag clean up.
 - **Plan before installs**: surface options + tradeoffs (size, model variant) before any `pip install` of large packages or model downloads.
 - **Write all scripts first, then run**: don't interleave write→run→write. Use available cores (`torch.set_num_threads(10)` or similar). Logs should be sequential and live (per-frame, per-iteration), not end-of-run summaries.
-- **Research bar**: any paper framing of this work must be genuinely novel, not "we composed N existing tools." Systems-integration framings have been explicitly rejected. The deliverable for Mark is the primary work; the paper is additive on top.
+- **Research bar**: any paper framing of this work must be genuinely novel, not "we composed N existing tools." Systems-integration framings have been explicitly rejected. The deliverable for the lab is the primary work; the paper is additive on top.
+
+- **No personal paths in docs**: never write any user's home directory or absolute filesystem path into a README or any tracked file. All examples must be relative (`<trial>`, `./figures/`, etc.).

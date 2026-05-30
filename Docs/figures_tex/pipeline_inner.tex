@@ -1,0 +1,100 @@
+% Pipeline diagram body (no \documentclass wrapper).
+% Included from Docs/writeup.tex via \input{figures_tex/pipeline_inner.tex}
+% and from Docs/figures_tex/pipeline.tex (standalone) for PDF/PNG export.
+
+\definecolor{inFill}{RGB}{230,230,230}
+\definecolor{inBorder}{RGB}{140,140,140}
+\definecolor{coreFill}{RGB}{255,225,185}
+\definecolor{coreBorder}{RGB}{210,130,40}
+\definecolor{frozenFill}{RGB}{210,225,250}
+\definecolor{frozenBorder}{RGB}{90,130,190}
+\definecolor{outFill}{RGB}{215,240,215}
+\definecolor{outBorder}{RGB}{60,140,60}
+\definecolor{evColor}{RGB}{190,50,50}
+
+\begin{tikzpicture}[
+  inblock/.style={
+    draw=inBorder, thick, rounded corners=3pt, fill=inFill,
+    minimum width=2.4cm, minimum height=1.5cm, text width=2.2cm, align=center, font=\small
+  },
+  core/.style={
+    draw=coreBorder, very thick, rounded corners=3pt, fill=coreFill,
+    minimum width=2.6cm, minimum height=2.0cm, text width=2.4cm, align=center, font=\small
+  },
+  frozen/.style={
+    draw=frozenBorder, very thick, rounded corners=3pt, dashed, fill=frozenFill,
+    minimum width=2.8cm, minimum height=2.0cm, text width=2.6cm, align=center, font=\small
+  },
+  outblock/.style={
+    draw=outBorder, very thick, rounded corners=3pt, fill=outFill,
+    minimum width=3.0cm, minimum height=2.0cm, text width=2.8cm, align=center, font=\small
+  },
+  arr/.style={-{Stealth[length=2.5mm]}, thick},
+  evarr/.style={-{Stealth[length=2.5mm]}, very thick, evColor},
+  rlabel/.style={font=\scriptsize\sffamily, fill=white, inner sep=1.5pt},
+  dlabel/.style={font=\scriptsize, align=center},
+  node distance=1.4cm,
+]
+
+% --- Row 1: inputs ---
+\node[inblock] (bag) {\textbf{ROS\,2 bag}\\[2pt]{\scriptsize pose / gripper /}\\{\scriptsize wrench / RGB}};
+\node[inblock, right=1.3cm of bag] (csv) {\textbf{Merged CSV}\\[2pt]{\scriptsize pose-synced,}\\{\scriptsize topic-prefixed}};
+\node[inblock, right=1.3cm of csv] (frames) {\textbf{ZED PNGs}\\[2pt]{\scriptsize 497 frames,}\\{\scriptsize ns-stamped}};
+
+% --- Row 2: core stages, horizontal flow ---
+\node[core, below=2.6cm of bag] (events) {\textbf{Event}\\\textbf{Detection}\\[3pt]
+  {\scriptsize gripper-width thr.}\\
+  {\scriptsize $\Rightarrow$ grasp, release}\\
+  {\scriptsize force peak}\\
+  {\scriptsize $\Rightarrow$ press}};
+
+\node[core, right=1.5cm of events] (seed) {\textbf{Frame +}\\\textbf{Prompt Seed}\\[3pt]
+  {\scriptsize event time $\to$}\\
+  {\scriptsize image ts $\to$}\\
+  {\scriptsize point prompt}};
+
+\node[frozen, right=1.5cm of seed] (sam) {\textbf{SAM\,2 (frozen)}\\\textbf{Video Pred.}\\[3pt]
+  {\scriptsize bidirectional}\\
+  {\scriptsize propagation}\\
+  {\scriptsize per object}};
+
+\node[core, right=1.5cm of sam] (agg) {\textbf{Per-Frame}\\\textbf{Aggregation}\\[3pt]
+  {\scriptsize obj 1: grasped}\\
+  {\scriptsize obj 2: contact-rec.}\\
+  {\scriptsize bbox + area + role}};
+
+% --- Row 3: outputs ---
+\node[outblock, below=2.3cm of seed] (json) {\textbf{Object Sidecar}\\[3pt]
+  {\scriptsize \texttt{objects.json}}\\
+  {\scriptsize \texttt{objects\_summary.csv}}\\
+  {\scriptsize overlays + MP4}};
+
+\node[inblock, right=2.5cm of json] (downstream) {\textbf{Downstream}\\\textbf{LfD Pipeline}\\[2pt]{\scriptsize constraint +}\\{\scriptsize interaction ID}};
+
+% --- Arrows: row 1 -> row 2 ---
+\draw[arr] (bag) -- node[above, rlabel] {\texttt{ros2\_unbag}} (csv);
+\draw[arr] (csv) -- (frames);
+\draw[arr] (csv.south) -- node[left, rlabel, pos=0.6] {pose, gripper, wrench} (events.north);
+\draw[arr] (frames.south) |- ([yshift=0.5cm]seed.north) -- node[right, rlabel, pos=0.4] {image-ts col} (seed.north);
+
+% --- Arrows: row 2 horizontal flow ---
+\draw[evarr] (events) -- node[above, rlabel] {3 events} (seed);
+\draw[arr] (seed) -- node[above, rlabel] {seed prompts} (sam);
+\draw[arr] (sam) -- node[above, rlabel] {per-frame masks} (agg);
+
+% --- Arrows: row 2 -> row 3 ---
+\draw[arr] (agg.south) |- ([yshift=0.4cm]json.east) -- (json.east);
+\draw[arr] (json) -- node[above, rlabel] {consumed by} (downstream);
+
+\begin{pgfonlayer}{background}
+  \node[draw=inBorder, dashed, thick, rounded corners=5pt, fill=gray!4, inner sep=10pt,
+        fit=(bag)(csv)(frames),
+        label={[font=\scriptsize\sffamily, text=inBorder]above:Inputs (from lab export)}
+  ] {};
+  \node[draw=coreBorder, thick, rounded corners=5pt, fill=orange!4, inner sep=10pt,
+        fit=(events)(seed)(sam)(agg),
+        label={[font=\scriptsize\sffamily\bfseries, text=coreBorder]above:Proprioception-cued logic (this work)}
+  ] {};
+\end{pgfonlayer}
+
+\end{tikzpicture}

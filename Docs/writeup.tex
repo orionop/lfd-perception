@@ -8,6 +8,8 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc, shapes.geometric}
 
 \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 
@@ -31,6 +33,18 @@ idea: the robot's own proprioception tells us \emph{when} something matters
 This document records the current setup, the data and code used, and a first
 result on the carrot pick/press/drop trial, followed by a prospective research
 framing.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{figures_tex/pipeline_inner.tex}}
+\caption{Pipeline overview. The lab's standard ROS\,2 bag export (grey,
+top) is consumed as-is. Proprioceptive event detection on the merged CSV
+identifies the grasp, press, and release moments; each event indexes the
+corresponding ZED frame, which is used to seed SAM\,2 (frozen) with a point
+prompt. Bidirectional video propagation yields per-frame, role-tagged masks
+that are aggregated into a JSON sidecar consumable by downstream LfD code.}
+\label{fig:pipeline}
+\end{figure}
 
 \section{Setup and Data}
 
@@ -373,10 +387,9 @@ Concrete data items needed to remove the placeholders above:
   \item Franka URDF or the gripper/tool frame definition relative to the
         end-effector pose published on
         \texttt{/NS\_1/franka\_robot\_state\_broadcaster/current\_pose}.
-  \item Depth stream enabled in the next bag (Mark's 19~May email offered
-        this on request).
-  \item A re-centred camera, addressing the off-centre framing flagged in
-        the same email.
+  \item Depth stream enabled in the next bag (available on request).
+  \item A re-centred camera, addressing the off-centre framing in the
+        current trial.
   \item Two to three additional trials with varied objects and placements,
         to begin step 4.
 \end{enumerate}

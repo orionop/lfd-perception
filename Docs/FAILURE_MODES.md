@@ -1,8 +1,8 @@
 # Failure modes — `lfdws_t001` (carrot pick / press / drop)
 
 Honest log of what does NOT work in the current pipeline, on the single
-trial Mark sent on 2026-05-19. Maintained so we can hand this to him in the
-next sync and not pretend the pipeline is more polished than it is.
+trial currently available. Maintained so we can surface it in the next sync
+and not pretend the pipeline is more polished than it is.
 
 ## A. Tracking / segmentation issues observed in the carrot trial
 
@@ -19,7 +19,7 @@ next sync and not pretend the pipeline is more polished than it is.
 ### A2. Cup mask is tiny before the press
 - Cup centroid only stabilises once the gripper is near it.
 - Before frame ~300, the cup mask is < 1 500 px.
-- **Cause:** the cup is partly out of frame in the early phase (Mark
+- **Cause:** the cup is partly out of frame in the early phase (the lab
   flagged the camera is off-centre; see B1).
 - **Implication:** the cup propagation backward from the press is the
   correct seed point — we cannot reliably find the cup before contact occurs.
@@ -35,16 +35,15 @@ next sync and not pretend the pipeline is more polished than it is.
 - **Implication:** validates that proprioceptive cueing is load-bearing,
   not decorative — vision-only label-free proposal does not work here.
 
-## B. Data limitations (from Mark's emails)
+## B. Data limitations
 
 ### B1. Camera is off-centre
-- Mark flagged this in the 2nd of the 19 May emails. Visible: many frames
-  have the cup near the right edge or partially clipped.
+- Many frames have the cup near the right edge or partially clipped.
 - **Implication:** the cup mask quality before the press is dominated by
-  this, not by SAM. Will be fixed in the next measurement on Mark's side.
+  this, not by SAM. To be addressed in the next measurement.
 
 ### B2. No depth available
-- Mark offered depth on request, currently absent. Pipeline runs on RGB
+- Depth is available on request, currently absent. Pipeline runs on RGB
   only.
 - **Implication:** any depth-aware proposer (DADO, RGB-D SAM extensions)
   needs the depth stream to be turned on. Worth requesting for the next bag.
@@ -58,7 +57,7 @@ next sync and not pretend the pipeline is more polished than it is.
   scene with a different camera pose.
 - **Fix:** project the end-effector pose into the image as the prompt.
   Blocked on ZED-to-base extrinsics + intrinsics + URDF — not in the data
-  Mark has shared so far. **Requested in next email.**
+  currently shared. **To request in next sync.**
 
 ### C2. Only forward propagation for the grasped object
 - The grasped-object seed is at the grasp event (~frame 250). Frames 0–249
@@ -72,16 +71,16 @@ next sync and not pretend the pipeline is more polished than it is.
 ### C3. Object identity not preserved across episodes
 - Within one demo, obj_id=1 is the carrot and obj_id=2 is the cup.
 - Across demos, there is no mechanism to say "the same physical carrot was
-  used in trial 001 and trial 005". If Mark needs that, we'd need
-  visual-feature matching across episodes (e.g. DINOv2 nearest-neighbour
-  on bbox crops) — not currently implemented.
+  used in trial 001 and trial 005". If downstream needs that, it would
+  require visual-feature matching across episodes (e.g. DINOv2
+  nearest-neighbour on bbox crops) — not currently implemented.
 
 ### C4. Force-direction overlay is uncalibrated
 - `force_overlay.py` fits a base->image linear map from the carrot mask
   centroids over time, rather than using real camera intrinsics and
   extrinsics. The arrow direction is a visual sanity check, not a
   geometric measurement.
-- **Fix:** real ZED intrinsics + base-to-camera transform from Mark.
+- **Fix:** real ZED intrinsics + base-to-camera transform from the lab side.
 
 ### C5. Hand-tuned event thresholds
 - Gripper width threshold = midpoint of (open, closed). Force-contact event
@@ -100,7 +99,7 @@ next sync and not pretend the pipeline is more polished than it is.
 - Quantitative mask quality (no hand-labelled ground-truth masks yet — we
   evaluate by eyeballing).
 
-## Recommended asks for Mark (next message)
+## Recommended asks for the next sync
 
 1. ZED intrinsics + ZED-to-robot-base extrinsics — fixes C1, C4
 2. Franka URDF or EE/tool frame definition — fixes C1
