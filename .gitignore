@@ -71,6 +71,12 @@ Docs/figures_tex/*.aux
 Docs/figures_tex/*.log
 Docs/figures_tex/*.out
 
+# per-trial diagnostic reports — regenerable from Code/trial_report.py
+Docs/reports/*.aux
+Docs/reports/*.log
+Docs/reports/*.out
+Docs/reports/*.tex
+
 # ----- per-trial CSVs (large; produced by the lab's export, kept off git) -----
 # (Existing trial_002 CSVs were committed before this rule and are kept.)
 *.csv

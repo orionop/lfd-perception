@@ -34,18 +34,6 @@ This document records the current setup, the data and code used, and a first
 result on the carrot pick/press/drop trial, followed by a prospective research
 framing.
 
-\begin{figure}[H]
-\centering
-\resizebox{\textwidth}{!}{\input{figures_tex/pipeline_inner.tex}}
-\caption{Pipeline overview. The lab's standard ROS\,2 bag export (grey,
-top) is consumed as-is. Proprioceptive event detection on the merged CSV
-identifies the grasp, press, and release moments; each event indexes the
-corresponding ZED frame, which is used to seed SAM\,2 (frozen) with a point
-prompt. Bidirectional video propagation yields per-frame, role-tagged masks
-that are aggregated into a JSON sidecar consumable by downstream LfD code.}
-\label{fig:pipeline}
-\end{figure}
-
 \section{Setup and Data}
 
 The lab exports each bag with \texttt{ros2\_unbag} plus an in-house merge
@@ -197,6 +185,18 @@ This section extends the writeup with results obtained after the first version
 was sent. The original four pages are unchanged. Steps 1 and 3 from the previous
 section are now complete; step 2 remains blocked on calibration data from the
 lab; step 4 is blocked on additional trials.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{figures_tex/pipeline_inner.tex}}
+\caption{Pipeline overview. The lab's standard ROS\,2 bag export (grey,
+top) is consumed as-is. Proprioceptive event detection on the merged CSV
+identifies the grasp, press, and release moments; each event indexes the
+corresponding ZED frame, which is used to seed SAM\,2 (frozen) with a point
+prompt. Bidirectional video propagation yields per-frame, role-tagged masks
+that are aggregated into a JSON sidecar consumable by downstream LfD code.}
+\label{fig:pipeline}
+\end{figure}
 
 \subsection{Step 1 (revisited): SAM and SAM\,2 on the event frames}
 
@@ -357,12 +357,6 @@ is kept in \texttt{FAILURE\_MODES.md} in the repository.
         in this scene) are tuned to the carrot trial. They are placeholders
         for end-effector projection, which requires ZED intrinsics +
         ZED-to-base extrinsics + the gripper/tool frame from the URDF.
-  \item \textbf{Memory pressure with two simultaneous objects.} Running
-        both SAM\,2 propagations in a single shared video state exceeds
-        Apple~M3~Pro unified memory (18\,GB). The deliverable workaround is
-        to propagate each object in its own state and merge the per-frame
-        artifacts (\texttt{build\_sidecar.py}). The JSON contract is
-        unchanged.
   \item \textbf{Carrot is not tracked during reach.} Forward propagation
         starts at the grasp; frames before grasp have no carrot mask. The
         cup is propagated bidirectionally so it is masked throughout.
@@ -375,6 +369,43 @@ is kept in \texttt{FAILURE\_MODES.md} in the repository.
         statements are evaluative on \texttt{lfdws\_t001} alone. Step 4
         of the original roadmap (multi-trial baselines) remains blocked on
         additional bags.
+\end{itemize}
+
+\subsection{Bag-agnostic utilities (added since the last update)}
+
+Four small additions to make the pipeline run on future bags without
+hand-tuning per trial:
+
+\begin{itemize}[noitemsep]
+  \item \texttt{Code/auto\_seed.py} --- replaces the hard-coded image
+        fractions used to seed SAM\,2. Runs SAM's automatic mask generator
+        on each event frame, scores candidates by centrality / size /
+        border-distance and a small role prior (\textit{grasped} prefers
+        upper-centre, \textit{contact\_receiver} prefers lower-centre),
+        and writes the chosen seed point to
+        \texttt{figures/identify/auto\_seeds.csv}. On the carrot trial it
+        recovers a clean cup seed and a gripper-finger seed near the
+        carrot; tightening the role priors and feeding the CSV into the
+        propagation scripts is the next iteration.
+  \item \texttt{Code/multi\_event.py} --- generalises event detection to
+        find \emph{all} grasps, releases, and force-magnitude peaks above a
+        baseline, then groups them into interaction cycles. On
+        \texttt{lfdws\_t001} it returns one cycle with one grasp,
+        one release, and four force peaks (the original detector returned
+        only the single global peak). This is what unblocks bags with
+        multi-cycle tasks.
+  \item \texttt{Code/object\_identity.py} --- embeds per-frame mask crops
+        with frozen DINOv2 and clusters the embeddings to assign stable
+        object identities across phases (and, in future, across episodes).
+        Current limitation noted below: the per-frame bounding boxes from
+        \texttt{build\_sidecar.py} are loose, so crops contain enough
+        background that clustering merges everything; tightening the crop
+        to the actual mask before embedding is the fix and is straightforward.
+  \item \texttt{Code/trial\_report.py} --- builds a single PDF per trial
+        (\texttt{Docs/reports/report\_<trial>.pdf}) containing the summary
+        table, the event list, the press-frame sidecar excerpt, and every
+        figure produced by the pipeline. Intended as the one document to
+        share per future bag.
 \end{itemize}
 
 \subsection{Asks for the next sync}
