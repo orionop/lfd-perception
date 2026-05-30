@@ -1,0 +1,384 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\title{\textbf{Proprioception-Cued Object Identification\\ for Learning from Demonstration}\\[4pt]
+\large Progress writeup --- carrot pick/press/drop trial (\texttt{lfdws\_t001})}
+\author{Anurag Shetye \quad\textbar\quad UTwente / NAKAMA Robotics Lab (remote)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Goal}
+
+Given a demonstration recorded as a ROS\,2 bag (robot pose, gripper state,
+force/torque, and ZED RGB camera), automatically determine \emph{which objects
+in the scene are task-relevant} --- without any manual labelling. The central
+idea: the robot's own proprioception tells us \emph{when} something matters
+(a grasp, a contact, a release), and those moments tell the vision system
+\emph{where} to look in the corresponding camera frame.
+
+This document records the current setup, the data and code used, and a first
+result on the carrot pick/press/drop trial, followed by a prospective research
+framing.
+
+\section{Setup and Data}
+
+The lab exports each bag with \texttt{ros2\_unbag} plus an in-house merge
+script, producing a single synchronised CSV resampled onto the robot-pose clock,
+alongside a folder of extracted camera frames. We build directly on that output;
+no custom export code is maintained on our side.
+
+\paragraph{Trial.} \texttt{lfdws\_t001} --- the robot picks a carrot from a
+plate (gripper close), presses it onto a cup (force contact), and drops it
+(gripper open). Duration $\approx 33$\,s, four topics:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llr}
+\toprule
+\textbf{Topic} & \textbf{Type} & \textbf{Messages} \\
+\midrule
+\texttt{/NS\_1/.../current\_pose}        & PoseStamped       & 33{,}137 \\
+\texttt{/bota\_post/wrench\_body\_compensated} & WrenchStamped & 17{,}047 \\
+\texttt{/NS\_1/franka\_gripper/joint\_states}  & JointState    & 472 \\
+\texttt{/zed/.../image/compressed}       & CompressedImage   & 497 \\
+\bottomrule
+\end{tabular}
+\caption{Topics in the \texttt{lfdws\_t001} bag.}
+\end{table}
+
+\paragraph{Key input files.}
+\begin{itemize}[noitemsep]
+  \item \texttt{lfdws\_t001\_0.csv} --- merged, pose-synchronised table
+        (33{,}137 rows). Columns are dot-separated, topic-prefixed; the final
+        column references the ZED frame by timestamp.
+  \item \texttt{zed\_zed\_node\_rgb\_color\_\allowbreak rect\_image\_compressed/}
+        --- 497 PNG frames, each named
+        \texttt{\{nanosecond\_\allowbreak timestamp\}.png}. The integer in the
+        CSV's image column is exactly the filename.
+\end{itemize}
+
+\section{Code}
+
+A single analysis script reads the merged CSV, detects interaction events from
+the proprioceptive signals, and pulls the camera frame at each event.
+
+\paragraph{\texttt{analyze\_demo.py}.} Stages:
+\begin{enumerate}[noitemsep]
+  \item \textbf{Load \& parse.} Read the merged CSV; parse the gripper
+        \texttt{position} column (a string such as \texttt{"[0.031, 0.031]"})
+        into a scalar gripper width; compute force magnitude
+        $|F|=\sqrt{f_x^2+f_y^2+f_z^2}$; build a relative-time axis from the
+        pose timestamps.
+  \item \textbf{Event detection.} The gripper width is near-bimodal
+        (open $\approx 0.063$\,m, closed $\approx 0.003$\,m); events are found by
+        threshold crossings at the midpoint (open$\to$closed = grasp,
+        closed$\to$open = release). The force-contact event is the peak of the
+        baseline-subtracted force magnitude restricted to the held-object window.
+  \item \textbf{Timeline plot.} Gripper width and force magnitude on a shared
+        time axis with event markers (Figure~\ref{fig:timeline}).
+  \item \textbf{Event frames.} For each event, look up the image timestamp in
+        that row and load the matching PNG (Figure~\ref{fig:frames}).
+\end{enumerate}
+
+\paragraph{Environment.} Pure offline Python (\texttt{pandas}, \texttt{numpy},
+\texttt{matplotlib}, \texttt{Pillow}); no ROS runtime needed since we work from
+the exported CSV and PNGs.
+
+\section{Result}
+
+The pick/press/drop structure is cleanly recoverable from proprioception alone,
+and the camera frames at the detected event timestamps contain the correct
+task-relevant objects.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Event} & \textbf{$t$ (s)} & \textbf{gripper transition} & \textbf{$|F|$ (N)} \\
+\midrule
+gripper close (grasp)   & 16.74 & open $\to$ closed & 3.1 \\
+force contact (press)   & 24.77 & closed (holding)  & 26.4 \\
+gripper open (release)  & 29.01 & closed $\to$ open  & 1.9 \\
+\bottomrule
+\end{tabular}
+\caption{Detected interaction events. The gripper-state transition is the
+detection signal; force magnitude is reported at the event. Times are taken at
+the threshold crossing (grasp/release) and at the force peak (press).}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/timeline.png}
+\caption{Proprioceptive timeline. Gripper width (blue) drops sharply at the
+grasp ($\sim$16.7\,s) and rises at release ($\sim$29\,s); force magnitude (red)
+peaks at $\sim$26\,N during the press onto the cup ($\sim$24.8\,s). The
+pick/press/drop phases are unambiguous from the signals alone.}
+\label{fig:timeline}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/event_frames.png}
+\caption{ZED frames at the detected event timestamps. \textbf{Left:} grasp ---
+the carrot is in the gripper above the plate. \textbf{Centre:} release --- the
+carrot at the cup. \textbf{Right:} press --- the gripper forcing the carrot onto
+the cup. Each event frame contains exactly the object the robot is interacting
+with, with no vision processing yet applied.}
+\label{fig:frames}
+\end{figure}
+
+This validates the core assumption before any segmentation model is introduced:
+proprioceptive events are reliable temporal anchors, and the corresponding
+frames localise the relevant object in time.
+
+\section{Prospective Research Framing}
+
+The lab's existing learning-from-demonstration pipeline forms a clear arc:
+kinematic constraint identification from pose
+(Overbeek et al., \emph{Frontiers in Robotics and AI}, 2025) and physical-interaction
+identification from contact (Overbeek et al., \emph{Advanced Robotics Research},
+2025). A natural third layer is \textbf{visual object grounding}: identifying not
+just \emph{that} a constraint or contact occurs, but \emph{which object} it
+concerns.
+
+\paragraph{Proposed contribution.} Use gripper and force/contact events to
+disambiguate which object in a label-free proposal set is task-relevant per
+sub-phase --- combining proprioceptive event detection with a promptable
+segmenter (SAM/SAM\,2, prompted by the end-effector projected into the image) or
+a depth+attention proposer (DADO). Prior work uses gripper events alone to learn
+affordances, or depth/attention alone to propose objects; the combination of
+\emph{contact-force events} with label-free object discovery for per-phase
+task-relevant grounding appears to be an open gap, and a well-scoped story for a
+short paper (e.g.\ RA-L), with hardware validation on the lab's Franka setup.
+
+\paragraph{Next steps.}
+\begin{enumerate}[noitemsep]
+  \item Run SAM/SAM\,2 (and compare DADO) on the three event frames; turn
+        ``object visible'' into ``object segmented.''
+  \item Project the end-effector pose into the camera frame as a spatial prompt
+        (requires the ZED-to-base extrinsics).
+  \item Propagate masks across the demo (SAM\,2 video) and check consistency
+        against the proprioceptive timeline.
+  \item Scale to multiple trials/tasks once more data is collected; quantify
+        against gripper-only and vision-only baselines.
+\end{enumerate}
+
+\clearpage
+
+\section{Update --- Segmentation, Propagation, and a First Deliverable}
+
+This section extends the writeup with results obtained after the first version
+was sent. The original four pages are unchanged. Steps 1 and 3 from the previous
+section are now complete; step 2 remains blocked on calibration data from the
+lab; step 4 is blocked on additional trials.
+
+\subsection{Step 1 (revisited): SAM and SAM\,2 on the event frames}
+
+Running \textbf{SAM (ViT-H)} on the three event frames with a point prompt
+placed near the gripper produced clean segmentations once the prompt sits on
+the relevant object (Figure~\ref{fig:sam}). The grasp frame yields a tight
+carrot mask (predictor score $1.01$); the press and release frames yield cup
+masks of varying completeness depending on point placement. The takeaway is
+unsurprising but important: SAM is a competent paintbrush; the open question is
+where to point it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/segmented_events.png}
+\caption{SAM (ViT-H) with point prompts on the three event frames. Left: the
+carrot is recovered cleanly at the grasp event. Centre and right: the cup is
+partially recovered at the press and release events. The blue dot marks the
+prompt point in each frame.}
+\label{fig:sam}
+\end{figure}
+
+\subsection{Step 3: SAM\,2 mask propagation across the demo}
+
+Seeding \textbf{SAM\,2 (Hiera-L)} with a single point prompt on the carrot at
+the grasp event and propagating forward through the remaining 247 frames
+recovers the carrot mask across the entire pick~$\rightarrow$~press~$\rightarrow$~drop
+sequence. A second SAM\,2 state, seeded on the cup at the press event and
+propagated bidirectionally, recovers the cup mask across all 497 frames.
+Figure~\ref{fig:both_strip} shows six milestone frames with both objects
+overlaid.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/propagation_both_strip.png}
+\caption{Per-frame masks for the grasped object (carrot, green) and
+contact-receiving object (cup, magenta), shown at six milestones spanning the
+demo. Both masks come from SAM\,2 video propagation seeded at the corresponding
+proprioceptive event (grasp for the carrot, press for the cup). No mask is
+hand-labelled.}
+\label{fig:both_strip}
+\end{figure}
+
+\subsection{Quantitative read --- mask area over time}
+
+Mask area is a useful summary signal. Figure~\ref{fig:area} plots both objects
+on the relative-time axis with the three events marked. Two observations:
+
+\begin{itemize}[noitemsep]
+  \item The cup mask area peaks essentially at the press event, dropping
+        sharply once the carrot is released onto it.
+  \item The carrot mask shrinks from $\sim 38{,}000$\,px at grasp to a stable
+        $\sim 20{,}000$\,px once it is in the gripper (occlusion by the
+        gripper itself), and collapses after release. Absolute area is
+        therefore a coarse ``presence'' indicator; bounding boxes or
+        centroids are the more useful per-frame summary.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/mask_area_over_time.png}
+\caption{Per-frame mask area for the carrot (green) and the cup (magenta),
+aligned to the proprioceptive event times. The cup's visual prominence
+co-rises with the force-contact event.}
+\label{fig:area}
+\end{figure}
+
+\subsection{Comparison --- a label-free baseline (DADO-style)}
+
+For comparison, we ran a DADO-style label-free object proposer on the three
+event frames: DINOv2 self-attention combined with monocular depth
+(Depth-Anything-V2). The depth map cleanly separates foreground from
+background, but the DINOv2 attention map is uniformly low and noisy on this
+in-lab scene, so the attention $\times$ depth saliency does not isolate either
+object (Figure~\ref{fig:dado}). The proposal masks are essentially empty.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/dado_events.png}
+\caption{DADO-style proposer on the three event frames (rows: grasp, press,
+release; columns: RGB, DINOv2 attention, Depth-Anything-V2 depth, thresholded
+saliency mask). Depth is informative; attention is not. The proposal masks
+fail to isolate either the carrot or the cup. This validates that the
+proprioceptive cue is load-bearing rather than decorative: vision-only
+label-free proposal does not solve the task on this scene.}
+\label{fig:dado}
+\end{figure}
+
+\subsection{Force-direction sanity check (uncalibrated)}
+
+A small experiment toward step 2 above. At the press event the wrist wrench
+is $|F| \approx 11.2$\,N, oriented essentially downward in the robot base
+frame ($f_z = -11.1$\,N, lateral components within $\pm 1$\,N). To preview
+what the end-effector projection will look like once real ZED-to-base
+extrinsics are available, we fit a coarse linear base-to-image map
+($\mathbb{R}^4 \rightarrow \mathbb{R}^2$) from the carrot-mask centroids over
+time and use it to draw the force-reaction arrow on the press frame
+(Figure~\ref{fig:force}). The fit has RMSE $58$\,px (the carrot itself is
+$\sim 150$\,px wide), so the arrow direction is suggestive rather than
+geometric. The exercise is included to make explicit that, until real
+intrinsics + extrinsics arrive, this overlay is a sanity check, not a
+measurement.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/force_overlay_press.png}
+\caption{Press frame with carrot mask (green), cup mask (magenta), and the
+force-reaction arrow (red), drawn through an uncalibrated linear base-to-image
+fit. The arrow direction is informative only to the extent that the linear fit
+is; the fit RMSE of $58$\,px is annotated on the image. Real ZED-to-base
+extrinsics would replace this approximation with a geometric projection.}
+\label{fig:force}
+\end{figure}
+
+\subsection{Deliverable --- \texttt{identify\_objects.py} and the JSON sidecar}
+
+The pipeline above is wrapped as a script intended to run on any future bag
+produced by the lab's standard export. The output is a per-trial bundle
+consumable by downstream LfD code:
+
+\begin{itemize}[noitemsep]
+  \item \texttt{objects.json} --- top-level events (grasp / press / release)
+        with their relative times, row indices, and image timestamps; per-frame
+        entries listing the object IDs present, their roles
+        (\texttt{grasped} / \texttt{contact\_receiver}), pixel mask area, and
+        axis-aligned bounding box.
+  \item \texttt{objects\_summary.csv} --- the same content as a flat,
+        spreadsheet-readable table (744 rows for this trial).
+  \item \texttt{overlays/f0000\_*.png} \ldots --- per-frame overlay PNGs
+        keyed by frame index.
+  \item \texttt{overlay.mp4} --- a stitched 15\,Hz video for visual review.
+\end{itemize}
+
+An example entry from \texttt{objects.json} at the press frame
+($\texttt{frame\_idx}=370$, $t_{\text{rel}}=24.76$\,s):
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lllr}
+\toprule
+\textbf{obj\_id} & \textbf{role} & \textbf{bbox (xyxy)} & \textbf{mask\,px} \\
+\midrule
+1 & grasped          & $[10,\,0,\,704,\,163]$  & 23{,}123 \\
+2 & contact\_receiver & $[10,\,16,\,721,\,442]$ & 65{,}601 \\
+\bottomrule
+\end{tabular}
+\caption{Per-frame object entry written by \texttt{identify\_objects.py} (press
+event, frame 370). The JSON sidecar contains 497 such entries per trial.}
+\end{table}
+
+\subsection{Honest limitations}
+
+Recorded here so they are visible to downstream readers; a more detailed list
+is kept in \texttt{FAILURE\_MODES.md} in the repository.
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Seed points are hand-fractioned.} The image-relative seed
+        coordinates for SAM\,2 (e.g.\ $(0.70, 0.30)$ for the grasped object
+        in this scene) are tuned to the carrot trial. They are placeholders
+        for end-effector projection, which requires ZED intrinsics +
+        ZED-to-base extrinsics + the gripper/tool frame from the URDF.
+  \item \textbf{Memory pressure with two simultaneous objects.} Running
+        both SAM\,2 propagations in a single shared video state exceeds
+        Apple~M3~Pro unified memory (18\,GB). The deliverable workaround is
+        to propagate each object in its own state and merge the per-frame
+        artifacts (\texttt{build\_sidecar.py}). The JSON contract is
+        unchanged.
+  \item \textbf{Carrot is not tracked during reach.} Forward propagation
+        starts at the grasp; frames before grasp have no carrot mask. The
+        cup is propagated bidirectionally so it is masked throughout.
+  \item \textbf{DADO-style proposal is essentially empty here.} Pretrained
+        DINOv2 attention does not isolate either object in this scene; a
+        depth-aware proposer that uses depth as the primary cue (rather than
+        as a re-weighting of attention) would likely fare better and is left
+        for follow-up once depth is enabled on the bag.
+  \item \textbf{One trial, one task, one camera pose.} All quantitative
+        statements are evaluative on \texttt{lfdws\_t001} alone. Step 4
+        of the original roadmap (multi-trial baselines) remains blocked on
+        additional bags.
+\end{itemize}
+
+\subsection{Asks for the next sync}
+
+Concrete data items needed to remove the placeholders above:
+
+\begin{enumerate}[noitemsep]
+  \item ZED intrinsics (camera matrix $K$, distortion) and the ZED-to-base
+        extrinsic transform.
+  \item Franka URDF or the gripper/tool frame definition relative to the
+        end-effector pose published on
+        \texttt{/NS\_1/franka\_robot\_state\_broadcaster/current\_pose}.
+  \item Depth stream enabled in the next bag (Mark's 19~May email offered
+        this on request).
+  \item A re-centred camera, addressing the off-centre framing flagged in
+        the same email.
+  \item Two to three additional trials with varied objects and placements,
+        to begin step 4.
+\end{enumerate}
+
+\end{document}

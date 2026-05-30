@@ -1,10 +1,66 @@
-*.mcap
-*.pickle
-*.pdf
-*.bag
-venv/
-test_output/
+# ----- OS / editor junk -----
+.DS_Store
 __pycache__/
 *.pyc
-*.csv
+
+# ----- secrets / personal config -----
+.claude/settings.local.json
 vlutters_confirmation_letter.txt
+*.env
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+*.credentials*
+
+# ----- Python virtual environments -----
+venv/
+.venv/
+.venv_*/
+
+# ----- third-party repos cloned for tooling -----
+dado_repo/
+
+# ----- model checkpoints (download separately, see CLAUDE.md) -----
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.bin
+
+# ----- raw bag data (large; lives on the lab share / cloud, not git) -----
+*.mcap
+*.bag
+*.pickle
+*.zip
+lfdws_t001/
+16apr_pipeline/
+pipeline_update/
+test_output/
+frames_jpg/
+
+# ----- bulk derived artifacts (per-frame dumps + videos) -----
+figures/identify/
+figures/propagation/
+figures/propagation_cup/
+figures/*.mp4
+
+# ----- documents / PDFs -----
+# writeup.pdf is compiled from writeup.tex; reference PDFs (e.g. dado paper.pdf)
+# stay out of git
+*.pdf
+
+# ----- LaTeX byproducts -----
+writeup.aux
+writeup.log
+writeup.out
+writeup.toc
+writeup.fls
+writeup.fdb_latexmk
+writeup.synctex.gz
+
+# ----- per-trial CSVs (large; produced by the lab's export, kept off git) -----
+# (Existing trial_002 CSVs were committed before this rule and are kept.)
+*.csv
+!.gitignore_keep_csv

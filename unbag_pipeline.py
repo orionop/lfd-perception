@@ -69,13 +69,14 @@ def flatten_ros_message(msg, prefix=""):
 # Image Handling (preserved from original)
 # =============================================================================
 
-def save_image_as_png(msg, msg_type_str, output_dir, counter):
+def save_image_as_png(msg, msg_type_str, topic_name, output_dir, counter):
     """
     Save a ROS image message as PNG. Returns the filename.
     Handles raw (sensor_msgs/msg/Image) and compressed images.
     """
+    topic_safe = topic_name.strip("/").replace("/", "_")
     if msg_type_str == IMAGE_RAW:
-        filename = os.path.join(output_dir, f"{counter:05d}_r.png")
+        filename = os.path.join(output_dir, f"{topic_safe}_{counter:05d}_r.png")
 
         if msg.encoding in ["rgb8", "bgr8", "rgba8", "bgra8"]:
             img = np.frombuffer(msg.data, dtype=np.uint8)
@@ -98,7 +99,7 @@ def save_image_as_png(msg, msg_type_str, output_dir, counter):
             raise NotImplementedError(f"Unsupported image encoding: {msg.encoding}")
 
     elif msg_type_str == IMAGE_COMPRESSED:
-        filename = os.path.join(output_dir, f"{counter:05d}_c.png")
+        filename = os.path.join(output_dir, f"{topic_safe}_{counter:05d}_c.png")
         image = Image.open(io.BytesIO(msg.data))
     else:
         raise ValueError(f"Not an image type: {msg_type_str}")
@@ -170,7 +171,7 @@ def extract_bag(bag_path, output_dir):
             image_counters[topic_name] += 1
 
             png_filename = save_image_as_png(
-                msg, msg_type_str, output_dir, image_counters[topic_name]
+                msg, msg_type_str, topic_name, output_dir, image_counters[topic_name]
             )
             flat_msg = flatten_image_message(msg, png_filename)
         else:
