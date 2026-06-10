@@ -61,9 +61,13 @@ and not pretend the pipeline is more polished than it is.
   to the hard-coded defaults otherwise. Cup seeds come out clean. The
   carrot seed in this trial lands on the gripper finger (514, 54), so the
   early carrot mask is degraded — see A4.
-- **Proper fix:** project the end-effector pose into the image as the
-  prompt. Blocked on ZED intrinsics + ZED-to-base extrinsics + URDF.
-  **To request in next sync.**
+- **Proper fix (scaffolded, awaiting data):** `Code/project_ee.py` projects
+  the `current_pose` point into the image via `calibration.yaml`. It runs
+  DRY (base-frame geometry only, no drawing) until the ZED intrinsics +
+  `base→camera` extrinsics are filled in. The Franka Research 3 arm URDF
+  is vendored (`Data/fr3.urdf`); `current_pose` is the TCP under default
+  config, so no extra offset is needed for EE projection. **Blocked only on
+  the lab's camera calibration** (in progress — extrinsics + depth promised).
 
 ### A4. Auto-seed carrot drift
 - On `lfdws_t001` the vision-only auto-seed for the grasped role lands on
@@ -101,7 +105,14 @@ and not pretend the pipeline is more polished than it is.
   centroids over time, rather than using real camera intrinsics and
   extrinsics. The arrow direction is a visual sanity check, not a
   geometric measurement.
-- **Fix:** real ZED intrinsics + base-to-camera transform from the lab side.
+- **Fix (scaffolded):** `Code/project_ee.py` does the real geometric
+  wrench-line projection (Bicchi 1990 contact ray, transformed
+  base->camera and projected through K). It needs three calibration
+  blocks filled in `calibration.yaml`: camera intrinsics, `base→camera`
+  extrinsics, and `bota_frame→base` (the F/T-sensor mount on the wrist).
+  The mount transform is **not derivable from any URDF** — it is physical
+  hardware geometry and must come from the lab. Until then `project_ee.py`
+  runs DRY and `force_overlay.py` remains the uncalibrated stand-in.
 
 ### C5. Hand-tuned event thresholds — multi-event detector in place
 - Gripper width threshold = midpoint of (open, closed). Force-contact
@@ -128,9 +139,18 @@ and not pretend the pipeline is more polished than it is.
 
 ## Recommended asks for the next sync
 
-1. ZED intrinsics + ZED-to-robot-base extrinsics — fixes C1, C4
-2. Franka URDF or EE/tool frame definition — fixes C1
-3. Depth stream enabled in next bag — unblocks B2, depth-aware proposers
-4. Recentred camera in next measurement — addresses A2, B1
-5. 2–3 more trials with varied objects/positions — addresses D and unblocks
-   step 4 of the writeup roadmap
+1. ZED intrinsics (K + distortion) + `base→camera` extrinsics — fills the
+   first two blocks of `calibration.yaml`, takes `project_ee.py` LIVE,
+   fixes C1 and C4.
+2. `bota_frame→base` F/T-sensor mount transform — the only piece not in any
+   URDF; needed for the wrench-line projection (C4 / the research direction).
+3. Confirm whether `current_pose` is the fingertip TCP or the flange (default
+   FR3+Hand = TCP; the script handles either via `calibration.yaml`).
+4. Depth stream enabled in next bag — unblocks B2, depth-aware proposers.
+5. Recentred camera in next measurement — addresses A2, B1.
+6. 2–3 more trials with varied objects/positions — addresses D and unblocks
+   step 4 of the writeup roadmap.
+
+Resolved since last sync: Franka Research 3 arm URDF obtained
+(`Data/fr3.urdf`); EE/tool frame no longer an open ask (item 2 of the
+previous list).

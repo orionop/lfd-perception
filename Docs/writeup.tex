@@ -3,6 +3,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{xcolor}
 \usepackage{hyperref}
@@ -426,23 +428,96 @@ hand-tuning per trial:
         table, the event list, the press-frame sidecar excerpt, and every
         figure produced by the pipeline. Intended as the one document to
         share per future bag.
+  \item \texttt{Code/project\_ee.py} --- the calibrated successor to the
+        vision-only auto-seed and the uncalibrated force overlay. Given
+        camera intrinsics, the \texttt{base}$\to$\texttt{camera} extrinsic,
+        and the F/T-sensor mount (all read from \texttt{calibration.yaml}),
+        it projects the end-effector point into the image as a geometric
+        SAM seed and projects the wrench line of action (Bicchi's contact
+        ray, $r_0 = (\mathbf{f}\times\boldsymbol{\tau})/|\mathbf{f}|^2$) to
+        localise the contact-receiving object. It runs in a DRY mode that
+        reports the base-frame geometry but draws nothing until the real
+        calibration is supplied, so the pipeline never uses placeholder
+        numbers. The Franka Research~3 arm URDF is now vendored
+        (\texttt{Data/fr3.urdf}); \texttt{current\_pose} is published in the
+        \texttt{base} frame and is the fingertip TCP under the default
+        configuration.
 \end{itemize}
+
+\subsection{Prospective research direction (updated)}
+
+The original framing on page 4 proposed combining contact-force events
+with label-free object discovery as the contribution; after building the
+pipeline end-to-end on \texttt{lfdws\_t001}, the picture has sharpened in
+two ways worth recording before the next sync.
+
+\paragraph{What the data has shown so far.}
+\begin{itemize}[noitemsep]
+  \item \textbf{The role split is empirically real, not just a framing
+        trick.} Proprioceptive signatures cleanly separate the grasped
+        object (gripper-state transition) from the contact-receiving
+        object (wrench peak during a held window). The press signal does
+        not coincide with any gripper transition --- this is what makes
+        the two roles structurally distinguishable from a single demo,
+        and it is the part the existing self-supervised literature
+        (gripper-events only) does not address.
+  \item \textbf{Vision-only label-free proposers fail on this scene.}
+        DINOv2-attention $\times$ Depth-Anything saliency does not isolate
+        either object (Section~5.4). The proprioceptive cue is therefore
+        load-bearing, not decorative --- the pipeline is not just SAM
+        with extra steps.
+  \item \textbf{The wrench vector carries usable spatial information.}
+        The uncalibrated base-to-image fit (Section~5.5) is suggestive
+        rather than geometric, but it is concentrated enough to keep the
+        force-reaction arrow inside the press region. With real
+        intrinsics + extrinsics it becomes a wrench-projected segmentation
+        prompt --- a distinct, methodological lever the prior art does
+        not exploit.
+\end{itemize}
+
+\paragraph{Refined contribution claim.} A label-free system that, from a
+single demonstration, automatically assigns \emph{role-tagged} per-frame
+object masks --- \textit{grasped} from the gripper-state transition,
+\textit{contact-receiving} from the wrench-magnitude peak --- where the
+two roles correspond to two structurally distinct objects in the scene
+without any cross-frame appearance learning, language input, or per-trial
+hand tuning. Hardware validation on the lab's Franka. The intended
+extension once camera calibration arrives: use the wrench \emph{direction}
+(not just the event time) as a geometric prompt for promptable
+segmentation, distinguishing the long-tool case (carrot, peg, stick)
+from EE-only projection methods that assume the contact point is at the
+gripper origin.
+
+\paragraph{What stays open and is genuinely blocked on data.}
+Generalisation across tasks, objects, and camera poses; a downstream
+result showing that role-tagged masks improve the lab's existing
+constraint-identification and interaction-identification pipelines; and
+the wrench-projection variant above. None of these are answerable on
+\texttt{lfdws\_t001} alone --- they are the reason for the next-sync asks
+below.
 
 \subsection{Asks for the next sync}
 
 Concrete data items needed to remove the placeholders above:
 
 \begin{enumerate}[noitemsep]
-  \item ZED intrinsics (camera matrix $K$, distortion) and the ZED-to-base
-        extrinsic transform.
-  \item Franka URDF or the gripper/tool frame definition relative to the
-        end-effector pose published on
-        \texttt{/NS\_1/franka\_robot\_state\_broadcaster/current\_pose}.
-  \item Depth stream enabled in the next bag (available on request).
+  \item ZED intrinsics (camera matrix $K$, distortion) and the
+        \texttt{base}$\to$\texttt{camera} extrinsic transform --- fills
+        \texttt{calibration.yaml} and takes \texttt{project\_ee.py} live.
+  \item The F/T-sensor mount transform
+        (\texttt{bota\_frame}$\to$\texttt{base}). This is the one quantity
+        not recoverable from any URDF, and it is required for the
+        wrench-line projection.
+  \item Confirmation of whether \texttt{current\_pose} is the fingertip TCP
+        or the flange (the script supports either).
+  \item Depth stream enabled in the next bag.
   \item A re-centred camera, addressing the off-centre framing in the
         current trial.
   \item Two to three additional trials with varied objects and placements,
         to begin step 4.
 \end{enumerate}
+
+\noindent The Franka Research~3 arm URDF has since been obtained, so the
+gripper/tool-frame request from the previous version is resolved.
 
 \end{document}

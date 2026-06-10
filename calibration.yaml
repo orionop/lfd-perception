@@ -1,0 +1,50 @@
+# Camera + sensor calibration for the lfdws rig.
+#
+# Fill these in when the lab provides them. Until every block below is marked
+# filled: true, Code/project_ee.py runs in "dry" mode (reports what it WOULD
+# do, draws nothing geometric) so the pipeline never silently uses fake numbers.
+#
+# Frames:
+#   base        : robot base (current_pose is published in this frame)
+#   camera      : ZED left rect optical frame (the PNG frames live here)
+#   bota_frame  : Bota wrist F/T sensor frame (wrench is published here)
+#
+# All 4x4 transforms are row-major homogeneous matrices mapping a point in the
+# CHILD frame to the PARENT frame:  p_parent = T_parent_child @ p_child.
+
+camera_intrinsics:
+  filled: false
+  # 3x3 pinhole matrix [[fx,0,cx],[0,fy,cy],[0,0,1]]
+  K: [[0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 1]]
+  # plumb-bob distortion [k1,k2,p1,p2,k3]; ZED rect images are usually ~0
+  dist: [0, 0, 0, 0, 0]
+  image_width: 960
+  image_height: 540
+
+base_to_camera:
+  filled: false
+  # T_base_camera : camera-frame point -> base-frame point
+  T: [[1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]]
+
+bota_to_base:
+  filled: false
+  # T_base_bota : bota_frame point -> base-frame point.
+  # NOTE: not derivable from any URDF -- this is the physical F/T-sensor mount
+  # on the wrist. Request from the lab. Needed only for wrench-line projection,
+  # not for plain end-effector projection.
+  T: [[1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]]
+
+end_effector:
+  # Is current_pose the fingertip TCP or the flange? Default FR3+Hand config
+  # publishes the TCP (fr3_hand_tcp). If the lab set a custom NE_T_EE, set this
+  # to "flange" and the script will add the +0.1034 m z offset to reach the TCP.
+  current_pose_is: tcp        # "tcp" or "flange"
+  flange_to_tcp_z: 0.1034     # metres, from franka_description (only used if flange)

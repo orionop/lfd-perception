@@ -77,7 +77,14 @@ Optional follow-ups:
 ```bash
 .venv_dado/bin/python Code/object_identity.py        # stable identities per object_id
 .venv_analysis/bin/python Code/trial_report.py --trial <trial>   # one diagnostic PDF
+.venv_analysis/bin/python Code/project_ee.py --trial <trial>     # EE / wrench projection
 ```
+
+`project_ee.py` reads `calibration.yaml` (camera intrinsics, `base→camera`
+extrinsics, `bota_frame→base` F/T mount). Until those are filled in it runs
+in a DRY mode that reports the base-frame geometry but draws nothing, so no
+placeholder calibration is ever used. The Franka Research 3 arm URDF is
+vendored at `Data/fr3.urdf`.
 
 Step 3 (`auto_seed.py`) is optional: if `figures/identify/auto_seeds.csv`
 doesn't exist, the propagation scripts fall back to the hard-coded defaults

@@ -103,7 +103,7 @@ The merged CSV's image column is the literal PNG filename (without `.png`). Per-
 
 Three places where the current code is tuned to `lfdws_t001` specifically and will need attention when the second bag arrives:
 
-- `ROLE_SEEDS` in `Code/identify_objects.py` and the `SEED_POINT_FRAC*` constants in `Code/propagate_demo.py` / `Code/propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection, which requires ZED-to-base extrinsics that the lab has not sent yet.
+- `ROLE_SEEDS` in `Code/identify_objects.py` and the `SEED_POINT_FRAC*` constants in `Code/propagate_demo.py` / `Code/propagate_cup.py` — image-relative seed points (e.g. `(0.70, 0.30)` for the grasped object). Placeholders for end-effector projection (`Code/project_ee.py`), which is fully wired but runs DRY until `calibration.yaml` is filled with the lab's ZED intrinsics + `base→camera` extrinsics. The wrench-line variant additionally needs the `bota_frame→base` mount transform (lab hardware, not in any URDF). The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf` (arm-only, flange `fr3_link8`); the Franka Hand TCP is `+0.1034 m` z past the flange, and `current_pose` is published in the `base` frame (the TCP under default FR3+Hand config).
 - `GRASP_IMG_ID` / `PRESS_IMG_ID` constants in the propagation scripts — image-timestamp seeds. `Code/identify_objects.py` derives these from the CSV via `detect_events`, so future bags work without changing constants there.
 - Event-detection thresholds in `Code/analyze_demo.py` (`detect_events`) — midpoint between open/closed gripper width, and force-peak restricted to the gripper-closed window. Will fail on demos with multiple pick-and-place cycles or no force contact.
 
@@ -130,6 +130,7 @@ Run twice to resolve refs. `.aux` / `.log` / `.out` are byproducts that can be l
 - `identify_objects.py` — intended one-shot end-to-end (currently OOMs on this hardware; see above).
 - `combined_strip.py` / `make_propagation_figure.py` / `mask_area_plot.py` / `force_overlay.py` — figure generators for the writeup.
 - `run_dado.py` + `_dado_inference.py` — DADO-style label-free baseline (DINOv2 attention × Depth-Anything depth). Negative-result figure for the writeup.
+- `project_ee.py` — calibrated end-effector + wrench-line projection into the camera image. Reads `calibration.yaml` (camera K + distortion, `base→camera` extrinsic, `bota_frame→base` F/T mount). Runs in DRY mode (reports base-frame geometry, draws nothing) until the calibration blocks are marked `filled: true`, so it never ships fake pixels. EE projection unblocks writeup step 2 (a geometric SAM seed, replacing `auto_seed.py`'s vision-only heuristic); the wrench-line projection (Bicchi 1990: `r0 = (f×τ)/|f|²`, direction `f/|f|`) is the go/no-go pre-test for the wrench-prompted-segmentation research direction.
 - `prepare_sam2_frames.py` — one-off util that converts PNGs to `00000.jpg`-style names because SAM 2's `init_state` requires that.
 - `download_sam2_ckpt.py` — convenience downloader for the SAM 2 checkpoint.
 - `unbag_pipeline.py` / `bag_to_csv.py` — legacy extraction tooling, kept for reference only.
