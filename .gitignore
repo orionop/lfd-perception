@@ -37,6 +37,7 @@ dado_repo/
 *.zip
 lfdws_t001/
 lfdws_t00/
+Data/raw_bag_downloads/
 Data/lfdws_t001/
 Data/lfdws_t001_depth/
 Data/lfdws_t001_new/
@@ -55,7 +56,7 @@ frames_jpg_*/
 figures/identify/
 figures/identify_depth/
 figures/identify_depth_multi/
-figures/identify_multi_regress/
+figures/scratch_tests/identify_multi_regress/
 figures/propagation/
 figures/propagation_cup/
 figures/propagation_cup_*/
