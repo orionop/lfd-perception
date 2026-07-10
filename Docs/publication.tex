@@ -1,0 +1,359 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{float}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\title{Proprioception as a Segmentation Prompt: Force-Guided Object Grounding for Learning from Demonstration}
+
+\author{
+\IEEEauthorblockN{Anurag Shetye}
+\IEEEauthorblockA{University of Twente / NAKAMA Robotics Lab (remote collaboration)}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Learning-from-demonstration (LfD) pipelines that reason about kinematic
+constraints or physical interaction depend on knowing which object in the
+scene is relevant at each phase of a demonstration. This is typically
+solved either by hand-labelling, by gripper-event heuristics that only
+identify the grasped object, or by label-free visual object discovery. We
+show empirically, across multiple real demonstrations, that label-free
+visual discovery (DINOv2 self-attention combined with monocular or real
+sensor depth) fails to isolate task-relevant objects in typical in-lab
+manipulation scenes -- including when real, not estimated, depth is
+available -- indicating that vision alone is insufficient. We propose
+using the robot's own proprioception as the grounding signal instead:
+gripper-state transitions localise the grasped object in time, and the
+wrist force/torque wrench, via the intrinsic contact ray of Bicchi
+\cite{bicchi1990}, geometrically constrains the location of the
+contact-receiving object once camera calibration is available. Both cues
+seed a frozen promptable video segmentation model (SAM~2
+\cite{ravi2024sam2}) and propagate a role-tagged object mask across the
+full demonstration. We report a working system validated on four
+real-robot recordings spanning three distinct manipulation tasks and
+three different sensor-availability profiles (full sensing, force-only,
+gripper-only), including a first case of tracking three simultaneous
+task-relevant objects through one demonstration. The geometric wrench-ray
+grounding experiment -- the paper's core evaluation -- is fully
+implemented and awaiting camera calibration data from the host lab; we
+report the evaluation protocol and preliminary (dry-run, uncalibrated)
+evidence that the signal is directionally correct.
+\end{abstract}
+
+\section{Introduction}
+
+Learning from demonstration increasingly decomposes a demonstration into
+phases governed by kinematic constraints \cite{overbeek2025frontiers} or
+physical contact \cite{overbeek2025adrr}. Both layers presuppose an
+answer to a prior question: \emph{which object, in the camera frame, is
+the one the constraint or contact concerns?} Most existing approaches
+either sidestep this (constraints defined on end-effector pose alone), or
+identify only the grasped object from gripper state, leaving any
+contact-receiving object unidentified.
+
+A natural alternative is label-free visual object discovery: use a
+frozen foundation model to propose salient objects without any
+task-specific training. We test this directly, using DINOv2
+\cite{oquab2023dinov2} self-attention combined with monocular depth
+(Depth-Anything-V2 \cite{yang2024depthanythingv2}) and, in a second test,
+combined with \emph{real} sensor depth from an RGB-D camera. In both
+cases the resulting saliency fails to isolate the task-relevant object in
+our recordings (Section~\ref{sec:experiments}), including on non-specular
+objects where depth is measured cleanly. This motivates a proprioceptive
+alternative.
+
+\textbf{Contributions.}
+\begin{itemize}
+  \item An event-detection scheme that localises grasp, release, and
+        contact moments from gripper and wrist force/torque signals,
+        with graceful degradation when either sensor is unavailable
+        (verified on real recordings missing each sensor in turn).
+  \item A geometric grounding method for the contact-receiving object,
+        using the intrinsic contact ray \cite{bicchi1990} computed from
+        the wrist wrench and projected into the camera frame via
+        calibrated extrinsics -- implemented and validated in dry-run
+        (uncalibrated) mode, pending calibration data to report
+        quantitative accuracy.
+  \item A generalisation of the resulting role-tagged tracking pipeline
+        from a fixed grasped/contact-receiver object pair to an
+        arbitrary number of simultaneously tracked objects, demonstrated
+        with three independently seeded and propagated objects in one
+        recording.
+  \item An empirical case, using real (not estimated) depth, that
+        label-free visual object discovery is not a substitute for
+        proprioceptive grounding in this setting.
+\end{itemize}
+
+\section{Related Work}
+
+\textbf{Gripper-event affordance learning.} Prior self-supervised
+approaches use gripper open/close transitions to bootstrap object
+affordance labels, but do not address which object receives contact once
+grasped.
+
+\textbf{Label-free / promptable segmentation.} Segment Anything
+\cite{kirillov2023sam} and its video extension SAM~2
+\cite{ravi2024sam2} provide high-quality, class-agnostic segmentation
+given a point or box prompt, but supply no mechanism for choosing
+\emph{where} to prompt. Depth-and-attention object discovery methods
+(DADO-style: DINOv2 attention re-weighted by monocular depth) attempt
+label-free prompt selection; we show this fails on our scenes even with
+real depth substituted for the monocular estimate.
+
+\textbf{Contact sensing.} Bicchi's intrinsic contact sensing
+\cite{bicchi1990} recovers the point and direction of a single contact
+from a wrist force/torque measurement alone, without vision. To our
+knowledge this geometric signal has not previously been used as a prompt
+for visual segmentation.
+
+\textbf{Constraint and interaction identification.} The host lab's
+existing LfD layers identify kinematic constraints from pose
+\cite{overbeek2025frontiers} and physical interactions from contact
+\cite{overbeek2025adrr}; this work is intended as the visual grounding
+layer beneath both.
+
+\section{Method}
+
+\subsection{Event detection}
+
+Given a merged, pose-synchronised recording, three event types are
+detected: \emph{grasp} and \emph{release} from gripper-width threshold
+crossings (midpoint of the observed open/closed range), and
+\emph{contact} (``press'') from the baseline-subtracted wrist
+force-magnitude peak. When only one of the two sensors is present, the
+detector degrades gracefully to that sensor's events alone (verified on
+real recordings lacking each sensor in turn, Section~\ref{sec:experiments}).
+For recordings with more than one grasp/release/contact cycle, peaks are
+grouped into activity clusters by time-gap rather than reporting only the
+single global event.
+
+\subsection{Geometric grounding of the contact-receiving object}
+
+At a contact event, the wrist wrench $(\mathbf{f}, \boldsymbol{\tau})$
+measured in the sensor frame determines, under a single-contact
+assumption, the contact ray's closest point to the sensor origin and its
+direction:
+\begin{equation}
+  \mathbf{r}_0 = \frac{\mathbf{f} \times \boldsymbol{\tau}}{\lVert \mathbf{f} \rVert^2}, \qquad
+  \hat{\mathbf{f}} = \frac{\mathbf{f}}{\lVert \mathbf{f} \rVert}
+  \label{eq:bicchi}
+\end{equation}
+following Bicchi \cite{bicchi1990}. Transforming $\mathbf{r}_0$ and
+$\hat{\mathbf{f}}$ through the sensor-to-base and base-to-camera
+transforms and projecting through the calibrated camera intrinsics
+yields a 2D ray in the image, which is used as a point (or line) prompt
+for SAM~2 on the contact-receiving object -- geometrically, without any
+learned object proposal step.
+
+\subsection{Grasped-object grounding}
+
+The grasped object is seeded either by a vision-only heuristic (SAM
+automatic mask generation, scored by position/size/border-distance
+priors) or, once available, by projecting the end-effector position
+directly into the image via the same calibration. The vision-only
+heuristic is shown in Section~\ref{sec:experiments} to be unreliable
+across scenes with different object scales, motivating the geometric
+alternative.
+
+\subsection{Propagation and multi-object generalisation}
+
+Each seeded object is propagated bidirectionally through the full
+recording with SAM~2's video predictor, yielding a per-frame mask. The
+sidecar representation generalises to an arbitrary number of
+independently seeded objects rather than a fixed grasped/contact-receiver
+pair, each with its own role label.
+
+\section{System and Data}
+
+Four real-robot recordings on a Franka Research 3 arm with a Franka Hand
+gripper, Bota wrist force/torque sensor, and ZED RGB(-D) camera are used.
+Table~\ref{tab:recordings} summarises sensor availability and scene
+content; the three recordings differ in which sensors were actively
+publishing, exercising the graceful-degradation behaviour of the event
+detector under real (not synthetic) conditions.
+
+\begin{table}[t]
+\centering
+\caption{Recordings used in this work.}
+\label{tab:recordings}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Recording} & \textbf{Gripper} & \textbf{F/T} & \textbf{Task} \\
+\midrule
+1 & \checkmark & \checkmark & pick / press / drop (2 objects) \\
+2 & --         & \checkmark & multi-object contact (4 objects) \\
+3 & \checkmark & --         & fastener insertion \\
+4 & \checkmark & --         & fastener insertion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Recordings 2--4 include registered depth in addition to RGB, decoded from
+the raw sensor transport where the standard export tooling could not
+process it.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Label-free visual discovery fails, even with real depth}
+
+DINOv2 attention combined with monocular depth (Depth-Anything-V2) was
+evaluated on Recording~1's event frames and fails to isolate either
+task-relevant object -- attention is low and spatially uniform on these
+in-lab scenes. To rule out monocular depth estimation error as the cause,
+the same recipe was re-run on Recording~2 substituting real sensor depth,
+across five contact events. Depth-sensor validity itself varies sharply
+with surface material (16\% valid pixels on a specular object vs.\
+58--72\% on matte objects in the same scene), and the resulting object
+proposal correctly localises the target object in 2 of 5 events, hitting
+background clutter in the remaining 3. Real depth is measurably better
+than a monocular estimate but does not make label-free discovery
+reliable.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/dado_real_depth_multi.png}
+\caption{Label-free discovery (DINOv2 attention $\times$ real depth) on
+five contact events. Object proposal (rightmost column, green) correctly
+localises the object in the first two rows; the remaining three land on
+background surfaces.}
+\label{fig:dado}
+\end{figure}
+
+\subsection{Vision-only seed placement is unreliable across scenes}
+
+The vision-only heuristic used to seed the grasped/contact-receiver roles
+scores SAM's candidate masks by position, size, and border distance, with
+a fixed area cutoff tuned on Recording~1's object scale. On Recording~2,
+the correct contact-receiving object exceeds this cutoff and is rejected
+outright, causing the seed to fall on background clutter and propagate an
+unstable mask (17--78\% of frame area) for the full recording. Two
+automated generalisations of the heuristic were attempted -- relative
+candidate-size ranking, and a real-depth near-camera prior -- and both
+failed: the first mis-selects a reflective background surface on
+Recording~1 that it correctly avoided under the original heuristic; the
+second is blind precisely on the specular surfaces where the original
+failure occurs, since sensor depth dropout is worst there. This negative
+result motivates the geometric grounding method of
+Section~\ref{sec:experiments}C over further heuristic tuning.
+
+\subsection{Wrench-ray geometric grounding (protocol and preliminary evidence)}
+
+This is the paper's core planned evaluation and is currently blocked on
+camera intrinsics and extrinsics from the host lab; the method itself
+(Eq.~\ref{eq:bicchi} through image projection) is fully implemented and
+runs in a dry-run mode that reports base-frame geometry without
+projecting, so that no placeholder calibration is ever silently used.
+Preliminary (uncalibrated) evidence: at the contact event of
+Recording~1, wrist wrench magnitude was 26.4\,N directed within
+$5^\circ$ of vertical in the base frame, consistent with a top-down
+press onto the visible contact-receiving object; the Bicchi contact
+point $\mathbf{r}_0$ lies within 1\,cm of the wrist origin along the
+force axis, a physically plausible contact offset for the demonstrated
+task.
+
+\textbf{Planned evaluation.} Once calibration is available, for each
+contact event across all recordings with real depth (Recordings 2--4):
+project $\mathbf{r}_0$ and $\hat{\mathbf{f}}$ into the image, intersect
+the ray with the scene using the recorded depth map, and measure the 3D
+distance between the intersection point and the nearest point on the
+true contact-receiving object's surface. We expect this to report a
+single, low (sub-centimetre to few-centimetre) error figure per event as
+the headline quantitative result.
+
+\subsection{Generalisation to multiple simultaneous objects}
+
+The fixed-pair role model was generalised to an arbitrary object count
+and demonstrated on Recording~2 with three independently seeded and
+bidirectionally propagated objects (Fig.~\ref{fig:multiobj}), each
+tracked across the full recording (1013/1013 frames) with no
+cross-object mask contamination and no unbounded mask growth.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/identify_depth_multi/overlays/f0786_1782835535683396106.png}
+\caption{Three independently-seeded, independently-propagated objects
+composed into one sidecar frame, generalising past a fixed
+grasped/contact-receiver pair.}
+\label{fig:multiobj}
+\end{figure}
+
+\subsection{Sensor-degradation robustness}
+
+Event detection was verified to degrade gracefully and correctly across
+all three sensor-availability profiles present in the four recordings:
+full sensing (Recording~1), force-only (Recording~2, no gripper events
+detected or attempted), and gripper-only (Recordings 3--4, no contact
+event detected or attempted). Each fallback path was regression-tested
+against a recording with full sensing to confirm zero behavioural change
+when both sensors are present.
+
+\section{Limitations}
+
+All recordings come from a single lab, a single robot arm, and a small
+number of camera poses; generalisation across hardware setups is
+untested. The sample size (four recordings, three tasks) is small for a
+generalisation claim and is treated here as a system validation rather
+than a statistically powered study. The paper's central quantitative
+claim -- wrench-ray grounding accuracy -- is not yet reported, pending
+calibration data; this is disclosed rather than approximated with
+placeholder values. Label-free discovery was tested with one
+attention-based method and one depth-conditioning scheme; other label-free
+approaches may perform differently.
+
+\section{Conclusion and Future Work}
+
+Proprioceptive signals -- gripper state and wrist wrench -- provide a
+grounding signal for task-relevant object identification that label-free
+visual discovery does not reliably replace, including when real depth is
+available. A geometric method for grounding the contact-receiving object
+from wrist force/torque alone is implemented and ready for evaluation
+once camera calibration is available; this is the immediate next step.
+Beyond that, an integration of the resulting role-tagged object tracks
+into the host lab's existing kinematic-constraint and physical-interaction
+identification layers \cite{overbeek2025frontiers,overbeek2025adrr} is
+the intended path to a complete perception-to-LfD pipeline.
+
+\begin{thebibliography}{9}
+
+\bibitem{bicchi1990}
+A.~Bicchi, ``Intrinsic contact sensing for soft fingers,'' in
+\emph{Proc. IEEE Int. Conf. Robotics and Automation (ICRA)}, 1990.
+
+\bibitem{kirillov2023sam}
+A.~Kirillov \emph{et al.}, ``Segment Anything,'' in \emph{Proc. IEEE/CVF
+Int. Conf. Computer Vision (ICCV)}, 2023.
+
+\bibitem{ravi2024sam2}
+N.~Ravi \emph{et al.}, ``SAM 2: Segment Anything in Images and Videos,''
+\emph{arXiv preprint arXiv:2408.00714}, 2024.
+
+\bibitem{oquab2023dinov2}
+M.~Oquab \emph{et al.}, ``DINOv2: Learning Robust Visual Features without
+Supervision,'' \emph{arXiv preprint arXiv:2304.07193}, 2023.
+
+\bibitem{yang2024depthanythingv2}
+L.~Yang \emph{et al.}, ``Depth Anything V2,'' \emph{arXiv preprint
+arXiv:2406.09414}, 2024.
+
+\bibitem{overbeek2025frontiers}
+W.~Overbeek \emph{et al.}, ``Kinematic constraint identification for
+learning from demonstration,'' \emph{Frontiers in Robotics and AI}, 2025.
+
+\bibitem{overbeek2025adrr}
+W.~Overbeek \emph{et al.}, ``Physical interaction identification from
+contact for learning from demonstration,'' \emph{Advanced Robotics
+Research}, 2025.
+
+\end{thebibliography}
+
+\end{document}

@@ -55,21 +55,29 @@ def detect_all_events(df, force_peak_min_n=5.0, peak_distance_s=0.5):
     cd = (np.where((~closed[:-1]) & (closed[1:]))[0] + 1).tolist()
     cu = (np.where((closed[:-1]) & (~closed[1:]))[0] + 1).tolist()
 
-    fm = np.sqrt(df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 +
-                 df[FZ].astype(float) ** 2).to_numpy()
-    baseline = float(np.median(fm[: len(fm) // 10]))
-    fm_adj = fm - baseline
-    # sampling rate from timestamps
-    dt = float(np.median(np.diff(t_rel)))
-    min_dist = max(1, int(round(peak_distance_s / max(dt, 1e-6))))
-
-    # restrict force peaks to held windows (between grasp and matching release)
-    held_mask = np.zeros_like(fm_adj, dtype=bool)
-    for g, r in zip(cd, cu + [len(fm_adj) - 1]):
-        if r > g:
-            held_mask[g:r] = True
-    fm_in_held = np.where(held_mask, fm_adj, -np.inf)
-    peaks, _ = find_peaks(fm_in_held, height=force_peak_min_n, distance=min_dist)
+    # No wrench topic (symmetric to the gripper-less case in auto_seed.py /
+    # force_only_events.py -- confirmed on lfdws_t004/lfdws_t005): skip all
+    # force-peak detection, report grasp/release cycles only.
+    has_force = FX in df.columns
+    if has_force:
+        fm = np.sqrt(df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 +
+                     df[FZ].astype(float) ** 2).to_numpy()
+        baseline = float(np.median(fm[: len(fm) // 10]))
+        fm_adj = fm - baseline
+        dt = float(np.median(np.diff(t_rel)))
+        min_dist = max(1, int(round(peak_distance_s / max(dt, 1e-6))))
+        held_mask = np.zeros_like(fm_adj, dtype=bool)
+        for g, r in zip(cd, cu + [len(fm_adj) - 1]):
+            if r > g:
+                held_mask[g:r] = True
+        fm_in_held = np.where(held_mask, fm_adj, -np.inf)
+        peaks, _ = find_peaks(fm_in_held, height=force_peak_min_n, distance=min_dist)
+    else:
+        print("[detect] no wrench topic -- gripper-only fallback "
+              "(no press events)", flush=True)
+        fm = np.full(len(t_rel), np.nan)
+        baseline = float("nan")
+        peaks = np.array([], dtype=int)
 
     def pack(idx, name):
         return {"event": name, "t_rel_s": float(t_rel[idx]),

@@ -54,12 +54,38 @@ def parse_gw(c):
 
 
 def detect_events(df):
-    """Same logic as analyze_demo.py — returns {name: (t_rel, idx, img_id)}."""
+    """Same logic as analyze_demo.py — returns {name: (t_rel, idx, img_id)}.
+
+    If the trial has no gripper topic (see Docs/FAILURE_MODES.md B3), skip
+    grasp/release entirely and pick 'press' as the single strongest
+    force-magnitude peak over the WHOLE trace (no held-window restriction,
+    since there's no grasp/release to bound it).
+
+    If the trial has no wrench topic (symmetric gap -- e.g. bota
+    disconnected; confirmed on lfdws_t004/lfdws_t005), skip 'press'
+    entirely and return grasp/release only. The 'contact_receiver' role
+    then has nothing to seed from, same as 'grasped' being skipped when
+    there's no grasp event."""
     t = pd.to_datetime(df[POSE_TS])
     t_rel = (t - t.iloc[0]).dt.total_seconds().to_numpy()
+    has_force = FX in df.columns
+    if has_force:
+        fm = np.sqrt(df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 +
+                     df[FZ].astype(float) ** 2).to_numpy()
+        baseline = float(np.median(fm[: len(fm) // 10]))
+
+    if GRIP not in df.columns:
+        print("[detect] no gripper topic -- force-only fallback "
+              "(grasp/release skipped)", flush=True)
+        if not has_force:
+            print("[detect] no gripper AND no wrench topic -- no events "
+                  "detectable", flush=True)
+            return {}
+        fm_adj = fm - baseline
+        i = int(np.argmax(fm_adj))
+        return {"press": (float(t_rel[i]), i, str(df[IMG].iloc[i]))}
+
     w = df[GRIP].apply(parse_gw).to_numpy()
-    fm = np.sqrt(df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 +
-                 df[FZ].astype(float) ** 2).to_numpy()
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5 * (w_open - w_closed)
     closed = w < thr
@@ -70,7 +96,10 @@ def detect_events(df):
         i = int(cd[0]); out["grasp"] = (float(t_rel[i]), i, str(df[IMG].iloc[i]))
     if len(cu):
         i = int(cu[-1]); out["release"] = (float(t_rel[i]), i, str(df[IMG].iloc[i]))
-    baseline = float(np.median(fm[: len(fm) // 10]))
+    if not has_force:
+        print("[detect] no wrench topic -- gripper-only fallback "
+              "(press skipped)", flush=True)
+        return out
     fm_adj = np.where(closed, fm - baseline, -np.inf)
     i = int(np.argmax(fm_adj))
     out["press"] = (float(t_rel[i]), i, str(df[IMG].iloc[i]))
@@ -84,6 +113,19 @@ def score_mask(m, img_shape, role):
     frame (where the gripper enters) with medium area.
     For 'contact_receiver' (cup at press): prefer masks in the lower-centre
     with larger area.
+
+    NOTE: the absolute area cutoff below (af > 0.4 rejected) is tuned to
+    lfdws_t001's object scale and known to misfire on scenes with a larger
+    contact-receiver object (see Docs/FAILURE_MODES.md B4 -- the plate on
+    lfdws_t001_depth was wrongly rejected by this cutoff). A relative-size
+    fix (reward largest-of-candidates instead of an absolute fraction) was
+    tried and REVERTED: on lfdws_t001 it just as reliably mis-picks the
+    reflective purple table mat as the "largest candidate" instead of the
+    cup (verified -- see figures/identify/auto_seeds_VERIFY_generalized.png,
+    kept as a negative-result artifact). Neither an absolute nor a relative
+    area heuristic is safe here; SAM-only seed picking is fundamentally
+    unreliable across differently-scaled/textured scenes. The real fix is
+    project_ee.py's geometric EE-projection seed, blocked on calibration.
     """
     H, W = img_shape[:2]
     seg = m["segmentation"]

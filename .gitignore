@@ -36,19 +36,40 @@ dado_repo/
 *.pickle
 *.zip
 lfdws_t001/
+lfdws_t00/
 Data/lfdws_t001/
+Data/lfdws_t001_depth/
+Data/lfdws_t001_new/
+Data/lfdws_t002_new/
+Data/lfdws_t004/
+Data/lfdws_t005/
 16apr_pipeline/
 Data/16apr_pipeline/
 pipeline_update/
 Data/pipeline_update/
 test_output/
 frames_jpg/
+frames_jpg_*/
 
 # ----- bulk derived artifacts (per-frame dumps + videos) -----
 figures/identify/
+figures/identify_depth/
+figures/identify_depth_multi/
+figures/identify_multi_regress/
 figures/propagation/
 figures/propagation_cup/
+figures/propagation_cup_*/
+figures/propagation_bidir/
+figures/propagation_obj3_screwdriver/
+figures/propagation_obj4_charger/
+figures/propagation_plate_depth/
+figures/t001new/
+figures/t002new/
+figures/t004/
+figures/t005/
 figures/*.mp4
+figures/*.mp4.bak
+figures/*_summary.csv.bak
 
 # ----- documents / PDFs -----
 # writeup.pdf is compiled from writeup.tex; reference PDFs (e.g. dado paper.pdf)
@@ -67,6 +88,12 @@ Docs/writeup.aux
 Docs/writeup.log
 Docs/writeup.out
 Docs/writeup.toc
+Docs/8july_update.aux
+Docs/8july_update.log
+Docs/8july_update.out
+Docs/publication.aux
+Docs/publication.log
+Docs/publication.out
 Docs/figures_tex/*.aux
 Docs/figures_tex/*.log
 Docs/figures_tex/*.out

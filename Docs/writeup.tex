@@ -520,4 +520,360 @@ Concrete data items needed to remove the placeholders above:
 \noindent The Franka Research~3 arm URDF has since been obtained, so the
 gripper/tool-frame request from the previous version is resolved.
 
+\clearpage
+
+\section{Update --- A Second Trial, and What It Revealed}
+
+This section covers work since the last update, on a second recording,
+\texttt{lfdws\_t001\_depth}. Pages 1--4 remain unchanged; the previous
+update section (\S5) is also left as-is.
+
+\subsection{Extracting a bag the standard exporter couldn't}
+
+A depth-enabled recording arrived, but \texttt{ros2\_unbag} could not export
+it: the ZED \texttt{compressedDepth} topic uses a transport it doesn't
+support. Rather than wait on a lab-side plugin fix, we wrote
+\texttt{Code/mcap\_extract.py}: a standalone \texttt{.mcap}$\to$merged-CSV
+extractor requiring no ROS\,2 installation (\texttt{.mcap} files embed their
+own message schemas, so the pure-Python \texttt{mcap-ros2-support} package
+decodes \texttt{WrenchStamped}/\texttt{PoseStamped}/\texttt{CompressedImage}
+directly). The \texttt{compressedDepth} transport itself was decoded by hand
+(a 12-byte header of three \texttt{float32}s --- format flag, two
+quantization constants --- followed by a PNG; true depth recovered as
+$\text{depth}_m = \text{quantA}/(\text{code} - \text{quantB})$, written out
+as 16-bit millimetre PNGs). Result: 1013/1013 RGB frames and 1013/1013 depth
+frames decoded cleanly, output in the same layout the rest of the pipeline
+already expects, so nothing downstream needed to change.
+
+\subsection{The second trial is a different, richer task}
+
+\texttt{lfdws\_t001\_depth} turned out not to be a carrot-pick-place at all.
+The scene contains a Rubik's cube, a large plate, a black charger, and an
+orange-handled screwdriver clamped to the table --- and the bag has no
+gripper topic, so grasp/release events cannot be detected at all (only
+force-magnitude peaks). A force-only event detector
+(\texttt{Code/force\_only\_events.py}) found 16 peaks between $t{=}30$--$64$s;
+grouping them by time-gap
+(\texttt{Code/force\_only\_multi\_event.py}) resolved 5 distinct activity
+clusters. Visually inspecting the seed frame of each cluster showed a
+genuine multi-object, multi-step task: a press on the plate ($|F|{=}64$\,N,
+the strongest contact), contact with the clamped screwdriver, a grasp of the
+charger, and what looks like the charger being moved toward the screwdriver
+clamp (a docking/plugging action). One of the five clusters
+($t{\approx}44$--$47$s, contact with the screwdriver) falls exactly where the
+plate's tracked mask area reads near-zero --- proprioception caught a real
+interaction that the vision pipeline, seeded only on the plate, had no way
+to see.
+
+This matters beyond this one trial: it is direct evidence that the
+pipeline's current two-role model (one \textit{grasped} object, one
+\textit{contact\_receiver}, tied to exactly one grasp event and one press
+event) does not generalise to tasks with more than two task-relevant objects
+or more than one contact phase --- which, on this evidence, may be the norm
+rather than the exception once more bags arrive.
+
+\subsection{A concrete case of the seed-picking failure mode we'd flagged}
+
+The auto-seed heuristic (\texttt{Code/auto\_seed.py}) scores SAM's candidate
+masks by position and size, with a hard cutoff rejecting anything covering
+more than 40\% of the frame --- a constant tuned to the first trial's small
+cup. On this trial the correct contact-receiver (the plate) is large enough
+to be rejected by that cutoff outright, and the picker fell back to a
+meaningless sliver of background table, which then propagated through all
+1013 frames as a wildly unstable mask (17--78\% of the frame, tracking
+reflective table texture rather than any object). We manually reseeded the
+plate and reran propagation; the corrected result is physically sane (peaks
+at 31\% of frame right at the press, decays cleanly through occlusion) and
+was verified against the raw frames, not just the summary numbers.
+
+Two independent attempts at a general, non-manual fix were tried and both
+failed, which is itself informative. A relative-size scoring scheme (reward
+the largest candidate mask in the frame, rather than an absolute area cutoff)
+fixes this trial but breaks the first one: on \texttt{lfdws\_t001}, the
+reflective table mat is simply the largest candidate in that scene too, so
+the same heuristic mis-picks it as the cup. A depth-based near-camera prior
+(using this trial's real depth data, unavailable for calibration purposes but
+usable for relative comparisons) also failed, because ZED depth dropout is
+worst on exactly the specular surfaces causing the position/size confusion in
+the first place --- the one signal that could rescue the pick is unavailable
+precisely where it's needed. Both attempts were reverted; production
+behaviour is unchanged. This strengthens rather than weakens the case that
+end-effector projection (\texttt{Code/project\_ee.py}, still blocked on
+calibration) is the correct fix, not a SAM-heuristic tuning problem.
+
+\subsection{Generalising to N objects, demonstrated not just designed}
+
+To show the two-role limitation above is fixable, we wrote a generic,
+parameterised propagation script (\texttt{Code/propagate\_object\_n.py} ---
+takes \texttt{obj\_id}/\texttt{role}/seed point as arguments, not hardcoded
+to a fixed object) and a sidecar builder that accepts an arbitrary list of
+objects instead of a fixed pair
+(\texttt{Code/build\_sidecar\_multi.py}). The screwdriver and the charger
+were both manually seeded and propagated bidirectionally across all 1013
+frames (mask areas 0--43{,}000\,px and 0--46{,}700\,px respectively, no
+runaway on either), and composed into a genuine three-object sidecar
+alongside the corrected plate mask (Figure~\ref{fig:multi}) --- all three
+objects visible and correctly masked simultaneously at the frame where
+their extents overlap most. That covers 3 of the $\geq\!4$ objects
+identified in \S6.2 (the docking phase, where the charger is moved toward
+the screwdriver rather than being a distinct new object, was not
+separately propagated); the schema and scripts support any $N$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/identify_depth_multi/overlays/f0786_1782835535683396106.png}
+\caption{Three independently-seeded, independently-propagated objects
+(plate, magenta; screwdriver, orange; charger, yellow) composed into one
+sidecar frame by \texttt{Code/build\_sidecar\_multi.py}. Proof that the
+pipeline generalises past the original grasped/contact-receiver pair.}
+\label{fig:multi}
+\end{figure}
+
+\subsection{Other results from this trial}
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Real depth vs.\ estimated depth for label-free proposal.}
+        Re-running the DADO-style comparison (\S5.4) with this trial's real
+        sensor depth in place of Depth-Anything's estimate, across all 5
+        activity-cluster frames (\texttt{Code/\_dado\_real\_depth\_multi.py}):
+        mixed result. ZED depth validity itself varies sharply by surface
+        (16\% valid on the specular plate vs.\ 58--72\% on the matte
+        tool/charger), and the resulting object proposal genuinely lands on
+        the correct object for 2 of 5 events, mostly hitting background
+        scatter for the other 3. This is a more nuanced negative result than
+        the single-frame version suggested, and it still supports the core
+        claim: proprioceptive cueing remains necessary even with real depth.
+  \item \textbf{Object identity does not generalise across trials, at
+        least not yet.} Pooling DINOv2 crop embeddings from both trials
+        (\texttt{Code/object\_identity\_cross\_trial.py}) into one clustering
+        run fragments the 3 true objects into 12 clusters and mixes 2 of
+        them together. A follow-up sweep across crop styles and thresholds
+        (\texttt{Code/object\_identity\_cross\_trial\_sweep.py}) found that
+        keeping background context (rather than the tight, blacked-out crops
+        used previously) eliminates cross-object confusion entirely across a
+        range of thresholds, but does not fix fragmentation --- the same
+        object's crops across pose/time still don't cluster together. The
+        two problems have different causes and need different fixes.
+  \item \textbf{Bidirectional propagation and a presence signal, applied
+        to the first trial too.} The grasped-object propagation on
+        \texttt{lfdws\_t001} now runs backward+forward from the grasp
+        event like the cup already did, giving full-demo coverage instead
+        of forward-only. A bounding-box-diagonal presence signal was also
+        added alongside raw mask area, and is visibly more stable under
+        partial occlusion.
+\end{itemize}
+
+\subsection{Updated asks}
+
+The calibration ask from \S5.9 stands (ZED intrinsics, \texttt{base}
+$\to$\texttt{camera} extrinsics, and the \texttt{bota\_frame}$\to$\texttt{base}
+F/T mount transform) --- everything in this section that touches seed
+placement or the wrench projection remains blocked on it. Two new,
+trial-specific questions: whether the missing gripper topic on
+\texttt{lfdws\_t001\_depth} was intentional, and --- given \S6.2's finding
+--- whether future recordings can be scoped to fewer simultaneous
+objects/phases per bag, since the current pipeline's role model handles
+$N{=}3$ but has not yet been exercised at the scale this trial actually
+needs.
+
+\clearpage
+
+\section{Update --- Two More Trials, a Third Task}
+
+Two new recordings arrived, \texttt{lfdws\_t004} and \texttt{lfdws\_t005},
+extracted with the same \texttt{Code/mcap\_extract.py} pipeline as before.
+Both carry the gripper topic (unlike \texttt{lfdws\_t001\_depth}), so real
+grasp/release detection applies directly, but neither has any wrench data
+at all --- the F/T sensor published zero messages on both --- so no
+\textit{press} event is detectable on either trial. Event detection across
+the pipeline was extended to handle this gripper-only case symmetrically
+to the existing force-only case, and regression-tested against both prior
+trials before trusting it on the new ones.
+
+\subsection{A third distinct task}
+
+Neither trial is the carrot/cup or plate/screwdriver scene from before.
+Both show a small fastener or knob being picked up and inserted into a
+mounting hole on a wall-mounted pegboard, near a hinge/latch assembly ---
+the same lab rig as the depth trial, reused for a different manipulation.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lllll}
+\toprule
+\textbf{Trial} & \textbf{Frames} & \textbf{Duration} & \textbf{Grasp} & \textbf{Release} \\
+\midrule
+\texttt{lfdws\_t004} & 1745 & 116.8\,s & $t{=}39.47$\,s & $t{=}54.66$\,s \\
+\texttt{lfdws\_t005} & 726  & 49.0\,s  & $t{=}10.69$\,s & $t{=}37.50$\,s \\
+\bottomrule
+\end{tabular}
+\caption{Detected grasp/release events on the two new trials. No press
+event on either (no wrench data).}
+\end{table}
+
+\subsection{Propagation results}
+
+The auto-seed picker placed a clean, small seed on the fastener at the
+grasp frame on both trials (visually confirmed), and bidirectional SAM\,2
+propagation (\texttt{Code/propagate\_demo\_bidir.py}) gave full-demo
+coverage on both: 726/726 frames on \texttt{lfdws\_t005}, 1745/1745 on
+\texttt{lfdws\_t004}. Mask area stayed small and stable throughout
+(maximum $\sim\!6{,}000$\,px on both, under 1.5\% of the frame), with no
+runaway or background-tracking behaviour. Spot-checked at the seed frame,
+mid-demo, and a frame where the fastener is genuinely out of view (mask
+area correctly reads zero rather than hallucinating a mask). Both trials'
+sidecars were composed with \texttt{build\_sidecar.py} in the
+grasped-object-only configuration, since neither has a contact-receiver
+event to seed from.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/t004/propagation_grasped/f0872_1782993012118220374.png}
+\caption{Fastener tracked mid-demo on \texttt{lfdws\_t004}, after being
+placed into a mounting hole on the pegboard.}
+\label{fig:t004mid}
+\end{figure}
+
+\subsection{Updated asks}
+
+The calibration ask stands unchanged. New: confirmation of whether the F/T
+sensor was intentionally disconnected for these two recordings, since both
+otherwise-complete trials have no contact/press signal at all.
+
+\clearpage
+
+\section{Update --- Calibration Data Arrives, Eye-in-Hand Rig Model}
+
+Dated 10 July. This section covers the lab's response to the asks above:
+camera intrinsics, CAD drawings of the camera bracket, and two further
+recordings with the force-data issue fixed.
+
+\subsection{The camera is eye-in-hand, not fixed}
+
+The lab's reply clarified the rig geometry: the ZED Mini is mounted on a
+bracket bolted to the gripper body, not fixed in the world as earlier
+sections assumed. \texttt{current\_pose} is the pose of the \textbf{Bota
+SensONE origin} in the base frame --- not the fingertip TCP. Consequences
+for the calibration model:
+\begin{itemize}[noitemsep]
+  \item There is no fixed \texttt{base}$\to$\texttt{camera} transform; it is
+        a per-frame quantity, $T_{\text{base}\to\text{camera}}(t) =
+        T_{\text{base}\to\text{bota}}(t)\,T_{\text{bota}\to\text{camera}}$,
+        with the first term read directly from \texttt{current\_pose} at
+        each row.
+  \item The wrench is already measured in the bota frame, and
+        \texttt{current\_pose} gives that frame's orientation in the base
+        frame directly --- so the previously-requested
+        \texttt{bota\_frame}$\to$\texttt{base} mount transform is no longer
+        needed at all. Rotating the wrench into the base frame uses the same
+        rotation as the camera projection.
+  \item The one remaining fixed unknown is $T_{\text{bota}\to\text{camera}}$
+        --- rigid bracket geometry, obtainable from CAD.
+\end{itemize}
+
+\subsection{Camera intrinsics}
+
+Real intrinsics were received (\texttt{intrinsics.md}) for three ZED
+resolution modes. The mode matching this pipeline's exported frame size
+(the ZED ROS wrapper's 960$\times$540 downscale of HD1080) was written into
+\texttt{calibration.yaml} and marked \texttt{filled: true}:
+$f_x=f_y=752.9597$, $c_x=472.6555$, $c_y=271.9621$, verified against the
+actual PNG dimensions on disk for both new recordings below.
+
+\subsection{CAD extraction attempt for $T_{\text{bota}\to\text{camera}}$}
+
+The lab has not yet run a calibration procedure for the bracket; instead
+CAD drawings and a STEP assembly file of the camera bracket were provided,
+with the lab separately arranging for someone to extract the transform
+from them. In parallel, three independent extraction attempts were made:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Assembly-tree placement math.} A STEP-file parser
+        (\texttt{Code/cad\_extract\_transform.py}) walks the
+        \texttt{NEXT\_ASSEMBLY\_USAGE\_OCCURRENCE} + \texttt{AXIS2\_PLACE}-
+        \texttt{MENT\_3D} chain to compose each component's rigid placement
+        to the assembly root. This recovered the camera housing's origin and
+        orientation exactly: translation $[-8.70,-198.46,-25.89]$\,mm in the
+        assembly root frame, a $45^\circ$ rotation about the bracket-arm
+        axis. Cross-checked two ways: against the PDF drawing's independent
+        dimensions ($151.00/177.16/158.82/91.72$\,mm, $30.01^\circ$ tilt),
+        and against FreeCAD's own Placement readout for the same part
+        (opened interactively) --- both matched exactly.
+  \item \textbf{Direct lens-bore search.} Using \texttt{pythonocc-core}
+        (OpenCascade's Python bindings) via
+        \texttt{Code/cad\_find\_lens\_occ.py}, every cylindrical face in the
+        assembly was enumerated and filtered to a plausible lens-radius
+        range. Two candidate bores were found near the housing, but they
+        are $88$\,mm apart, not the ZED Mini's published $63$\,mm stereo
+        baseline --- almost certainly mounting/dowel holes for the housing
+        shell, not the lens barrels. The lens glass may be modelled as a
+        flat disc rather than a cylindrical bore, or not separately
+        labelled; this search was abandoned rather than force an
+        unsupported number.
+  \item \textbf{CAD orientation + published baseline.} The housing's local
+        $X$-axis (from the assembly-tree extraction) is exactly aligned with
+        the assembly root's global $X$-axis --- the camera's $45^\circ$ tilt
+        is entirely in its $Y/Z$, so the stereo baseline stays level, as
+        expected for a camera that pitches down at a workspace while
+        keeping its two lenses side by side. Combining this confirmed
+        direction with the ZED Mini's published $63$\,mm baseline gives two
+        candidate lens positions (bota frame, mm): $A=[111.3,-143.6,25.9]$,
+        $B=[155.9,-99.0,25.9]$.
+\end{enumerate}
+
+This value is written into \texttt{calibration.yaml} as a documented
+\textbf{preliminary} estimate (still \texttt{filled: false}): the housing
+pose is solid (three independent cross-checks agree), but which of $A/B$ is
+the true left lens is not visually confirmed, and a $\sim$1--2\,cm
+lens-to-body depth offset is assumed zero. Good enough to develop and test
+against; not yet trusted for sub-centimetre wrench-ray accuracy.
+
+\subsection{\texttt{project\_ee.py} reworked for eye-in-hand}
+
+The projection script was rewritten around the per-frame extrinsic model
+above: the anchor point (bota origin, standing in for the end-effector until
+a fingertip-TCP offset is available) and the Bicchi wrench ray are computed
+in the bota frame and carried into the base frame via the same
+\texttt{current\_pose} rotation used for the camera, then projected through
+$T_{\text{base}\to\text{camera}}(t)$ built fresh at each event.
+
+Verified in DRY mode (calibration not yet trusted, so nothing is drawn)
+across all four sensor-availability profiles seen so far --- full sensors,
+force-only, gripper-only, and the original trial as a regression check ---
+confirming identical wrench/force numbers to the previously-documented
+values on \texttt{lfdws\_t001} ($|F|=26.37$\,N at the press, matching
+\S3's Table~2 exactly). The LIVE code path was also exercised with the
+calibration flag temporarily set, confirming the transform composition and
+image projection execute correctly end-to-end; as expected given the
+preliminary lens position, the projected wrench ray did not land on the
+contact point, and the flag was reverted to \texttt{filled: false}
+afterward. One incidental sanity check: with the camera eye-in-hand, the
+anchor point projects to the identical pixel across every event regardless
+of where the arm is in the world, since the bota origin sits at a fixed
+offset from the camera at all times --- exactly the expected eye-in-hand
+invariant, and a useful confirmation that the per-frame transform is wired
+correctly.
+
+\subsection{Two more recordings, force data fixed}
+
+Two further recordings arrived, extracted the same way, both with the
+gripper, wrench, and depth topics all live simultaneously for the first
+time. One is a short test clip (9.8\,s); the other (65.5\,s) is a full task:
+a Rubik's cube grasped and pressed down onto the table repeatedly. Unlike
+the earlier plate/screwdriver trial, the strongest contact event here is
+the cube touching the plain table surface, not a second distinct object ---
+recognised as such by inspecting the event frame directly rather than
+seeding a meaningless table-texture mask, and the trial was processed in
+the grasped-object-only configuration as a result.
+
+The first propagation attempt, seeded with a single point prompt, only
+recovered one sticker face of the cube rather than the whole object ---
+SAM's point-prompt convention segments the locally-contiguous coloured
+region, not the physical object boundary, on a multi-coloured object like a
+Rubik's cube. Reseeding with a box prompt around the full cube instead
+(\texttt{Code/propagate\_object\_n.py} extended to accept
+\texttt{--seed\_box} as an alternative to a point) fixed this: the
+corrected propagation tracks the whole cube across all 975 frames, mask
+area topping out around 15\% of the frame with no drift.
+
 \end{document}

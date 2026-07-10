@@ -12,10 +12,25 @@ Usage:
 import argparse
 import ast
 import os
+import shutil
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+
+def backup_if_exists(path):
+    """Before overwriting a shared-path output, save whatever was already
+    there to path + '.bak'. Same insurance as the rest of the pipeline
+    (see Docs/FAILURE_MODES.md C1b) -- analyze_demo.py's default --out is
+    the fixed 'figures' dir (intentional, so the primary trial's canonical
+    timeline.png/event_frames.png keep their documented path), which means
+    running it on a second trial without an explicit --out would silently
+    clobber the first trial's output without this guard."""
+    if os.path.exists(path):
+        bak = path + ".bak"
+        shutil.copy2(path, bak)
+        print(f"[backup] {path} -> {bak}", flush=True)
 
 POSE_TS = "NS_1.franka_robot_state_broadcaster.current_pose.timestamp"
 GRIP = "NS_1.franka_gripper.joint_states.position"
@@ -47,10 +62,18 @@ def load(trial_dir):
     df = pd.read_csv(csv_path)
     t = pd.to_datetime(df[POSE_TS])
     df["t_rel"] = (t - t.iloc[0]).dt.total_seconds()
-    df["grip_w"] = df[GRIP].apply(parse_gripper_width)
-    df["force_mag"] = np.sqrt(
-        df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 + df[FZ].astype(float) ** 2
-    )
+    df["grip_w"] = df[GRIP].apply(parse_gripper_width) if GRIP in df.columns else np.nan
+    if FX in df.columns:
+        df["force_mag"] = np.sqrt(
+            df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 + df[FZ].astype(float) ** 2
+        )
+    else:
+        # no F/T sensor topic in this trial (e.g. bota disconnected) --
+        # gripper-only fallback, mirrors the force-only fallback used when
+        # GRIP is missing (see auto_seed.py / force_only_events.py)
+        print("[load] no wrench columns in this trial's CSV -- "
+              "gripper-only fallback (no force_contact event)", flush=True)
+        df["force_mag"] = np.nan
     return df
 
 
@@ -68,10 +91,12 @@ def detect_events(df):
     events["gripper_open"] = (df["t_rel"].iloc[open_idx], open_idx)
 
     # Force contact: baseline-subtracted magnitude peak (the press).
+    # Skipped entirely if this trial has no wrench data (df["force_mag"] all NaN).
     fm = df["force_mag"].to_numpy()
-    baseline = np.median(fm[: len(fm) // 10])  # first 10% as rest baseline
-    contact_idx = int(np.argmax(fm - baseline))
-    events["force_contact"] = (df["t_rel"].iloc[contact_idx], contact_idx)
+    if np.isfinite(fm).any():
+        baseline = np.nanmedian(fm[: len(fm) // 10])  # first 10% as rest baseline
+        contact_idx = int(np.nanargmax(fm - baseline))
+        events["force_contact"] = (df["t_rel"].iloc[contact_idx], contact_idx)
 
     return events
 
@@ -84,10 +109,11 @@ def plot_timeline(df, events, out_path):
     ax1.set_ylabel("gripper width (m)", color="tab:blue")
     ax1.tick_params(axis="y", labelcolor="tab:blue")
 
-    ax2 = ax1.twinx()
-    ax2.plot(df["t_rel"], df["force_mag"], color="tab:red", alpha=0.7, label="|force| (N)")
-    ax2.set_ylabel("|force| (N)", color="tab:red")
-    ax2.tick_params(axis="y", labelcolor="tab:red")
+    if np.isfinite(df["force_mag"].to_numpy()).any():
+        ax2 = ax1.twinx()
+        ax2.plot(df["t_rel"], df["force_mag"], color="tab:red", alpha=0.7, label="|force| (N)")
+        ax2.set_ylabel("|force| (N)", color="tab:red")
+        ax2.tick_params(axis="y", labelcolor="tab:red")
 
     colors = {"gripper_close": "green", "force_contact": "purple", "gripper_open": "orange"}
     for name, (t, _) in events.items():
@@ -96,6 +122,7 @@ def plot_timeline(df, events, out_path):
 
     plt.title("Proprioceptive timeline — pick / press / drop")
     fig.tight_layout()
+    backup_if_exists(out_path)
     fig.savefig(out_path, dpi=150)
     print(f"saved timeline -> {out_path}")
 
@@ -118,6 +145,7 @@ def save_event_frames(df, events, trial_dir, out_path):
         ax.axis("off")
 
     fig.tight_layout()
+    backup_if_exists(out_path)
     fig.savefig(out_path, dpi=150)
     print(f"saved event frames -> {out_path}")
 

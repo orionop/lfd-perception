@@ -20,17 +20,20 @@ import subprocess
 from datetime import datetime
 
 REPORT_DIR = "Docs/reports"
+# filenames only -- joined with --fig_dir at render time, since each trial's
+# figures live under its own subdirectory (figures/<trial>/...), not the
+# fixed global figures/ path (that's lfdws_t001's canonical location only)
 FIG_REFS = [
-    ("figures/timeline.png",            "Proprioceptive timeline (gripper width + force magnitude)."),
-    ("figures/event_frames.png",        "Raw ZED frames at the detected events."),
-    ("figures/segmented_events.png",    "SAM (ViT-H) on event frames."),
-    ("figures/propagation_both_strip.png", "SAM 2 propagation, carrot (green) and cup (magenta)."),
-    ("figures/mask_area_over_time.png", "Per-frame mask area over the demo."),
-    ("figures/force_overlay_press.png", "Press frame: carrot + cup masks + uncalibrated force arrow."),
-    ("figures/dado_events.png",         "DADO-style label-free baseline (negative result)."),
+    ("timeline.png",            "Proprioceptive timeline (gripper width + force magnitude)."),
+    ("event_frames.png",        "Raw ZED frames at the detected events."),
+    ("segmented_events.png",    "SAM (ViT-H) on event frames."),
+    ("propagation_both_strip.png", "SAM 2 propagation, carrot (green) and cup (magenta)."),
+    ("mask_area_over_time.png", "Per-frame mask area over the demo."),
+    ("force_overlay_press.png", "Press frame: carrot + cup masks + uncalibrated force arrow."),
+    ("dado_events.png",         "DADO-style label-free baseline (negative result)."),
 ]
 
-SIDECAR_JSON = "figures/identify/objects.json"
+SIDECAR_JSON_DEFAULT = "figures/identify/objects.json"
 
 
 def latex_escape(s):
@@ -45,6 +48,15 @@ def main():
     ap.add_argument("--trial", required=True)
     ap.add_argument("--out_basename", default=None,
                     help="basename for tex/pdf in Docs/reports/ (auto-derived if omitted)")
+    ap.add_argument("--sidecar_json", default=SIDECAR_JSON_DEFAULT,
+                    help="build_sidecar.py output for this trial "
+                         "(different trials should use different --out, "
+                         "e.g. figures/identify_depth/objects.json)")
+    ap.add_argument("--fig_dir", default="figures",
+                    help="directory containing this trial's timeline.png/"
+                         "event_frames.png/etc (default 'figures' matches "
+                         "lfdws_t001's canonical location; pass e.g. "
+                         "figures/t004 for other trials)")
     ap.add_argument("--no_open", action="store_true")
     args = ap.parse_args()
 
@@ -55,12 +67,12 @@ def main():
 
     # ---- load sidecar if present ----
     sidecar = None
-    if os.path.exists(SIDECAR_JSON):
-        with open(SIDECAR_JSON) as f:
+    if os.path.exists(args.sidecar_json):
+        with open(args.sidecar_json) as f:
             sidecar = json.load(f)
-        print(f"[load] {SIDECAR_JSON}", flush=True)
+        print(f"[load] {args.sidecar_json}", flush=True)
     else:
-        print(f"[warn] {SIDECAR_JSON} missing -- report will skip object summary",
+        print(f"[warn] {args.sidecar_json} missing -- report will skip object summary",
               flush=True)
 
     # ---- compose LaTeX ----
@@ -142,7 +154,8 @@ def main():
 
     # ---- figures ----
     lines.append(r"\section*{Figures}")
-    for path, cap in FIG_REFS:
+    for fname, cap in FIG_REFS:
+        path = os.path.join(args.fig_dir, fname)
         if not os.path.exists(path):
             print(f"  [skip fig] {path}", flush=True)
             continue

@@ -18,6 +18,7 @@ Usage:
 import argparse
 import csv
 import os
+import shutil
 import sys
 import time
 
@@ -25,6 +26,17 @@ import cv2
 import numpy as np
 import torch
 from sam2.build_sam import build_sam2_video_predictor
+
+
+def backup_if_exists(path):
+    """Before overwriting a merged output, save whatever was already there
+    to path + '.bak'. Cheap insurance against output-path bugs (see
+    Docs/FAILURE_MODES.md C1b: a hardcoded-path bug once let one trial's
+    run silently overwrite another's)."""
+    if os.path.exists(path):
+        bak = path + ".bak"
+        shutil.copy2(path, bak)
+        print(f"[backup] {path} -> {bak}", flush=True)
 
 
 def load_auto_seed(csv_path, role):
@@ -82,6 +94,10 @@ def main():
     ap.add_argument("--auto_seeds_csv", default="figures/identify/auto_seeds.csv",
                     help="if present, use grasped-role row from this CSV as the seed; "
                          "falls back to hard-coded GRASP_IMG_ID + SEED_POINT_FRAC")
+    ap.add_argument("--offload_video_to_cpu", action="store_true",
+                    help="keep decoded video frames on CPU RAM instead of GPU/MPS "
+                         "memory; needed once frame count gets large enough that "
+                         "init_state's single allocation exceeds device memory")
     args = ap.parse_args()
 
     torch.set_num_threads(args.threads)
@@ -135,9 +151,11 @@ def main():
     predictor = build_sam2_video_predictor(args.cfg, args.ckpt, device=device)
     print(f"[load] ready in {time.time() - t0:.1f}s", flush=True)
 
-    print(f"[init] initializing inference state on {args.jpg_dir} ...", flush=True)
+    print(f"[init] initializing inference state on {args.jpg_dir} "
+          f"(offload_video_to_cpu={args.offload_video_to_cpu}) ...", flush=True)
     t0 = time.time()
-    inference_state = predictor.init_state(video_path=args.jpg_dir)
+    inference_state = predictor.init_state(
+        video_path=args.jpg_dir, offload_video_to_cpu=args.offload_video_to_cpu)
     print(f"[init] ok in {time.time() - t0:.1f}s", flush=True)
 
     print(f"[seed] adding point prompt at frame_idx={seed_idx}", flush=True)
@@ -186,7 +204,8 @@ def main():
     if summary_rows:
         sample = cv2.imread(summary_rows[0][3])
         h, w = sample.shape[:2]
-        mp4_path = os.path.join("figures", "propagation_overlay.mp4")
+        mp4_path = f"{args.out}_overlay.mp4"
+        backup_if_exists(mp4_path)
         # ZED ~15 Hz nominal; use 15 fps
         writer = cv2.VideoWriter(mp4_path, cv2.VideoWriter_fourcc(*"mp4v"), 15, (w, h))
         print(f"[video] writing {mp4_path} ({len(summary_rows)} frames @ 15 fps) ...", flush=True)
@@ -198,7 +217,8 @@ def main():
         print(f"[video] saved -> {mp4_path}", flush=True)
 
     # ----- save summary csv -----
-    csv_path = os.path.join("figures", "propagation_summary.csv")
+    csv_path = f"{args.out}_summary.csv"
+    backup_if_exists(csv_path)
     with open(csv_path, "w") as f:
         f.write("frame_idx,file,mask_px,overlay_path\n")
         for r in summary_rows:

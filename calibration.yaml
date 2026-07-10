@@ -1,50 +1,118 @@
 # Camera + sensor calibration for the lfdws rig.
 #
-# Fill these in when the lab provides them. Until every block below is marked
-# filled: true, Code/project_ee.py runs in "dry" mode (reports what it WOULD
-# do, draws nothing geometric) so the pipeline never silently uses fake numbers.
+# Until every block a script needs is marked filled: true, Code/project_ee.py
+# runs in "dry" mode (reports what it WOULD do, draws nothing geometric) so
+# the pipeline never silently uses fake numbers.
+#
+# ---------------------------------------------------------------------------
+# RIG MODEL (per the lab's 2026-07-09 email + CAD drawings, REV02 bracket):
+#
+# The ZED Mini is EYE-IN-HAND: mounted on a rigid SLS-printed bracket bolted
+# to the gripper body, camera tilted ~30 deg looking down past the fingertips
+# at the workspace. There is NO fixed base->camera transform.
+#
+# current_pose (NS_1/franka_robot_state_broadcaster/current_pose) reports the
+# pose OF THE BOTA SENSONE ORIGIN in the robot base frame ("All robot and
+# force data is recorded in the origin of the Bota SensOne force sensor").
+# It is NOT the Franka Hand TCP. Consequences:
+#   T_base_bota(t)   = current_pose row t (position + quaternion)
+#   T_base_camera(t) = T_base_bota(t) @ T_bota_camera        (per frame)
+#   wrench           already in bota frame; rotate to base via current_pose
+#                    directly -- the old "bota_to_base mount transform" ask
+#                    is DISSOLVED, nothing extra needed from the lab for it.
+#
+# The single remaining fixed unknown is T_bota_camera (bota origin -> left
+# ZED-Mini lens optical frame), which is pure rigid CAD geometry of the
+# bracket. The lab is extracting it from the drawings; we attempt the same
+# from the STEP/PDF in parallel (see bota_to_camera block below).
 #
 # Frames:
-#   base        : robot base (current_pose is published in this frame)
-#   camera      : ZED left rect optical frame (the PNG frames live here)
-#   bota_frame  : Bota wrist F/T sensor frame (wrench is published here)
+#   base        : robot base (current_pose is expressed in this frame)
+#   bota_frame  : Bota SensONE measurement origin (current_pose's subject;
+#                 wrench topics are expressed here)
+#   camera      : ZED-Mini LEFT rect optical frame (the PNG frames live here)
 #
 # All 4x4 transforms are row-major homogeneous matrices mapping a point in the
 # CHILD frame to the PARENT frame:  p_parent = T_parent_child @ p_child.
+# ---------------------------------------------------------------------------
 
 camera_intrinsics:
-  filled: false
-  # 3x3 pinhole matrix [[fx,0,cx],[0,fy,cy],[0,0,1]]
-  K: [[0, 0, 0],
-      [0, 0, 0],
-      [0, 0, 1]]
-  # plumb-bob distortion [k1,k2,p1,p2,k3]; ZED rect images are usually ~0
+  filled: true
+  # Source: lab-provided intrinsics.md (2026-07-09), block "HD1080 downscaled
+  # (by ZED ROS wrapper) to 540x960" -- matches the exported PNGs exactly
+  # (960 wide x 540 high, verified on lfdws_t001_new / lfdws_t002_new).
+  K: [[752.9597, 0.0,      472.6555],
+      [0.0,      752.9597, 271.9621],
+      [0.0,      0.0,      1.0]]
+  # plumb-bob distortion [k1,k2,p1,p2,k3]; rect images -> zeros. The lab file
+  # provided no distortion coefficients for the rectified stream.
   dist: [0, 0, 0, 0, 0]
   image_width: 960
   image_height: 540
+  # Other calibrations from the same file, for reference (unused):
+  #   HD1080 native (1920x1080): fx=1544.4000 fy=1544.6899 cx=917.54 cy=572.7920
+  #   720   (1280x720):          fx=772.67    fy=772.615   cx=641.06 cy=363.03
 
-base_to_camera:
-  filled: false
-  # T_base_camera : camera-frame point -> base-frame point
-  T: [[1, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 0, 1, 0],
-      [0, 0, 0, 1]]
-
-bota_to_base:
-  filled: false
-  # T_base_bota : bota_frame point -> base-frame point.
-  # NOTE: not derivable from any URDF -- this is the physical F/T-sensor mount
-  # on the wrist. Request from the lab. Needed only for wrench-line projection,
-  # not for plain end-effector projection.
-  T: [[1, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 0, 1, 0],
-      [0, 0, 0, 1]]
+bota_to_camera:
+  filled: false   # PRELIMINARY -- see notes below. Do not trust for
+                  # sub-cm-accurate wrench-line projection without a review
+                  # pass (ideally cross-checked against the lab's own CAD
+                  # extraction once that lands).
+  # T_bota_camera : camera-frame point -> bota-frame point. FIXED transform
+  # (rigid bracket, REV02).
+  #
+  # Two independent inputs combined here:
+  #  (1) CAD-derived housing ORIGIN + ORIENTATION -- extracted via
+  #      Code/cad_extract_transform.py by walking the assembly tree's
+  #      NEXT_ASSEMBLY_USAGE_OCCURRENCE + AXIS2_PLACEMENT_3D chain in
+  #      ZED-M_assy_body-bracket-gripper_REV02.STEP (pure rigid-body
+  #      placement math). Cross-checked against the PDF drawing's
+  #      independent dims (151.00/177.16/158.82/91.72 mm, 30.01 deg tilt)
+  #      and against FreeCAD's own Placement readout for the same part
+  #      (both matched exactly: origin [-8.70,-198.46,-25.89] mm root-frame,
+  #      45 deg about X). housing origin in bota frame: [133.583,-121.279,
+  #      25.888] mm.
+  #  (2) ZED Mini's PUBLISHED stereo baseline (63 mm, Stereolabs datasheet)
+  #      applied along the housing's own local X axis, which the CAD
+  #      confirms is EXACTLY the assembly-root global X axis (no tilt
+  #      component -- the 45 deg tilt is entirely in the housing's Y/Z, so
+  #      the stereo baseline stays "horizontal" as expected for a camera
+  #      that pitches to look down at a workspace while keeping its two
+  #      lenses level). That direction, expressed in the bota frame, is
+  #      [-0.7071, -0.7071, 0.0].
+  #
+  # Attempted first to find the lens bore directly in the STEP mesh
+  # (Code/cad_find_lens_occ.py, via pythonocc-core/OpenCascade): found two
+  # candidate cylindrical bores near the housing, but they are 88mm apart
+  # -- doesn't match the 63mm baseline, so they are almost certainly
+  # mounting/dowel holes for the housing shell, not the lens barrels. The
+  # lens glass may be modelled as a flat disc (no cylindrical bore) or not
+  # separately labelled at all; abandoned further mesh-mining in favour of
+  # this CAD-orientation + datasheet-baseline combination.
+  #
+  # REMAINING UNKNOWNS (why this stays filled: false):
+  #  - which physical lens is "left" vs "right" -- not visually confirmed
+  #    against the ZED Mini's own markings, so the sign of the +/-31.5mm
+  #    shift below is a guess. The two candidates (bota frame, mm):
+  #      A: [111.309, -143.553, 25.888]
+  #      B: [155.857,  -99.006, 25.888]
+  #    T below uses candidate A; swap the translation for B if wrong.
+  #  - zero forward/Z offset assumed between the housing reference origin
+  #    and the lens plane (i.e. treats the lens as sitting exactly at the
+  #    CAD placement origin along the optical axis) -- ZED Mini's actual
+  #    lens-to-body depth offset (order 1-2 cm) is not accounted for.
+  T: [[-0.7071, -0.5,    -0.5,     0.111309],
+      [-0.7071,  0.5,     0.5,    -0.143553],
+      [ 0.0,     0.7071, -0.7071,  0.025888],
+      [ 0.0,     0.0,     0.0,     1.0]]
 
 end_effector:
-  # Is current_pose the fingertip TCP or the flange? Default FR3+Hand config
-  # publishes the TCP (fr3_hand_tcp). If the lab set a custom NE_T_EE, set this
-  # to "flange" and the script will add the +0.1034 m z offset to reach the TCP.
-  current_pose_is: tcp        # "tcp" or "flange"
-  flange_to_tcp_z: 0.1034     # metres, from franka_description (only used if flange)
+  # current_pose is the BOTA SENSONE ORIGIN pose (see rig model above), not
+  # the TCP and not the flange. The fingertip/TCP offset below the bota
+  # origin is bracket+gripper CAD geometry; fill when extracted. Used only
+  # for seeding masks at the fingertips -- not needed for camera extrinsics
+  # or wrench projection.
+  current_pose_is: bota_origin
+  # bota origin -> fingertip TCP offset, metres, in the bota frame (approx
+  # -z down through the gripper). Placeholder until CAD extraction:
+  bota_to_tcp: null

@@ -18,9 +18,22 @@ The point: SEE whether the wrench direction at press actually points at the
 cup. If yes, the wrench-projection idea is alive on this data even without
 real camera calibration. If not, we honestly say so.
 
+Requires a GRASPED object (carrot) trajectory to fit the base->uv
+regression -- on a trial with no gripper topic (no grasp event, no
+propagate_demo.py run) this has nothing to fit against and exits early
+with "[fatal] too few pairs to fit projection". That's a real data gap
+(see Docs/FAILURE_MODES.md B3), not a bug.
+
 Output:
-    figures/force_overlay_press.png
+    figures/force_overlay_press.png  (or --out)
+
+Usage:
+    .venv_analysis/bin/python Code/force_overlay.py \
+        --trial Data/lfdws_t001/lfdws_t001 \
+        --carrot_csv figures/propagation_summary.csv \
+        --cup_csv figures/propagation_cup_summary.csv
 """
+import argparse
 import ast
 import csv
 import os
@@ -29,14 +42,10 @@ import cv2
 import numpy as np
 import pandas as pd
 
-DEMO_CSV = "Data/lfdws_t001/lfdws_t001/lfdws_t001_0.csv"
-IMG_DIR = "Data/lfdws_t001/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
-PRESS_IMG_TS = 1779192196405413163
-CARROT_SUMMARY = "figures/propagation_summary.csv"
-CUP_SUMMARY = "figures/propagation_cup_summary.csv"
-OUT = "figures/force_overlay_press.png"
+IMG_DIR_NAME = "zed_zed_node_rgb_color_rect_image_compressed"
 
 POSE_TS = "NS_1.franka_robot_state_broadcaster.current_pose.timestamp"
+GRIP = "NS_1.franka_gripper.joint_states.position"
 PX, PY, PZ = (
     "NS_1.franka_robot_state_broadcaster.current_pose.pose.position.x",
     "NS_1.franka_robot_state_broadcaster.current_pose.pose.position.y",
@@ -67,18 +76,55 @@ def mask_centroid_from_overlay(overlay_path, src_path, color):
     return float(xs.mean()), float(ys.mean())
 
 
+def detect_press_row(df):
+    """Same force-only-safe press detection as auto_seed.py: strongest
+    force-magnitude peak, restricted to the gripper-held window if a
+    gripper topic is present, else over the whole trace."""
+    fm = np.sqrt(df[FX].astype(float) ** 2 + df[FY].astype(float) ** 2 +
+                 df[FZ].astype(float) ** 2).to_numpy()
+    baseline = float(np.median(fm[: len(fm) // 10]))
+    if GRIP not in df.columns:
+        return int(np.argmax(fm - baseline))
+
+    def parse_gw(c):
+        try:
+            return float(np.sum(ast.literal_eval(c)))
+        except Exception:
+            return float("nan")
+    w = df[GRIP].apply(parse_gw).to_numpy()
+    w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
+    thr = w_closed + 0.5 * (w_open - w_closed)
+    closed = w < thr
+    fm_adj = np.where(closed, fm - baseline, -np.inf)
+    return int(np.argmax(fm_adj))
+
+
 def main():
-    print(f"[load] {DEMO_CSV}", flush=True)
-    df = pd.read_csv(DEMO_CSV)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--trial", default="Data/lfdws_t001/lfdws_t001")
+    ap.add_argument("--carrot_csv", default="figures/propagation_summary.csv")
+    ap.add_argument("--cup_csv", default="figures/propagation_cup_summary.csv")
+    ap.add_argument("--out", default="figures/force_overlay_press.png")
+    args = ap.parse_args()
+
+    demo_csv = next((os.path.join(args.trial, f) for f in os.listdir(args.trial)
+                     if f.endswith(".csv") and not f.startswith(".")), None)
+    if demo_csv is None:
+        raise FileNotFoundError(f"no merged CSV in {args.trial}")
+    img_dir = os.path.join(args.trial, IMG_DIR_NAME)
+
+    print(f"[load] {demo_csv}", flush=True)
+    df = pd.read_csv(demo_csv)
+
+    if FX not in df.columns:
+        print("[fatal] no wrench topic in this trial -- nothing to compute "
+              "a force direction from (see Docs/FAILURE_MODES.md)", flush=True)
+        return
 
     # ---------- press-frame index ----------
-    press_str = str(PRESS_IMG_TS)
-    press_rows = df.index[df[IMG].astype(str) == press_str]
-    if len(press_rows) == 0:
-        print(f"[fatal] press img ts {press_str} not in CSV", flush=True)
-        return
-    press_row = int(press_rows[0])
-    print(f"[load] press row idx = {press_row}", flush=True)
+    press_row = detect_press_row(df)
+    press_img_ts = str(df[IMG].iloc[press_row])
+    print(f"[load] press row idx = {press_row}  img={press_img_ts}", flush=True)
 
     # ---------- EE positions across demo ----------
     ee = df[[PX, PY, PZ]].astype(float).to_numpy()  # (N, 3)
@@ -87,14 +133,14 @@ def main():
 
     # ---------- build (EE_base) -> (u, v) regression from carrot mask centroids ----------
     # for each frame where we have a carrot mask, find the EE position
-    print(f"[load] carrot summary: {CARROT_SUMMARY}", flush=True)
+    print(f"[load] carrot summary: {args.carrot_csv}", flush=True)
     pairs = []
-    if os.path.exists(CARROT_SUMMARY):
-        with open(CARROT_SUMMARY) as f:
+    if os.path.exists(args.carrot_csv):
+        with open(args.carrot_csv) as f:
             for row in csv.DictReader(f):
                 img_id = row["file"].replace(".png", "")
                 ov_path = row["overlay_path"]
-                src_path = os.path.join(IMG_DIR, row["file"])
+                src_path = os.path.join(img_dir, row["file"])
                 c = mask_centroid_from_overlay(ov_path, src_path, "green")
                 if c is None:
                     continue
@@ -136,7 +182,7 @@ def main():
     print(f"[press] arrow uv: {tail_uv} -> {head_uv}", flush=True)
 
     # ---------- render ----------
-    src_path = os.path.join(IMG_DIR, f"{PRESS_IMG_TS}.png")
+    src_path = os.path.join(img_dir, f"{press_img_ts}.png")
     base = cv2.imread(src_path)
     if base is None:
         print(f"[fatal] {src_path} missing", flush=True); return
@@ -144,12 +190,12 @@ def main():
     out = base.copy()
 
     # overlay carrot mask (green) and cup mask (magenta)
-    for path, color in [(CARROT_SUMMARY, "green"), (CUP_SUMMARY, "magenta")]:
+    for path, color in [(args.carrot_csv, "green"), (args.cup_csv, "magenta")]:
         if not os.path.exists(path):
             continue
         with open(path) as f_:
             for row in csv.DictReader(f_):
-                if row["file"] != f"{PRESS_IMG_TS}.png":
+                if row["file"] != f"{press_img_ts}.png":
                     continue
                 ov = cv2.imread(row["overlay_path"])
                 if ov is None or ov.shape != base.shape:
@@ -175,9 +221,9 @@ def main():
     cv2.putText(out, "carrot (green)  cup (magenta)  EE base->uv via least-squares fit",
                 (10, H - 12), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-    os.makedirs("figures", exist_ok=True)
-    cv2.imwrite(OUT, out)
-    print(f"[save] -> {OUT}", flush=True)
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+    cv2.imwrite(args.out, out)
+    print(f"[save] -> {args.out}", flush=True)
 
 
 if __name__ == "__main__":

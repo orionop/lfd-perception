@@ -1,0 +1,143 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\title{\textbf{Progress Update}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Input}
+
+\textbf{Depth recording.} RGB + depth topics present, no gripper topic,
+wrench topic present. 1013 RGB frames, 1013 depth frames. Scene: plate,
+screwdriver (clamped), charger, Rubik's cube.
+
+\textbf{Recording A.} Gripper topic present, wrench topic present but 0
+messages. 1745 frames, 116.8\,s. Scene: fastener/knob insertion into a
+pegboard mount.
+
+\textbf{Recording B.} Same sensor profile as A. 726 frames, 49.0\,s. Same
+scene as A.
+
+Standard exporter cannot decode the ZED compressed-depth transport; all
+three recordings extracted with a custom \texttt{.mcap} decoder (no ROS\,2
+install required, decodes pose/wrench/image messages directly from the
+bag's embedded schemas, decodes the compressed-depth transport by hand:
+12-byte header + PNG, standard quantization formula for true depth).
+
+\section{Experiments}
+
+\begin{enumerate}[noitemsep]
+  \item Event detection on the depth recording: force-magnitude peaks
+        grouped by time-gap into activity clusters (no gripper topic, so
+        no grasp/release).
+  \item Seed placement + SAM\,2 propagation on each object identified by
+        the clusters above (plate, screwdriver, charger), independently.
+  \item Two automated fixes attempted for the seed-picking failure on the
+        plate (see Results): relative-size scoring, depth-based
+        near-camera prior.
+  \item Label-free object proposal (DINOv2 attention $\times$ depth) on
+        the depth recording, using real sensor depth instead of monocular
+        depth estimation, across all 5 activity-cluster frames.
+  \item Cross-recording object-identity clustering: pooled appearance
+        embeddings from the depth recording and the original recording
+        into one clustering run.
+  \item Event detection extended to handle recordings with a gripper
+        topic but zero wrench messages (recordings A, B).
+  \item Seed placement + bidirectional SAM\,2 propagation on the grasped
+        object, recordings A and B.
+  \item Bidirectional propagation (previously forward-only) applied
+        retroactively to the grasped object in the first recording.
+\end{enumerate}
+
+\section{Results}
+
+\textbf{Depth recording, event detection.} 16 force peaks, grouped into 5
+activity clusters mapping to 4 distinct objects plus one compound action
+(charger moved toward the screwdriver clamp).
+
+\textbf{Depth recording, seed placement.} Automatic seed picker's area
+cutoff (rejects any candidate mask $>$40\% of frame) rejected the correct
+plate mask outright; picker fell back to a background sliver, which then
+propagated as an unstable mask (17--78\% of frame) across all 1013 frames.
+Manually reseeded; corrected propagation peaks at 31\% of frame at the
+press and decays cleanly through occlusion.
+
+\textbf{Automated seed-picking fixes.} Both failed. Relative-size scoring
+fixes the depth recording but mis-picks a reflective table surface as the
+target object on the first recording. Depth-based near-camera prior fails
+because depth-sensor dropout is worst on the same specular surfaces
+causing the original confusion. \textbf{Mitigation:} calibrated
+end-effector projection (camera intrinsics + extrinsics) replaces the
+heuristic entirely -- see Asks.
+
+\textbf{N-object propagation.} Plate, screwdriver, and charger each
+independently seeded and propagated across all 1013 frames, no runaway on
+any (max 43,000\,px / 46,700\,px for the two newly added objects). All
+three verified simultaneously masked in one frame with no cross-object
+contamination.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/identify_depth_multi/overlays/f0786_1782835535683396106.png}
+\caption{Plate (magenta), screwdriver (orange), charger (yellow) --
+independently propagated, composed in one frame.}
+\end{figure}
+
+\textbf{Real depth vs.\ estimated depth, label-free proposal.} Depth-sensor
+validity: 16\% on the specular plate, 58--72\% on matte tool/charger
+surfaces. Object proposal correctly lands on the target object for 2 of 5
+events; hits background scatter on the other 3 -- fails even with real
+depth. \textbf{Mitigation:} none needed; confirms proprioceptive event
+cueing is required and cannot be replaced by a label-free proposer, real
+depth or not.
+
+\textbf{Cross-recording object identity.} 3 true objects fragment into 12
+clusters at default settings, 2 clusters contaminated with mixed objects.
+Sweep across crop style / clustering threshold: keeping background context
+in the crop (vs.\ tight, background-removed crops) eliminates
+contamination across a threshold range, does not fix fragmentation.
+\textbf{Mitigation:} contamination fixed (use background-context crops);
+fragmentation unresolved, no fix attempted yet.
+
+\textbf{Recordings A, B.} Grasp/release detected cleanly (A:
+$t{=}39.47$\,s / $54.66$\,s; B: $t{=}10.69$\,s / $37.50$\,s), no press
+event on either (0 wrench messages). Seed placement clean on both,
+verified visually. Bidirectional propagation: full frame coverage on
+both (1745/1745, 726/726), max mask area $<$1.5\% of frame, no drift.
+Verified against a frame where the object is genuinely out of view (mask
+correctly reads 0).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/t004/propagation_grasped/f0872_1782993012118220374.png}
+\caption{Fastener tracked after insertion into the pegboard mount,
+recording A.}
+\end{figure}
+
+\section{Asks}
+
+\begin{enumerate}[noitemsep]
+  \item Camera intrinsics (K, distortion) and camera-to-base extrinsics --
+        unblocks calibrated end-effector projection, replaces the
+        seed-picking heuristic.
+  \item F/T sensor mount transform (sensor frame to base) -- needed for
+        force-direction projection.
+  \item Confirm F/T sensor status on recordings A and B (0 wrench
+        messages on both -- no press/contact event detectable).
+\end{enumerate}
+
+\end{document}
