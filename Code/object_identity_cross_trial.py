@@ -52,6 +52,9 @@ SOURCES = [
     {"trial": "lfdws_t002_new",
      "summary_csv": "figures/t002new/identify/objects_summary.csv",
      "img_dir": "Data/lfdws_t002_new/zed_zed_node_rgb_color_rect_image_compressed"},
+    {"trial": "lfdws_t002_labexport",
+     "summary_csv": "figures/t002labexport/identify/objects_summary.csv",
+     "img_dir": "Data/lfdws_t002_labexport/lfdws_t002/zed_zed_node_rgb_color_rect_image_compressed"},
 ]
 
 

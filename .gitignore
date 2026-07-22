@@ -44,6 +44,8 @@ Data/lfdws_t001_new/
 Data/lfdws_t002_new/
 Data/lfdws_t004/
 Data/lfdws_t005/
+Data/lfdws_t001_labexport/
+Data/lfdws_t002_labexport/
 16apr_pipeline/
 Data/16apr_pipeline/
 pipeline_update/
@@ -68,6 +70,8 @@ figures/t001new/
 figures/t002new/
 figures/t004/
 figures/t005/
+figures/t001labexport/
+figures/t002labexport/
 figures/*.mp4
 figures/*.mp4.bak
 figures/*_summary.csv.bak

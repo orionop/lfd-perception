@@ -96,9 +96,14 @@ alternative.
 \section{Related Work}
 
 \textbf{Gripper-event affordance learning.} Prior self-supervised
-approaches use gripper open/close transitions to bootstrap object
-affordance labels, but do not address which object receives contact once
-grasped.
+approaches exploit robot motion to bootstrap object segmentation without
+manual labels -- e.g. Boerdijk \emph{et al.}~\cite{boerdijk2021gripper} use
+optical-flow motion cues during a grasp to segment the held object from
+the manipulator and background. These approaches identify \emph{that} an
+object is grasped, continuously, from motion; they do not address which
+object receives contact once grasped, nor do they use discrete
+proprioceptive events (grasp/press) to trigger a single, targeted
+segmentation prompt the way we do.
 
 \textbf{Label-free / promptable segmentation.} Segment Anything
 \cite{kirillov2023sam} and its video extension SAM~2
@@ -113,7 +118,12 @@ real depth substituted for the monocular estimate.
 \cite{bicchi1990} recovers the point and direction of a single contact
 from a wrist force/torque measurement alone, without vision. To our
 knowledge this geometric signal has not previously been used as a prompt
-for visual segmentation.
+for visual segmentation. Learned approaches instead predict force jointly
+with a visual goal from text and image (ForceSight~\cite{collins2023forcesight}
+predicts a text-conditioned visual-force goal for mobile manipulation);
+our contact ray is not learned or predicted -- it is the measured wrench,
+transformed geometrically, which requires no training data and applies
+directly to any single-contact event.
 
 \textbf{Constraint and interaction identification.} The host lab's
 existing LfD layers identify kinematic constraints from pose
@@ -122,6 +132,7 @@ existing LfD layers identify kinematic constraints from pose
 layer beneath both.
 
 \section{Method}
+\label{sec:method}
 
 \subsection{Event detection}
 
@@ -174,10 +185,10 @@ pair, each with its own role label.
 
 \section{System and Data}
 
-Four real-robot recordings on a Franka Research 3 arm with a Franka Hand
+Six real-robot recordings on a Franka Research 3 arm with a Franka Hand
 gripper, Bota wrist force/torque sensor, and ZED RGB(-D) camera are used.
 Table~\ref{tab:recordings} summarises sensor availability and scene
-content; the three recordings differ in which sensors were actively
+content; the recordings differ in which sensors were actively
 publishing, exercising the graceful-degradation behaviour of the event
 detector under real (not synthetic) conditions.
 
@@ -185,47 +196,86 @@ detector under real (not synthetic) conditions.
 \centering
 \caption{Recordings used in this work.}
 \label{tab:recordings}
-\begin{tabular}{lccl}
+\begin{tabular}{lccp{3.3cm}}
 \toprule
-\textbf{Recording} & \textbf{Gripper} & \textbf{F/T} & \textbf{Task} \\
+\textbf{Rec.} & \textbf{Grip.} & \textbf{F/T} & \textbf{Task} \\
 \midrule
 1 & \checkmark & \checkmark & pick / press / drop (2 objects) \\
 2 & --         & \checkmark & multi-object contact (4 objects) \\
 3 & \checkmark & --         & fastener insertion \\
 4 & \checkmark & --         & fastener insertion \\
+5 & \checkmark & \checkmark & multi-phase: latch / cube pick-press-drop / latch \\
+6 & \checkmark & \checkmark & latch contact (short clip) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Recordings 2--4 include registered depth in addition to RGB, decoded from
-the raw sensor transport where the standard export tooling could not
-process it.
+Recordings 2--6 include registered depth in addition to RGB; for
+Recordings 2--4 this was decoded from the raw sensor transport where the
+standard export tooling could not process it, while Recordings 5--6 use
+the host lab's own depth export directly. Recording 5 is notable for
+containing three distinct interaction phases in one continuous capture
+(a latch/hinge contact, then a cube pick-press-drop cycle, then a second
+latch contact); a naive single-event detector that reports only the
+global peak force in the recording silently attributes the wrong phase's
+event to the grasp cycle it should describe (Section~\ref{sec:multievent}).
 
 \section{Experiments}
 \label{sec:experiments}
 
 \subsection{Label-free visual discovery fails, even with real depth}
+\label{sec:dado}
 
 DINOv2 attention combined with monocular depth (Depth-Anything-V2) was
 evaluated on Recording~1's event frames and fails to isolate either
 task-relevant object -- attention is low and spatially uniform on these
 in-lab scenes. To rule out monocular depth estimation error as the cause,
-the same recipe was re-run on Recording~2 substituting real sensor depth,
-across five contact events. Depth-sensor validity itself varies sharply
-with surface material (16\% valid pixels on a specular object vs.\
-58--72\% on matte objects in the same scene), and the resulting object
-proposal correctly localises the target object in 2 of 5 events, hitting
-background clutter in the remaining 3. Real depth is measurably better
-than a monocular estimate but does not make label-free discovery
-reliable.
+the same recipe (DINOv2 attention $\times$ real-depth$^{0.5}$, thresholded
+at the 85th percentile) was re-run substituting real sensor depth, scored
+quantitatively against the ground-truth object mask each event's
+proprioceptive cue actually seeds (Section~\ref{sec:method}), across every
+recording with both real depth and a propagated ground-truth mask
+(Recordings 2, 3, 4, 5): 16 (recording, event) pairs in total. Mean
+intersection-over-union between the label-free proposal and the true
+object is $0.161$ (range $0.044$--$0.352$, Table~\ref{tab:dado}) -- real
+depth is measurably better than a monocular estimate at recovering scene
+geometry, but the attention signal itself does not localise the
+task-relevant object reliably at any tested event, contact or otherwise.
+
+\begin{table}[t]
+\centering
+\caption{Label-free proposal (DINOv2 attn.\ $\times$ real depth) vs.\
+ground truth, all recordings with real depth. IoU is intersection over
+union between the thresholded proposal and the true object mask.}
+\label{tab:dado}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Recording} & \textbf{n events} & \textbf{mean IoU} & \textbf{range} \\
+\midrule
+2 (4-object) & 5 & 0.181 & 0.110--0.262 \\
+3 (fastener, grasp only) & 1 & 0.044 & -- \\
+4 (fastener, grasp only) & 1 & 0.052 & -- \\
+5 (cube phase) & 3 & 0.215 & 0.113--0.352 \\
+5, earlier extraction\footnotemark & 3 & 0.177 & 0.092--0.283 \\
+6 (latch) & 3 & 0.131 & 0.119--0.142 \\
+\midrule
+all & 16 & 0.161 & 0.044--0.352 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\footnotetext{An earlier, separately-processed extraction of Recording
+5's cube-manipulation phase, from before the host lab's native depth
+export was available for this bag; included to show the result is not
+an artefact of one specific extraction pipeline.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/dado_real_depth_multi.png}
-\caption{Label-free discovery (DINOv2 attention $\times$ real depth) on
-five contact events. Object proposal (rightmost column, green) correctly
-localises the object in the first two rows; the remaining three land on
-background surfaces.}
+\includegraphics[width=\columnwidth]{figures/dado_vs_groundtruth_all_trials.png}
+\caption{Label-free discovery (DINOv2 attention $\times$ real depth) vs.\
+ground truth across representative events. DINOv2 attention (middle
+column) stays diffuse and object-agnostic; the resulting thresholded
+proposal (right column, red) rarely aligns with the true object outline
+(green).}
 \label{fig:dado}
 \end{figure}
 
@@ -246,14 +296,49 @@ failure occurs, since sensor depth dropout is worst there. This negative
 result motivates the geometric grounding method of
 Section~\ref{sec:experiments}C over further heuristic tuning.
 
-\subsection{Wrench-ray geometric grounding (protocol and preliminary evidence)}
+\textbf{Point vs.\ box prompts.} A related, sharper failure mode was
+found in how a seed is prompted to SAM~2, independent of how the seed
+location is chosen. A single point prompt on a multi-coloured object
+(a Rubik's cube) segments only the locally-contiguous coloured region
+under it rather than the physical object; switching to a box prompt
+around the whole object fixes this at the seed frame. Propagating both
+prompt types across a full recording (Recording~5's cube phase,
+975 frames) reveals a second, more severe failure: once the seed frame
+is behind it, the box-prompted track degrades gracefully to
+near-empty when the object leaves the frame (mean 3{,}243\,px across
+469 object-absent frames), while the point-prompted track does not
+recognise object absence at all and drifts onto unrelated background
+--- mean 247{,}594\,px (46\% of the 960$\times$540 frame) across the
+same 469 frames, peaking at 495{,}142\,px (95\% of frame) on a bare
+pegboard panel (Table~\ref{tab:seedablation}). The two prompt types are
+comparable while the object is genuinely present (66{,}075 vs.\
+72{,}763\,px mean); the difference is entirely in how each degrades once
+the object is gone.
 
-This is the paper's core planned evaluation and is currently blocked on
-camera intrinsics and extrinsics from the host lab; the method itself
+\begin{table}[t]
+\centering
+\caption{Point vs.\ box seed prompt, propagated across Recording 5's
+cube phase (975 frames, SAM~2).}
+\label{tab:seedablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Prompt} & \textbf{Window} & \textbf{n frames} & \textbf{mean px (max)} \\
+\midrule
+box   & object present & 506 & 66{,}075 (80{,}462) \\
+box   & object absent  & 469 & 3{,}243 (18{,}486) \\
+point & object present & 506 & 72{,}763 (368{,}128) \\
+point & object absent  & 469 & 247{,}594 (495{,}142) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Wrench-ray geometric grounding (protocol and CAD-sensitivity evidence)}
+
+This is the paper's core planned evaluation. The method itself
 (Eq.~\ref{eq:bicchi} through image projection) is fully implemented and
 runs in a dry-run mode that reports base-frame geometry without
-projecting, so that no placeholder calibration is ever silently used.
-Preliminary (uncalibrated) evidence: at the contact event of
+projecting whenever calibration is not marked trusted, so that no
+placeholder calibration is ever silently used. At the contact event of
 Recording~1, wrist wrench magnitude was 26.4\,N directed within
 $5^\circ$ of vertical in the base frame, consistent with a top-down
 press onto the visible contact-receiving object; the Bicchi contact
@@ -261,14 +346,33 @@ point $\mathbf{r}_0$ lies within 1\,cm of the wrist origin along the
 force axis, a physically plausible contact offset for the demonstrated
 task.
 
-\textbf{Planned evaluation.} Once calibration is available, for each
-contact event across all recordings with real depth (Recordings 2--4):
-project $\mathbf{r}_0$ and $\hat{\mathbf{f}}$ into the image, intersect
-the ray with the scene using the recorded depth map, and measure the 3D
-distance between the intersection point and the nearest point on the
-true contact-receiving object's surface. We expect this to report a
-single, low (sub-centimetre to few-centimetre) error figure per event as
-the headline quantitative result.
+\textbf{CAD-derived calibration is not yet trustworthy.} The host lab's
+eye-in-hand camera bracket CAD left one translation ambiguous between two
+candidate lens positions 63\,mm apart (the camera's own stereo baseline,
+along its housing's local axis). Both candidates were evaluated by
+running the full projection pipeline (live, not dry-run) on every
+recording with a real force event and an already-propagated
+contact-receiver mask (Recordings 1, 2, 6) and measuring the projected
+ray's pixel distance to the mask centroid. Both candidates project
+\emph{outside the visible frame} on all three recordings (551--760\,px
+from the image centre against a 540\,px-tall image), independent of
+which of the two is chosen -- indicating the CAD-derived
+\emph{orientation} of the bracket, not only the ambiguous 63\,mm
+translation, is unreliable. This is a stronger and more actionable
+negative result than an unresolved translation would be: it rules out
+CAD-reading as sufficient and motivates a direct hand-eye calibration
+(checkerboard/ArUco correspondences across several arm poses,
+\texttt{cv2.calibrateHandEye}) as the only remaining path to a trusted
+extrinsic, which is in progress.
+
+\textbf{Planned evaluation.} Once a trusted calibration is available, for
+each contact event across all recordings with real depth (Recordings
+2--6): project $\mathbf{r}_0$ and $\hat{\mathbf{f}}$ into the image,
+intersect the ray with the scene using the recorded depth map, and
+measure the 3D distance between the intersection point and the nearest
+point on the true contact-receiving object's surface. We expect this to
+report a single, low (sub-centimetre to few-centimetre) error figure per
+event as the headline quantitative result.
 
 \subsection{Generalisation to multiple simultaneous objects}
 
@@ -287,21 +391,58 @@ grasped/contact-receiver pair.}
 \label{fig:multiobj}
 \end{figure}
 
-\subsection{Sensor-degradation robustness}
+\subsection{Sensor-degradation robustness and multi-cycle detection}
+\label{sec:multievent}
 
 Event detection was verified to degrade gracefully and correctly across
-all three sensor-availability profiles present in the four recordings:
-full sensing (Recording~1), force-only (Recording~2, no gripper events
+all three sensor-availability profiles present in the recordings: full
+sensing (Recordings 1, 5, 6), force-only (Recording~2, no gripper events
 detected or attempted), and gripper-only (Recordings 3--4, no contact
-event detected or attempted). Each fallback path was regression-tested
+event detected or attempted); Table~\ref{tab:eventdet} summarises all
+six recordings. Each fallback path was regression-tested
 against a recording with full sensing to confirm zero behavioural change
 when both sensors are present.
+
+Recording~5 additionally exposed a failure mode not present in the other
+recordings: a single-event detector that reports only the global-maximum
+force peak in the whole recording silently attributes the wrong phase's
+contact to the grasp cycle it is meant to describe, since Recording~5
+contains three distinct interaction phases (a latch contact, a cube
+pick-press-drop cycle, a second latch contact) and the largest force peak
+occurs in the first, unrelated phase. Restricting the press-event search
+to the window between the detected grasp and release events (rather than
+the full recording) recovers the correct, cube-related contact event.
+This failure is silent -- it produces a plausible-looking but wrong
+event with no error signal -- and would not have been caught without
+manually inspecting the seeded frame.
+
+\begin{table}[t]
+\centering
+\caption{Event detection across all six recordings used in
+this work. A ``FAIL'' verdict means the naive single global-maximum
+detector mis-attributed an event to the wrong interaction phase; the
+grasp-window-restricted detector (Section~\ref{sec:multievent})
+corrects it.}
+\label{tab:eventdet}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Recording} & \textbf{Grip.} & \textbf{F/T} & \textbf{Verdict} \\
+\midrule
+1              & \checkmark & \checkmark & pass \\
+2              & --         & \checkmark & pass \\
+3              & \checkmark & --         & pass \\
+4              & \checkmark & --         & pass \\
+5              & \checkmark & \checkmark & FAIL (single-event) / pass (windowed) \\
+6              & \checkmark & \checkmark & pass (no real grasp cycle present) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Limitations}
 
 All recordings come from a single lab, a single robot arm, and a small
 number of camera poses; generalisation across hardware setups is
-untested. The sample size (four recordings, three tasks) is small for a
+untested. The sample size (six recordings, four distinct task types) is small for a
 generalisation claim and is treated here as a system validation rather
 than a statistically powered study. The paper's central quantitative
 claim -- wrench-ray grounding accuracy -- is not yet reported, pending
@@ -346,13 +487,26 @@ L.~Yang \emph{et al.}, ``Depth Anything V2,'' \emph{arXiv preprint
 arXiv:2406.09414}, 2024.
 
 \bibitem{overbeek2025frontiers}
-W.~Overbeek \emph{et al.}, ``Kinematic constraint identification for
-learning from demonstration,'' \emph{Frontiers in Robotics and AI}, 2025.
+A.~H.~G.~Overbeek, D.~Dresscher, H.~van~der~Kooij, and M.~Vlutters,
+``Versatile kinematics-based constraint identification applied to robot
+task reproduction,'' \emph{Frontiers in Robotics and AI}, vol.~12, art.
+1574110, 2025.
 
 \bibitem{overbeek2025adrr}
-W.~Overbeek \emph{et al.}, ``Physical interaction identification from
-contact for learning from demonstration,'' \emph{Advanced Robotics
-Research}, 2025.
+A.~H.~G.~Overbeek, H.~van~der~Kooij, D.~Dresscher, and M.~Vlutters,
+``Identifying physical interactions in contact-based robot manipulation
+for learning from demonstration,'' \emph{Advanced Robotics Research},
+e202500109, 2025.
+
+\bibitem{boerdijk2021gripper}
+W.~Boerdijk, M.~Sundermeyer, M.~Durner, and R.~Triebel, ``Self-supervised
+object-in-gripper segmentation from robotic motions,'' in \emph{Proc.
+Machine Learning Research (PMLR)}, 2021.
+
+\bibitem{collins2023forcesight}
+J.~A.~Collins, C.~Houff, Y.~L.~Tan, and C.~C.~Kemp, ``ForceSight:
+Text-guided mobile manipulation with visual-force goals,'' \emph{arXiv
+preprint arXiv:2309.12312}, 2023.
 
 \end{thebibliography}
 
