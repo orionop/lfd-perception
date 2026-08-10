@@ -1,0 +1,113 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\title{\textbf{Progress Update}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Input}
+
+Two new recordings, exported directly through your own \texttt{ros2\_unbag}
+pipeline rather than our \texttt{.mcap} fallback -- both include native
+registered depth alongside RGB, gripper, and wrench, confirming the
+compressedDepth export fix is working end to end.
+
+\textbf{Recording 5.} Gripper, wrench, RGB, depth all present. 65.5\,s,
+975 RGB frames. On inspection this recording contains three distinct
+interaction phases in one continuous capture: a latch/hinge contact, a
+Rubik's cube pick-press-drop cycle, then a second latch contact.
+
+\textbf{Recording 6.} Same sensor profile. Short 9.7\,s clip, 156 frames.
+Latch/hinge contact only, no grasp cycle.
+
+\section{Experiments}
+
+\begin{enumerate}[noitemsep]
+  \item Full pipeline (event detection, seed placement, SAM\,2
+        propagation, sidecar) on both recordings.
+  \item Latch/hinge bolt hardware propagated as a \texttt{contact\_receiver}
+        for the first time -- new object-role type, not seen in earlier
+        recordings.
+  \item Label-free object proposal (DINOv2 attention $\times$ real depth)
+        scored quantitatively against the propagated ground-truth object,
+        extended from one recording to every recording with real depth
+        (16 events across 6 recordings total).
+  \item Point-prompt vs.\ box-prompt SAM\,2 seeding compared by
+        propagating both across a full 975-frame recording.
+  \item Both candidate camera-bracket transforms from the CAD drawings
+        (sent earlier) tested directly by running the live projection
+        pipeline and measuring where the projected wrench ray lands.
+  \item A direct hand-eye calibration procedure (standard method: printed
+        calibration board, several arm poses, closed-form solve) written
+        and validated against synthetic ground truth.
+\end{enumerate}
+
+\section{Results}
+
+\textbf{Multi-phase event detection.} A single-event detector that reports
+only the largest force peak in the whole recording silently attributes
+the wrong phase's contact to Recording 5's cube task (the latch phase's
+peak is larger). \textbf{Mitigation:} restricting the search to the
+window between the detected grasp and release events recovers the correct
+cube-related event; already the default elsewhere in the pipeline, now
+applied here too.
+
+\textbf{New object role.} Latch/hinge bolt hardware propagated cleanly as
+a contact-receiver across Recording 6's full 156 frames.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/t001labexport/identify/overlays/f0079_1783420306137171476.png}
+\caption{Latch bolt hardware (magenta), propagated as a contact-receiver
+for the first time.}
+\end{figure}
+
+\textbf{Label-free discovery, quantified.} Mean intersection-over-union
+between the label-free proposal and the true object is 0.161 across all
+16 events (range 0.044--0.352) -- consistently low regardless of scene or
+event type. \textbf{Mitigation:} none needed; extends the earlier
+finding with a real number instead of a single-recording example.
+
+\textbf{Point vs.\ box prompts.} Comparable while the object is genuinely
+in frame. Once the object leaves frame, a box-prompted track degrades
+gracefully toward empty (mean 3{,}243\,px); a point-prompted track does
+not recognise absence and drifts onto unrelated background (mean
+247{,}594\,px, 46\% of frame; peak 495{,}142\,px, 95\% of frame, on a bare
+panel with no object visible). \textbf{Mitigation:} box prompts used for
+any multi-coloured or irregular object going forward.
+
+\textbf{CAD-based calibration.} Both candidate lens positions from the
+bracket drawings (63\,mm apart, matching the ZED Mini's stereo baseline)
+were tested directly: both project the wrench ray entirely outside the
+visible frame, on every recording tested, regardless of which is chosen.
+This indicates the CAD-derived bracket orientation is unreliable, not
+only the ambiguous translation. \textbf{Mitigation:} CAD-reading is ruled
+out as a calibration method here; a direct hand-eye calibration script
+(printed board + several arm poses + closed-form solve) has been written
+and validated against synthetic ground truth (recovers a known transform
+exactly). Ready to run once there is a short window of rig access.
+
+\section{Asks}
+
+No blocking ask this update -- the earlier request to have someone extract
+the bracket transform from CAD is no longer necessary given the result
+above, so that effort can be dropped. When convenient, a short recording
+of the arm pausing at 10--15 distinct poses in front of a printed
+calibration board would let us close the calibration loop directly; happy
+to send the exact board spec whenever useful.
+
+\end{document}
