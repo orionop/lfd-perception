@@ -22,9 +22,15 @@
 #                    is DISSOLVED, nothing extra needed from the lab for it.
 #
 # The single remaining fixed unknown is T_bota_camera (bota origin -> left
-# ZED-Mini lens optical frame), which is pure rigid CAD geometry of the
-# bracket. The lab is extracting it from the drawings; we attempt the same
-# from the STEP/PDF in parallel (see bota_to_camera block below).
+# ZED-Mini lens optical frame). The CAD-reading approach (bota_to_camera
+# block below) left this ambiguous between two 63mm-apart candidates, and
+# Code/cad_candidate_sensitivity.py showed BOTH candidates project the
+# wrench ray entirely outside the image on every trial tested -- the
+# CAD-derived rotation is unreliable, not only the ambiguous translation.
+# Code/calibrate_hand_eye.py (hand-eye calibration, cv2.calibrateHandEye,
+# AX=XB) recovers this by direct measurement instead and is the
+# recommended path going forward; needs rig access + a physically
+# measured ChArUco board.
 #
 # Frames:
 #   base        : robot base (current_pose is expressed in this frame)

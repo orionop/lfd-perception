@@ -876,4 +876,91 @@ Rubik's cube. Reseeding with a box prompt around the full cube instead
 corrected propagation tracks the whole cube across all 975 frames, mask
 area topping out around 15\% of the frame with no drift.
 
+\section{Update --- Lab's Native Depth Export, a Multi-Phase Recording, and Quantified Ablations}
+
+\subsection{Two new recordings via the lab's own export}
+
+Two further bags arrived, this time exported directly by the lab's own
+\texttt{ros2\_unbag} pipeline rather than our \texttt{mcap\_extract.py}
+fallback --- confirmation that the lab's compressedDepth plugin fix has
+landed, since both exports include native registered depth (16-bit PNG and
+float32 metre \texttt{.npy}) alongside RGB, gripper, and wrench. One
+recording is a short 9.7\,s clip; the other is 65.5\,s and turned out, on
+inspection, to contain three distinct interaction phases in one continuous
+capture: a latch/hinge contact, a Rubik's cube pick-press-drop cycle, then
+a second latch contact. \texttt{Code/analyze\_demo.py}'s event detector reports the single
+global-maximum force peak across the whole recording with no window
+restriction, and on this recording that silently attributes the wrong
+phase's contact (the latch phase's peak is larger) to what should be the
+cube task's press event. \texttt{Code/build\_sidecar\_multi.py},
+\texttt{Code/auto\_seed.py}, and \texttt{Code/multi\_event.py} were
+unaffected --- all three already restrict the press search to the window
+between the detected grasp and release events, which correctly isolates
+the cube-related contact on this same recording. This is a real,
+previously undocumented failure mode specific to
+\texttt{analyze\_demo.py}'s detector, caught only by manually inspecting
+the seeded frame rather than trusting its output; the timeline/event-frame
+figures it produces should not be trusted at face value on any
+multi-cycle recording.
+
+A new object-role was propagated for the first time: the latch/hinge bolt
+hardware as a \texttt{contact\_receiver}, from the short recording's force
+event. Both new recordings' sidecars and diagnostic reports were generated
+through the existing pipeline unmodified.
+
+\subsection{CAD-based calibration is not trustworthy; hand-eye calibration is the way forward}
+
+The two CAD-derived candidate lens positions left unresolved previously
+(63\,mm apart, matching the ZED Mini's stereo baseline, differing only in
+which physical lens is ``left'') were tested directly: both were run
+through the full live projection pipeline on every recording with a real
+force event and an existing ground-truth contact-receiver mask. Both
+candidates project the wrench ray \emph{entirely outside the visible
+frame} on all three recordings tested, independent of which is chosen.
+This is a stronger finding than the unresolved translation ambiguity
+alone: it indicates the CAD-derived bracket \emph{orientation} is
+unreliable, not only the 63\,mm translation, and rules out CAD-reading as
+a sufficient calibration method on its own.
+
+In response, \texttt{Code/calibrate\_hand\_eye.py} was written: a standard
+OpenCV eye-in-hand hand-eye calibration (ChArUco board detection +
+\texttt{cv2.calibrateHandEye}, AX=XB) that recovers \texttt{bota\_to\_camera}
+by direct measurement rather than CAD interpretation. Both stages --- board
+detection and the AX=XB solve --- were validated against synthetic data
+before any rig time is spent on it: a rendered ChArUco image correctly
+round-trips through the detector, and the solver recovers a known
+synthetic ground-truth transform to $0.0^\circ$ rotation error and
+$\sim 10^{-16}$\,m translation error across 12 synthetic poses. The method
+is therefore known-correct; what remains is rig time to capture real board
+detections across a diverse set of arm poses.
+
+\subsection{Quantified ablations}
+
+Three results that were previously qualitative or single-example are now
+quantified across the full trial set:
+
+\begin{itemize}
+\item \textbf{Label-free discovery vs.\ ground truth.} The DINOv2-attention
+$\times$ real-depth baseline was scored against ground-truth masks across
+every recording with both real depth and a propagated ground-truth object
+(16 (recording, event) pairs, 6 recordings). Mean intersection-over-union
+is $0.161$ (range $0.044$--$0.352$) --- consistently low regardless of
+scene or event type, not an artefact of one trial.
+\item \textbf{Point vs.\ box seed prompts.} Propagating both prompt types
+across a full 975-frame recording shows the two are comparable while the
+tracked object is genuinely present in frame (66{,}075 vs.\ 72{,}763 mean
+mask pixels), but diverge sharply once the object leaves frame: the
+box-prompted track degrades gracefully towards empty (mean 3{,}243\,px),
+while the point-prompted track drifts onto unrelated background, peaking
+at 495{,}142\,px --- 95\% of the frame, on a bare wall panel with no cube
+anywhere in the image.
+\item \textbf{Event detection across all six recordings.} Tabulated
+sensor-availability profile, detected events, and pass/fail verdict per
+recording, including the multi-phase misdetection above as a documented
+case.
+\end{itemize}
+
+All three are now part of the paper draft's Experiments section with the
+numbers and tables above.
+
 \end{document}

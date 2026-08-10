@@ -117,16 +117,22 @@ Optional follow-ups:
 .venv_dado/bin/python Code/object_identity_cross_trial.py         # same, pooled across multiple trials
 .venv_analysis/bin/python Code/trial_report.py --trial <trial> --sidecar_json <fig_dir>/identify/objects.json --fig_dir <fig_dir>   # one diagnostic PDF
 .venv_analysis/bin/python Code/project_ee.py --trial <trial>      # EE / wrench-line projection
+.venv_analysis/bin/python Code/calibrate_hand_eye.py solve --trial <calib_trial> --square_size_m <m> --marker_size_m <m>  # recover bota→camera by hand-eye calibration
 ```
 
 `project_ee.py` reads `calibration.yaml` (camera intrinsics, the fixed
 `bota→camera` bracket transform). Until both are marked `filled: true` it
 runs in a DRY mode that reports the bota/base-frame geometry but draws
 nothing, so no placeholder calibration is ever used. As of now, intrinsics
-are real (lab-provided); `bota→camera` is a documented preliminary CAD +
-datasheet estimate, not yet trusted for live projection — see
-`calibration.yaml` for the full derivation and open caveats. The Franka
-Research 3 arm URDF is vendored at `Data/fr3.urdf`.
+are real (lab-provided); `bota→camera` is a documented preliminary CAD
+estimate that turned out not to be trustworthy (both candidate lens
+positions project the wrench ray outside the image on every real trial
+tested) — see `calibration.yaml` for the full derivation and open caveats.
+`calibrate_hand_eye.py` recovers `bota→camera` by direct measurement
+(ChArUco board + `cv2.calibrateHandEye`) instead of reading it off CAD,
+and is the recommended path once rig access is available; it never writes
+`calibration.yaml` automatically, only prints a result for manual review.
+The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf`.
 
 Step 3 (`auto_seed.py`) is optional: if the seed CSV doesn't exist, the
 propagation scripts fall back to hard-coded defaults tuned to the original
