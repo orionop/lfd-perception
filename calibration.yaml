@@ -91,10 +91,43 @@ bota_to_camera:
   # (Code/cad_find_lens_occ.py, via pythonocc-core/OpenCascade): found two
   # candidate cylindrical bores near the housing, but they are 88mm apart
   # -- doesn't match the 63mm baseline, so they are almost certainly
-  # mounting/dowel holes for the housing shell, not the lens barrels. The
-  # lens glass may be modelled as a flat disc (no cylindrical bore) or not
-  # separately labelled at all; abandoned further mesh-mining in favour of
-  # this CAD-orientation + datasheet-baseline combination.
+  # mounting/dowel holes for the housing shell, not the lens barrels.
+  #
+  # 2026-08-11 follow-up, exhaustive: re-ran the bore search with a wider
+  # radius net (2-20mm, was 3-13mm) -- same 88mm-apart pair, nothing new.
+  # Tested the "flat disc, not a bore" hypothesis the original script
+  # flagged but never checked (Code/cad_find_lens_planar.py): zero
+  # single-circular-edge planar faces anywhere in the same radius range.
+  # Then correctly ISOLATED the actual ZED-M_body_REV01_GJN solid itself
+  # (Code/cad_isolate_body_solids.py -- found by bounding-box proximity to
+  # the confirmed housing origin, since XCAF part labels are broken in
+  # this pythonocc-core build) and searched ONLY its 101 faces, cleanly
+  # separated from the bracket's many mounting-hole faces that were
+  # diluting the earlier whole-assembly scans: 33 cylindrical (all
+  # 0.3-5mm, fastener/standoff-sized) + 36 planar, zero lens-sized
+  # candidates either way. CONCLUSIVE: the bracket designer's ZED-M body
+  # solid is a simplified space-claim block (126 x 37.7 x 37.7mm, no
+  # lens-level detail at any fidelity) -- not merely "not yet found",
+  # genuinely not modelled in this file. No further mesh-mining of this
+  # STEP file is worth attempting.
+  #
+  # Cross-checked the isolated block's dimensions against Stereolabs' own
+  # official ZED Mini datasheet (generationrobots.com/media/
+  # zed-mini-camera-datasheet.pdf, Rev 2 Oct 2018): real body is
+  # 124.5 x 30.5 x 26.5mm, baseline 63mm -- the block's 126mm length axis
+  # matches the real 124.5mm length closely (~1.2%) and is confirmed
+  # aligned with the assembly's global X axis, which cross-validates (not
+  # contradicts) the existing "baseline direction = global X" finding
+  # below. The block's cross-section (37.7 x 37.7mm) is oversized vs the
+  # real 30.5 x 26.5mm, consistent with a rough clearance envelope rather
+  # than a precise body model. This datasheet has NO dimensioned
+  # mechanical drawing with lens positions for the Mini (unlike the
+  # original ZED's own datasheet, which does have one) -- no quick
+  # read-a-number-off-a-vendor-PDF shortcut available either. Stereolabs'
+  # own STEP/STL download (stereolabs.com/3dmodels) exists per their site
+  # but is behind a JS-rendered page not reachable by automated fetch in
+  # this session; worth trying again with a browser, or asking whether the
+  # lab already has it on file (many labs mounting a ZED Mini would).
   #
   # REMAINING UNKNOWNS (why this stays filled: false):
   #  - which physical lens is "left" vs "right" -- not visually confirmed
@@ -107,6 +140,11 @@ bota_to_camera:
   #    and the lens plane (i.e. treats the lens as sitting exactly at the
   #    CAD placement origin along the optical axis) -- ZED Mini's actual
   #    lens-to-body depth offset (order 1-2 cm) is not accounted for.
+  #  - candidates A/B both assume the lens pair is symmetric about the
+  #    isolated placeholder block's centroid (plausible from the vendor's
+  #    own product photos, which show visually symmetric lens placement,
+  #    but not confirmed against real dimensioned geometry) -- this is a
+  #    refinement of the existing hypothesis, not new independent proof.
   T: [[-0.7071, -0.5,    -0.5,     0.111309],
       [-0.7071,  0.5,     0.5,    -0.143553],
       [ 0.0,     0.7071, -0.7071,  0.025888],
