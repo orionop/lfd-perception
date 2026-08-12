@@ -50,8 +50,9 @@ three different sensor-availability profiles (full sensing, force-only,
 gripper-only), including a first case of tracking three simultaneous
 task-relevant objects through one demonstration. The geometric wrench-ray
 grounding experiment -- the paper's core evaluation -- is fully
-implemented and awaiting camera calibration data from the host lab; we
-report the evaluation protocol and preliminary (dry-run, uncalibrated)
+implemented and awaiting a direct hand-eye calibration pass (reading the
+camera-to-sensor transform from CAD proved unreliable, Section~\ref{sec:calib});
+we report the evaluation protocol and preliminary (dry-run, uncalibrated)
 evidence that the signal is directionally correct.
 \end{abstract}
 
@@ -73,7 +74,7 @@ task-specific training. We test this directly, using DINOv2
 (Depth-Anything-V2 \cite{yang2024depthanythingv2}) and, in a second test,
 combined with \emph{real} sensor depth from an RGB-D camera. In both
 cases the resulting saliency fails to isolate the task-relevant object in
-our recordings (Section~\ref{sec:experiments}), including on non-specular
+our recordings (Section~\ref{sec:dado}), including on non-specular
 objects where depth is measured cleanly. This motivates a proprioceptive
 alternative.
 
@@ -87,8 +88,8 @@ alternative.
         using the intrinsic contact ray \cite{bicchi1990} computed from
         the wrist wrench and projected into the camera frame via
         calibrated extrinsics -- implemented and validated in dry-run
-        (uncalibrated) mode, pending calibration data to report
-        quantitative accuracy.
+        (uncalibrated) mode, pending a hand-eye calibration pass to
+        report quantitative accuracy.
   \item A generalisation of the resulting role-tagged tracking pipeline
         from a fixed grasped/contact-receiver object pair to an
         arbitrary number of simultaneously tracked objects, demonstrated
@@ -197,7 +198,7 @@ The grasped object is seeded either by a vision-only heuristic (SAM
 automatic mask generation, scored by position/size/border-distance
 priors) or, once available, by projecting the end-effector position
 directly into the image via the same calibration. The vision-only
-heuristic is shown in Section~\ref{sec:experiments} to be unreliable
+heuristic is shown in Section~\ref{sec:seedplacement} to be unreliable
 across scenes with different object scales, motivating the geometric
 alternative.
 
@@ -263,10 +264,12 @@ proprioceptive cue actually seeds (Section~\ref{sec:method}), across every
 recording with both real depth and a propagated ground-truth mask
 (Recordings 2, 3, 4, 5): 16 (recording, event) pairs in total. Mean
 intersection-over-union between the label-free proposal and the true
-object is $0.161$ (range $0.044$--$0.352$, Table~\ref{tab:dado}) -- real
-depth is measurably better than a monocular estimate at recovering scene
-geometry, but the attention signal itself does not localise the
-task-relevant object reliably at any tested event, contact or otherwise.
+object is $0.161$ (range $0.044$--$0.352$, Table~\ref{tab:dado}), and the
+attention signal itself stays diffuse and object-agnostic on every
+event tested (Fig.~\ref{fig:dado}) -- real depth is measurably better
+than a monocular estimate at recovering scene geometry, but does not
+localise the task-relevant object reliably at any tested event, contact
+or otherwise.
 
 \begin{table}[t]
 \centering
@@ -306,6 +309,7 @@ proposal (right column, red) rarely aligns with the true object outline
 \end{figure}
 
 \subsection{Vision-only seed placement is unreliable across scenes}
+\label{sec:seedplacement}
 
 The vision-only heuristic used to seed the grasped/contact-receiver roles
 scores SAM's candidate masks by position, size, and border distance, with
@@ -320,7 +324,7 @@ Recording~1 that it correctly avoided under the original heuristic; the
 second is blind precisely on the specular surfaces where the original
 failure occurs, since sensor depth dropout is worst there. This negative
 result motivates the geometric grounding method of
-Section~\ref{sec:experiments}C over further heuristic tuning.
+Section~\ref{sec:calib} over further heuristic tuning.
 
 \textbf{Point vs.\ box prompts.} A related, sharper failure mode was
 found in how a seed is prompted to SAM~2, independent of how the seed
@@ -473,8 +477,9 @@ untested. The sample size (six recordings, four distinct task types) is small fo
 generalisation claim and is treated here as a system validation rather
 than a statistically powered study. The paper's central quantitative
 claim -- wrench-ray grounding accuracy -- is not yet reported, pending
-calibration data; this is disclosed rather than approximated with
-placeholder values. Label-free discovery was tested with one
+a direct hand-eye calibration pass (Section~\ref{sec:calib}); this is
+disclosed rather than approximated with placeholder values. Label-free
+discovery was tested with one
 attention-based method and one depth-conditioning scheme; other label-free
 approaches may perform differently.
 
@@ -485,8 +490,9 @@ grounding signal for task-relevant object identification that label-free
 visual discovery does not reliably replace, including when real depth is
 available. A geometric method for grounding the contact-receiving object
 from wrist force/torque alone is implemented and ready for evaluation
-once camera calibration is available; this is the immediate next step.
-Beyond that, an integration of the resulting role-tagged object tracks
+once a direct hand-eye calibration pass replaces the CAD-derived
+extrinsic ruled out in Section~\ref{sec:calib}; this is the immediate
+next step. Beyond that, an integration of the resulting role-tagged object tracks
 into the host lab's existing kinematic-constraint and physical-interaction
 identification layers \cite{overbeek2025frontiers,overbeek2025adrr} is
 the intended path to a complete perception-to-LfD pipeline.
@@ -503,7 +509,7 @@ Int. Conf. Computer Vision (ICCV)}, 2023.
 
 \bibitem{ravi2024sam2}
 N.~Ravi \emph{et al.}, ``SAM 2: Segment Anything in Images and Videos,''
-\emph{arXiv preprint arXiv:2408.00714}, 2024.
+in \emph{Proc. Int. Conf. Learning Representations (ICLR)}, 2025.
 
 \bibitem{oquab2023dinov2}
 M.~Oquab \emph{et al.}, ``DINOv2: Learning Robust Visual Features without
