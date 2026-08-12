@@ -164,5 +164,5 @@ never edited, only appended to.
 
 - `CLAUDE.md` — full pipeline notes, hard-coded knobs, conventions.
 - `Docs/setup_info.md` — legacy ROS 2 / bag-export setup notes.
-- `Docs/publication.tex` — early-draft paper skeleton (separate from the
+- `Docs/twente-paper.tex` — RA-L-format paper draft (separate from the
   writeup; not the lab deliverable).
