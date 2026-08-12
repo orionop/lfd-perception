@@ -131,6 +131,26 @@ our contact ray is not learned or predicted -- it is the measured wrench,
 transformed geometrically, which requires no training data and applies
 directly to any single-contact event.
 
+\textbf{Dense tactile contact sensing.} Vision-based tactile sensors
+provide dense contact geometry directly at the point of touch --
+NormalFlow~\cite{huang2025normalflow} tracks full 6-DoF object pose
+during contact from a GelSight-style sensor's surface normal field. This
+requires a dedicated tactile-sensing fingertip and only observes the
+object once the fingertip itself is in contact. Our contact ray uses a
+single wrist-mounted force/torque sensor already present on the rig for
+other reasons, and recovers a coarser 3D ray rather than a full 6-DoF
+pose, but requires no additional sensing hardware and localises contact
+anywhere on the manipulator, not only at an instrumented fingertip.
+
+\textbf{Hand-eye calibration.} Recovering the fixed transform between a
+rigidly-mounted eye-in-hand camera and the robot's proprioceptive frame
+is a classical problem, solved in closed form by Tsai and
+Lenz~\cite{tsai1989handeye} via the AX=XB formulation; our calibration
+procedure uses their method directly. Reading this transform off CAD
+drawings instead of measuring it directly proved unreliable at the
+fidelity available to us (Section~\ref{sec:calib}), the practical case
+for the direct calibration route standard in this literature.
+
 \textbf{Constraint and interaction identification.} The host lab's
 existing LfD layers identify kinematic constraints from pose
 \cite{overbeek2025frontiers} and physical interactions from contact
@@ -339,6 +359,7 @@ point & object absent  & 469 & 247{,}594 (495{,}142) \\
 \end{table}
 
 \subsection{Wrench-ray geometric grounding (protocol and CAD-sensitivity evidence)}
+\label{sec:calib}
 
 This is the paper's core planned evaluation. The method itself
 (Eq.~\ref{eq:bicchi} through image projection) is fully implemented and
@@ -514,6 +535,17 @@ Machine Learning Research (PMLR)}, 2021.
 J.~A.~Collins, C.~Houff, Y.~L.~Tan, and C.~C.~Kemp, ``ForceSight:
 Text-guided mobile manipulation with visual-force goals,'' \emph{arXiv
 preprint arXiv:2309.12312}, 2023.
+
+\bibitem{huang2025normalflow}
+H.-J.~Huang, M.~Kaess, and W.~Yuan, ``NormalFlow: Fast, robust, and
+accurate contact-based object 6DoF pose tracking with vision-based
+tactile sensors,'' \emph{IEEE Robot. Autom. Lett.}, vol.~10, no.~1,
+pp.~452--459, Jan. 2025.
+
+\bibitem{tsai1989handeye}
+R.~Y.~Tsai and R.~K.~Lenz, ``A new technique for fully autonomous and
+efficient 3D robotics hand/eye calibration,'' \emph{IEEE Trans. Robot.
+Autom.}, vol.~5, no.~3, pp.~345--358, Jun. 1989.
 
 \end{thebibliography}
 
