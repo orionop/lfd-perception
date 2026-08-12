@@ -40,7 +40,8 @@ import torch
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from event_utils import mask_from_overlay
+from event_utils import (gripper_closed_window, gripper_transitions,
+                         mask_from_overlay)
 from PIL import Image
 from transformers import AutoImageProcessor, AutoModel
 
@@ -92,18 +93,19 @@ def detect_events_generic(csv_path):
         if has_force:
             out["press"] = ids(int(np.argmax(fm - baseline)))
         return out
+    # Guarded against a gripper that never actuated -- without this the
+    # midpoint threshold splits the sensor's noise band and yields phantom
+    # grasp/release, which here would mean scoring DADO against events that
+    # do not exist (confirmed on lfdws_t001_labexport). See event_utils.py.
     w = np.array([parse_gw(r[GRIP]) for r in rows])
-    w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
-    thr = w_closed + 0.5*(w_open - w_closed)
-    closed = w < thr
-    cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
-    cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
-    if len(cd):
-        out["grasp"] = ids(int(cd[0]))
-    if len(cu):
-        out["release"] = ids(int(cu[-1]))
+    grasp_i, release_i = gripper_transitions(w)
+    closed = gripper_closed_window(w)
+    if grasp_i is not None:
+        out["grasp"] = ids(grasp_i)
+    if release_i is not None:
+        out["release"] = ids(release_i)
     if has_force:
-        fm_adj = np.where(closed, fm - baseline, -np.inf)
+        fm_adj = np.where(closed, fm - baseline, -np.inf) if closed.any() else fm - baseline
         out["press"] = ids(int(np.argmax(fm_adj)))
     return out
 

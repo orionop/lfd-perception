@@ -73,8 +73,8 @@ We test this directly with DINOv2~\cite{oquab2023dinov2} self-attention
 combined first with monocular depth (Depth-Anything-V2
 \cite{yang2024depthanythingv2}) and then with \emph{real} sensor depth
 from an RGB-D camera; in both cases the resulting saliency fails to
-isolate the task-relevant object, across 16 (recording, event) pairs
-spanning six recordings, at a mean intersection-over-union of only 0.160
+isolate the task-relevant object, across 14 (recording, event) pairs
+spanning six recordings, at a mean intersection-over-union of only 0.166
 against the true object (Section~\ref{sec:dado}) -- including on
 non-specular objects where depth is measured cleanly, ruling out sensor
 noise as the cause. This motivates a proprioceptive alternative.
@@ -102,8 +102,8 @@ noise as the cause. This motivates a proprioceptive alternative.
         cross-object contamination.
   \item \textit{Label-Free Discovery Fails, Even With Real Depth:}
         DINOv2 attention $\times$ real sensor depth achieves a mean IoU
-        of only 0.160 (range 0.044--0.352) against the true object across
-        16 events, confirming that proprioceptive grounding is not
+        of only 0.166 (range 0.044--0.352) against the true object across
+        14 events, confirming that proprioceptive grounding is not
         replaceable by a stronger depth signal alone.
 \end{itemize}
 
@@ -241,7 +241,7 @@ detector under real (not synthetic) conditions.
 \textbf{Rec.} & \textbf{Grip.} & \textbf{F/T} & \textbf{Task} \\
 \midrule
 1 & \checkmark & \checkmark & pick / press / drop (2 objects) \\
-2 & --         & \checkmark & multi-object contact (4 objects) \\
+2 & --         & \checkmark & multi-object contact (4 in scene, 3 tracked) \\
 3 & \checkmark & --         & fastener insertion \\
 4 & \checkmark & --         & fastener insertion \\
 5 & \checkmark & \checkmark & multi-phase: latch / cube pick-press-drop / latch \\
@@ -275,9 +275,9 @@ at the 85th percentile) was re-run substituting real sensor depth, scored
 quantitatively against the ground-truth object mask each event's
 proprioceptive cue actually seeds (Section~\ref{sec:method}), across every
 recording with both real depth and a propagated ground-truth mask
-(Recordings 2--6): 16 (recording, event) pairs in total. Mean
+(Recordings 2--6): 14 (recording, event) pairs in total. Mean
 intersection-over-union between the label-free proposal and the true
-object is $0.160$ (range $0.044$--$0.352$, Table~\ref{tab:dado}), and the
+object is $0.166$ (range $0.044$--$0.352$, Table~\ref{tab:dado}), and the
 attention signal itself stays diffuse and object-agnostic on every
 event tested (Fig.~\ref{fig:dado}) -- real depth is measurably better
 than a monocular estimate at recovering scene geometry, but does not
@@ -299,9 +299,9 @@ union between the thresholded proposal and the true object mask.}
 4 (fastener, grasp only) & 1 & 0.052 & -- \\
 5 (cube phase) & 3 & 0.215 & 0.113--0.352 \\
 5, earlier extraction\footnotemark & 3 & 0.178 & 0.092--0.286 \\
-6 (latch) & 3 & 0.128 & 0.117--0.140 \\
+6 (latch) & 1 & 0.134 & -- \\
 \midrule
-all & 16 & 0.160 & 0.044--0.352 \\
+all & 14 & 0.166 & 0.044--0.352 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -520,7 +520,7 @@ approaches may perform differently.
 Proprioceptive signals -- gripper state and wrist wrench -- ground
 task-relevant object identification where label-free visual discovery
 does not: DINOv2 attention $\times$ real depth achieves a mean IoU of
-only 0.160 across 16 events, and a point-seeded SAM~2 track drifts onto
+only 0.166 across 14 events, and a point-seeded SAM~2 track drifts onto
 unrelated background at up to 95\% of frame area where a box-seeded
 track degrades gracefully to near-empty instead. A geometric method for
 grounding the contact-receiving object from wrist force/torque alone is
