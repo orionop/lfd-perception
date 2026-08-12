@@ -60,44 +60,51 @@ evidence that the signal is directionally correct.
 
 Learning from demonstration increasingly decomposes a demonstration into
 phases governed by kinematic constraints \cite{overbeek2025frontiers} or
-physical contact \cite{overbeek2025adrr}. Both layers presuppose an
+physical contact \cite{overbeek2025adrr}, both of which presuppose an
 answer to a prior question: \emph{which object, in the camera frame, is
 the one the constraint or contact concerns?} Most existing approaches
-either sidestep this (constraints defined on end-effector pose alone), or
-identify only the grasped object from gripper state, leaving any
+sidestep this entirely, defining constraints on end-effector pose alone,
+or identify only the grasped object from gripper state and leave any
 contact-receiving object unidentified.
 
-A natural alternative is label-free visual object discovery: use a
-frozen foundation model to propose salient objects without any
-task-specific training. We test this directly, using DINOv2
-\cite{oquab2023dinov2} self-attention combined with monocular depth
-(Depth-Anything-V2 \cite{yang2024depthanythingv2}) and, in a second test,
-combined with \emph{real} sensor depth from an RGB-D camera. In both
-cases the resulting saliency fails to isolate the task-relevant object in
-our recordings (Section~\ref{sec:dado}), including on non-specular
-objects where depth is measured cleanly. This motivates a proprioceptive
-alternative.
+A natural alternative is label-free visual object discovery: a frozen
+foundation model proposes salient objects with no task-specific training.
+We test this directly with DINOv2~\cite{oquab2023dinov2} self-attention
+combined first with monocular depth (Depth-Anything-V2
+\cite{yang2024depthanythingv2}) and then with \emph{real} sensor depth
+from an RGB-D camera; in both cases the resulting saliency fails to
+isolate the task-relevant object, across 16 (recording, event) pairs
+spanning six recordings, at a mean intersection-over-union of only 0.161
+against the true object (Section~\ref{sec:dado}) -- including on
+non-specular objects where depth is measured cleanly, ruling out sensor
+noise as the cause. This motivates a proprioceptive alternative.
 
 \textbf{Contributions.}
 \begin{itemize}
-  \item An event-detection scheme that localises grasp, release, and
-        contact moments from gripper and wrist force/torque signals,
-        with graceful degradation when either sensor is unavailable
-        (verified on real recordings missing each sensor in turn).
-  \item A geometric grounding method for the contact-receiving object,
-        using the intrinsic contact ray \cite{bicchi1990} computed from
-        the wrist wrench and projected into the camera frame via
-        calibrated extrinsics -- implemented and validated in dry-run
-        (uncalibrated) mode, pending a hand-eye calibration pass to
-        report quantitative accuracy.
-  \item A generalisation of the resulting role-tagged tracking pipeline
-        from a fixed grasped/contact-receiver object pair to an
-        arbitrary number of simultaneously tracked objects, demonstrated
-        with three independently seeded and propagated objects in one
-        recording.
-  \item An empirical case, using real (not estimated) depth, that
-        label-free visual object discovery is not a substitute for
-        proprioceptive grounding in this setting.
+  \item \textit{Sensor-Robust Event Detection:} Grasp, release, and
+        contact moments are localised from gripper and wrist
+        force/torque signals, degrading gracefully to whichever signal
+        remains when the other is absent, verified with zero
+        behavioural change on full-sensing recordings against two
+        gripper-only and one force-only recording.
+  \item \textit{Geometric Contact Grounding:} The intrinsic contact ray
+        of Bicchi~\cite{bicchi1990}, computed from the wrist wrench alone
+        and projected into the camera frame via calibrated extrinsics,
+        grounds the contact-receiving object without any learned
+        proposal step -- implemented and validated in dry-run mode,
+        pending a hand-eye calibration pass to report quantitative
+        accuracy.
+  \item \textit{Arbitrary-Object Generalisation:} The role-tagged
+        tracking pipeline generalises from a fixed grasped/contact-
+        receiver pair to an arbitrary object count, demonstrated with
+        three independently seeded and bidirectionally propagated
+        objects tracked across a full 1013-frame recording with no
+        cross-object contamination.
+  \item \textit{Label-Free Discovery Fails, Even With Real Depth:}
+        DINOv2 attention $\times$ real sensor depth achieves a mean IoU
+        of only 0.161 (range 0.044--0.352) against the true object across
+        16 events, confirming that proprioceptive grounding is not
+        replaceable by a stronger depth signal alone.
 \end{itemize}
 
 \section{Related Work}
@@ -165,14 +172,19 @@ layer beneath both.
 
 Given a merged, pose-synchronised recording, three event types are
 detected: \emph{grasp} and \emph{release} from gripper-width threshold
-crossings (midpoint of the observed open/closed range), and
+crossings at the midpoint of the observed open/closed range, and
 \emph{contact} (``press'') from the baseline-subtracted wrist
-force-magnitude peak. When only one of the two sensors is present, the
-detector degrades gracefully to that sensor's events alone (verified on
-real recordings lacking each sensor in turn, Section~\ref{sec:experiments}).
-For recordings with more than one grasp/release/contact cycle, peaks are
-grouped into activity clusters by time-gap rather than reporting only the
-single global event.
+force-magnitude peak, where the baseline is the median force magnitude
+over the first 10\% of the recording. When only one of the two sensors is
+present, the detector degrades to that sensor's events alone with zero
+change in behaviour when both are present, verified on real recordings
+lacking each sensor in turn (Section~\ref{sec:multievent}). For
+recordings with more than one grasp/release/contact cycle, peaks are
+grouped into activity clusters by time-gap, and the contact search is
+restricted to the window between the surrounding grasp and release
+rather than reporting the single global-maximum peak, which we show
+(Section~\ref{sec:multievent}) silently attributes the wrong phase's
+contact on a multi-phase recording.
 
 \subsection{Geometric grounding of the contact-receiving object}
 
@@ -194,21 +206,22 @@ learned object proposal step.
 
 \subsection{Grasped-object grounding}
 
-The grasped object is seeded either by a vision-only heuristic (SAM
-automatic mask generation, scored by position/size/border-distance
-priors) or, once available, by projecting the end-effector position
-directly into the image via the same calibration. The vision-only
-heuristic is shown in Section~\ref{sec:seedplacement} to be unreliable
-across scenes with different object scales, motivating the geometric
-alternative.
+The grasped object is seeded either by a vision-only heuristic -- SAM
+automatic mask generation scored by position, size, and border distance,
+rejecting any candidate mask exceeding 40\% of frame area -- or, once
+available, by projecting the end-effector position directly into the
+image via the same calibration. The 40\% cutoff, tuned to one
+recording's object scale, is shown in Section~\ref{sec:seedplacement} to
+reject a correct but larger contact-receiving object on a different
+scene, motivating the geometric alternative.
 
 \subsection{Propagation and multi-object generalisation}
 
 Each seeded object is propagated bidirectionally through the full
-recording with SAM~2's video predictor, yielding a per-frame mask. The
-sidecar representation generalises to an arbitrary number of
-independently seeded objects rather than a fixed grasped/contact-receiver
-pair, each with its own role label.
+recording with SAM~2.1 Hiera-Large's video predictor, yielding a
+per-frame mask. The sidecar representation generalises to an arbitrary
+number of independently seeded objects rather than a fixed
+grasped/contact-receiver pair, each with its own role label.
 
 \section{System and Data}
 
@@ -313,10 +326,11 @@ proposal (right column, red) rarely aligns with the true object outline
 
 The vision-only heuristic used to seed the grasped/contact-receiver roles
 scores SAM's candidate masks by position, size, and border distance, with
-a fixed area cutoff tuned on Recording~1's object scale. On Recording~2,
-the correct contact-receiving object exceeds this cutoff and is rejected
-outright, causing the seed to fall on background clutter and propagate an
-unstable mask (17--78\% of frame area) for the full recording. Two
+a 40\% frame-area cutoff tuned on Recording~1's object scale. On
+Recording~2, the correct contact-receiving object exceeds this cutoff and
+is rejected outright, causing the seed to fall on background clutter and
+propagate an unstable mask (17--78\% of frame area) for the full
+recording. Two
 automated generalisations of the heuristic were attempted -- relative
 candidate-size ranking, and a real-depth near-camera prior -- and both
 failed: the first mis-selects a reflective background surface on
@@ -485,17 +499,20 @@ approaches may perform differently.
 
 \section{Conclusion and Future Work}
 
-Proprioceptive signals -- gripper state and wrist wrench -- provide a
-grounding signal for task-relevant object identification that label-free
-visual discovery does not reliably replace, including when real depth is
-available. A geometric method for grounding the contact-receiving object
-from wrist force/torque alone is implemented and ready for evaluation
-once a direct hand-eye calibration pass replaces the CAD-derived
-extrinsic ruled out in Section~\ref{sec:calib}; this is the immediate
-next step. Beyond that, an integration of the resulting role-tagged object tracks
-into the host lab's existing kinematic-constraint and physical-interaction
-identification layers \cite{overbeek2025frontiers,overbeek2025adrr} is
-the intended path to a complete perception-to-LfD pipeline.
+Proprioceptive signals -- gripper state and wrist wrench -- ground
+task-relevant object identification where label-free visual discovery
+does not: DINOv2 attention $\times$ real depth achieves a mean IoU of
+only 0.161 across 16 events, and a point-seeded SAM~2 track drifts onto
+unrelated background at up to 95\% of frame area where a box-seeded
+track degrades gracefully to near-empty instead. A geometric method for
+grounding the contact-receiving object from wrist force/torque alone is
+implemented and ready for evaluation once a direct hand-eye calibration
+pass replaces the CAD-derived extrinsic ruled out in
+Section~\ref{sec:calib}; this is the immediate next step. Beyond that,
+integrating the resulting role-tagged object tracks into the host lab's
+existing kinematic-constraint and physical-interaction identification
+layers \cite{overbeek2025frontiers,overbeek2025adrr} is the intended path
+to a complete perception-to-LfD pipeline.
 
 \begin{thebibliography}{9}
 
