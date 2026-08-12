@@ -34,6 +34,15 @@ from sam2.build_sam import build_sam2_video_predictor
 IMG_DIR_NAME = "zed_zed_node_rgb_color_rect_image_compressed"
 
 
+
+# Caption colour. MUST NOT equal any object's mask colour: the sidecar
+# builder recovers masks from these overlays by colour-differencing, and a
+# caption drawn in the mask colour is recovered as object pixels (phantom
+# ~1000px object with a fixed bbox at the caption location). White is safe
+# for every role colour in use -- it drives all three channels up, so it
+# fails the "off channel must be unchanged" test in event_utils.py.
+CAPTION_COLOR = (255, 255, 255)
+
 def backup_if_exists(path):
     if os.path.exists(path):
         bak = path + ".bak"
@@ -164,7 +173,7 @@ def main():
             cv2.circle(ov, (int(px), int(py)), 8, (0, 0, 255), -1)
         cv2.putText(ov, f"f{out_frame_idx:03d} obj{args.obj_id}:{args.role} "
                     f"px={int(mask.sum())}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, CAPTION_COLOR, 2)
         out_path = os.path.join(args.out, f"f{out_frame_idx:04d}_{fname}")
         cv2.imwrite(out_path, ov)
         rows.append((out_frame_idx, fname, int(mask.sum()), out_path))
@@ -189,7 +198,7 @@ def main():
         ov = overlay(bgr, mask, color)
         cv2.putText(ov, f"f{out_frame_idx:03d} obj{args.obj_id}:{args.role} "
                     f"px={int(mask.sum())}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, CAPTION_COLOR, 2)
         out_path = os.path.join(args.out, f"f{out_frame_idx:04d}_{fname}")
         cv2.imwrite(out_path, ov)
         rows.append((out_frame_idx, fname, int(mask.sum()), out_path))

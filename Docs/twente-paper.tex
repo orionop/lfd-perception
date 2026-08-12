@@ -74,7 +74,7 @@ combined first with monocular depth (Depth-Anything-V2
 \cite{yang2024depthanythingv2}) and then with \emph{real} sensor depth
 from an RGB-D camera; in both cases the resulting saliency fails to
 isolate the task-relevant object, across 16 (recording, event) pairs
-spanning six recordings, at a mean intersection-over-union of only 0.161
+spanning six recordings, at a mean intersection-over-union of only 0.160
 against the true object (Section~\ref{sec:dado}) -- including on
 non-specular objects where depth is measured cleanly, ruling out sensor
 noise as the cause. This motivates a proprioceptive alternative.
@@ -102,7 +102,7 @@ noise as the cause. This motivates a proprioceptive alternative.
         cross-object contamination.
   \item \textit{Label-Free Discovery Fails, Even With Real Depth:}
         DINOv2 attention $\times$ real sensor depth achieves a mean IoU
-        of only 0.161 (range 0.044--0.352) against the true object across
+        of only 0.160 (range 0.044--0.352) against the true object across
         16 events, confirming that proprioceptive grounding is not
         replaceable by a stronger depth signal alone.
 \end{itemize}
@@ -275,9 +275,9 @@ at the 85th percentile) was re-run substituting real sensor depth, scored
 quantitatively against the ground-truth object mask each event's
 proprioceptive cue actually seeds (Section~\ref{sec:method}), across every
 recording with both real depth and a propagated ground-truth mask
-(Recordings 2, 3, 4, 5): 16 (recording, event) pairs in total. Mean
+(Recordings 2--6): 16 (recording, event) pairs in total. Mean
 intersection-over-union between the label-free proposal and the true
-object is $0.161$ (range $0.044$--$0.352$, Table~\ref{tab:dado}), and the
+object is $0.160$ (range $0.044$--$0.352$, Table~\ref{tab:dado}), and the
 attention signal itself stays diffuse and object-agnostic on every
 event tested (Fig.~\ref{fig:dado}) -- real depth is measurably better
 than a monocular estimate at recovering scene geometry, but does not
@@ -294,14 +294,14 @@ union between the thresholded proposal and the true object mask.}
 \toprule
 \textbf{Recording} & \textbf{n events} & \textbf{mean IoU} & \textbf{range} \\
 \midrule
-2 (4-object) & 5 & 0.181 & 0.110--0.262 \\
+2 (4-object) & 5 & 0.182 & 0.112--0.268 \\
 3 (fastener, grasp only) & 1 & 0.044 & -- \\
 4 (fastener, grasp only) & 1 & 0.052 & -- \\
 5 (cube phase) & 3 & 0.215 & 0.113--0.352 \\
-5, earlier extraction\footnotemark & 3 & 0.177 & 0.092--0.283 \\
-6 (latch) & 3 & 0.131 & 0.119--0.142 \\
+5, earlier extraction\footnotemark & 3 & 0.178 & 0.092--0.286 \\
+6 (latch) & 3 & 0.128 & 0.117--0.140 \\
 \midrule
-all & 16 & 0.161 & 0.044--0.352 \\
+all & 16 & 0.160 & 0.044--0.352 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -352,7 +352,7 @@ is behind it, the box-prompted track degrades gracefully to
 near-empty when the object leaves the frame (mean 3{,}243\,px across
 469 object-absent frames), while the point-prompted track does not
 recognise object absence at all and drifts onto unrelated background
---- mean 247{,}594\,px (46\% of the 960$\times$540 frame) across the
+--- mean 247{,}594\,px (48\% of the 960$\times$540 frame) across the
 same 469 frames, peaking at 495{,}142\,px (95\% of frame) on a bare
 pegboard panel (Table~\ref{tab:seedablation}). The two prompt types are
 comparable while the object is genuinely present (66{,}075 vs.\
@@ -384,12 +384,12 @@ This is the paper's core planned evaluation. The method itself
 runs in a dry-run mode that reports base-frame geometry without
 projecting whenever calibration is not marked trusted, so that no
 placeholder calibration is ever silently used. At the contact event of
-Recording~1, wrist wrench magnitude was 26.4\,N directed within
-$5^\circ$ of vertical in the base frame, consistent with a top-down
-press onto the visible contact-receiving object; the Bicchi contact
-point $\mathbf{r}_0$ lies within 1\,cm of the wrist origin along the
-force axis, a physically plausible contact offset for the demonstrated
-task.
+Recording~1, wrist wrench magnitude was 26.4\,N directed
+$10.1^\circ$ from vertical in the base frame, consistent with a
+predominantly top-down press onto the visible contact-receiving object;
+the Bicchi contact point $\mathbf{r}_0$ lies 2.0\,cm from the wrist
+origin, perpendicular to the force axis by construction, a physically
+plausible contact offset for the demonstrated task.
 
 \textbf{CAD-derived calibration is not yet trustworthy.} The host lab's
 eye-in-hand camera bracket CAD left one translation ambiguous between two
@@ -461,13 +461,31 @@ This failure is silent -- it produces a plausible-looking but wrong
 event with no error signal -- and would not have been caught without
 manually inspecting the seeded frame.
 
+Recording~6 exposes a second, independent silent failure. Its gripper
+never actuates: the measured width spans 0.07999710--0.07999776\,m, a
+total travel of $6.6\times10^{-7}$\,m that is entirely sensor noise.
+Because the open/closed threshold is computed as the midpoint of the
+observed width range, that midpoint falls \emph{inside} the noise band,
+and the detector reports a grasp at $t{=}0.06$\,s and a release at
+$t{=}7.66$\,s. The consequence propagates: since the contact search is
+restricted to the interval between grasp and release, the spurious
+window also displaces the contact event, which was reported at
+$t{=}3.34$\,s against a true force peak of 11.15\,N at $t{=}5.08$\,s.
+Requiring a minimum gripper travel of 1\,mm before believing any
+transition removes both errors -- the guard sits roughly 24$\times$ below
+the smallest genuine grasp in this dataset (0.024\,m) and three orders of
+magnitude above the observed noise floor, so it separates the two cases
+without tuning. With the guard active the detector correctly reports
+contact only, at the true peak.
+
 \begin{table}[t]
 \centering
 \caption{Event detection across all six recordings used in
-this work. A ``FAIL'' verdict means the naive single global-maximum
-detector mis-attributed an event to the wrong interaction phase; the
-grasp-window-restricted detector (Section~\ref{sec:multievent})
-corrects it.}
+this work. Recording~5 fails without the grasp-window restriction
+(global-maximum force lands in the wrong interaction phase); Recording~6
+fails without the minimum-travel guard (a gripper that never actuates
+yields phantom grasp/release from sensor noise). Both are corrected in
+Section~\ref{sec:multievent}.}
 \label{tab:eventdet}
 \begin{tabular}{lccl}
 \toprule
@@ -478,7 +496,7 @@ corrects it.}
 3              & \checkmark & --         & pass \\
 4              & \checkmark & --         & pass \\
 5              & \checkmark & \checkmark & FAIL (single-event) / pass (windowed) \\
-6              & \checkmark & \checkmark & pass (no real grasp cycle present) \\
+6              & \checkmark & \checkmark & FAIL (no span guard) / pass (guarded) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -502,7 +520,7 @@ approaches may perform differently.
 Proprioceptive signals -- gripper state and wrist wrench -- ground
 task-relevant object identification where label-free visual discovery
 does not: DINOv2 attention $\times$ real depth achieves a mean IoU of
-only 0.161 across 16 events, and a point-seeded SAM~2 track drifts onto
+only 0.160 across 16 events, and a point-seeded SAM~2 track drifts onto
 unrelated background at up to 95\% of frame area where a box-seeded
 track degrades gracefully to near-empty instead. A geometric method for
 grounding the contact-receiving object from wrist force/torque alone is

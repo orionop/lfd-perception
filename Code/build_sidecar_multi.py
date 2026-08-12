@@ -43,6 +43,11 @@ import cv2
 import numpy as np
 import pandas as pd
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from event_utils import (gripper_closed_window, gripper_transitions,
+                         mask_from_overlay)
+
 IMG_DIR_NAME = "zed_zed_node_rgb_color_rect_image_compressed"
 
 POSE_TS = "NS_1.franka_robot_state_broadcaster.current_pose.timestamp"
@@ -72,44 +77,48 @@ def events_from_demo(csv_path):
     df = pd.read_csv(csv_path)
     t = pd.to_datetime(df[POSE_TS])
     t_rel = (t - t.iloc[0]).dt.total_seconds().to_numpy()
-    fm = np.sqrt(df[FX].astype(float)**2 + df[FY].astype(float)**2 + df[FZ].astype(float)**2).to_numpy()
-    baseline = float(np.median(fm[: len(fm) // 10]))
+
+    # Wrench may be absent entirely (F/T sensor not publishing, e.g.
+    # lfdws_t004/t005). This was previously computed unconditionally and
+    # raised KeyError on those trials, despite the no-wrench case being
+    # documented as handled -- guard it.
+    has_force = FX in df.columns
+    if has_force:
+        fm = np.sqrt(df[FX].astype(float)**2 + df[FY].astype(float)**2
+                     + df[FZ].astype(float)**2).to_numpy()
+        baseline = float(np.median(fm[: len(fm) // 10]))
+
     if GRIP not in df.columns:
-        fm_adj = fm - baseline
-        i = int(np.argmax(fm_adj))
+        if not has_force:
+            return {}          # neither sensor: no events are inferable
+        i = int(np.argmax(fm - baseline))
         return {"press": {"t_rel_s": float(t_rel[i]), "row_idx": i,
                           "img_ts": str(df[IMG].iloc[i])}}
+    # Gripper transitions, guarded against a gripper that never actuated --
+    # without the guard the midpoint threshold lands inside the sensor's
+    # noise band and manufactures grasp/release, which then mis-restricts
+    # the press search below (see Code/event_utils.py, BUG 1).
     w = df[GRIP].apply(parse_gw).to_numpy()
-    w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
-    thr = w_closed + 0.5 * (w_open - w_closed)
-    closed = w < thr
-    cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
-    cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
+    grasp_i, release_i = gripper_transitions(w)
+    closed = gripper_closed_window(w)
     out = {}
-    if len(cd):
-        i = int(cd[0]); out["grasp"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
-    if len(cu):
-        i = int(cu[-1]); out["release"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
-    fm_adj = np.where(closed, fm - baseline, -np.inf)
-    i = int(np.argmax(fm_adj))
-    out["press"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
+    if grasp_i is not None:
+        i = grasp_i; out["grasp"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
+    if release_i is not None:
+        i = release_i; out["release"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
+    # Contact event only exists if the F/T sensor was publishing.
+    if has_force:
+        # Restrict the contact search to the held window when there is one;
+        # with no real grasp cycle, search the whole recording instead.
+        fm_adj = np.where(closed, fm - baseline, -np.inf) if closed.any() else fm - baseline
+        i = int(np.argmax(fm_adj))
+        out["press"] = {"t_rel_s": float(t_rel[i]), "row_idx": i, "img_ts": str(df[IMG].iloc[i])}
     return dict(sorted(out.items(), key=lambda kv: kv[1]["t_rel_s"]))
 
 
-def mask_from_overlay(ov_path, src_path, color_bgr, tol=40):
-    ov = cv2.imread(ov_path)
-    src = cv2.imread(src_path)
-    if ov is None or src is None or ov.shape != src.shape:
-        return None
-    diff = ov.astype(int) - src.astype(int)
-    b, g, r = color_bgr
-    m = np.ones(diff.shape[:2], dtype=bool)
-    for ch, target in zip(range(3), (b, g, r)):
-        if target > 100:
-            m &= diff[..., ch] > tol
-        else:
-            m &= diff[..., ch] < tol
-    return m
+# mask_from_overlay now lives in Code/event_utils.py -- the local copy
+# recovered the overlay's caption text as object pixels because the
+# propagation scripts draw that caption in the object's own colour.
 
 
 def bbox(mask):

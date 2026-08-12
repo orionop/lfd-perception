@@ -37,6 +37,10 @@ import os
 import cv2
 import numpy as np
 import torch
+
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from event_utils import mask_from_overlay
 from PIL import Image
 from transformers import AutoImageProcessor, AutoModel
 
@@ -149,19 +153,14 @@ def dado_mask(a_full, d_full):
 
 
 def load_gt_mask(rgb_path, overlay_path, color_bgr, tol=40):
-    src = cv2.imread(rgb_path)
-    ov = cv2.imread(overlay_path)
-    if src is None or ov is None or src.shape != ov.shape:
-        return None
-    diff = ov.astype(int) - src.astype(int)
-    b, g, r = color_bgr
-    m = np.ones(diff.shape[:2], dtype=bool)
-    for ch, target in zip(range(3), (b, g, r)):
-        if target > 100:
-            m &= diff[..., ch] > tol
-        else:
-            m &= diff[..., ch] < tol
-    return m
+    """Delegates to the shared, corrected recovery in Code/event_utils.py.
+
+    The previous local copy accepted the overlay's caption text as object
+    pixels (the propagation scripts drew that caption in the object's own
+    colour), so the ground truth these IoUs are scored against carried a
+    ~1000px phantom blob in the caption band. Fixed 2026-08-12.
+    """
+    return mask_from_overlay(overlay_path, rgb_path, color_bgr, tol=tol)
 
 
 def iou(a, b):
