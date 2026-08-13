@@ -184,61 +184,11 @@ def label(img, text):
 # ----------------------------------------------------------------------------
 # per-trial configuration
 # ----------------------------------------------------------------------------
-DEPTH_EXT_BY_TRIAL = {}  # filled per-trial below (npy preferred if present)
-
-TASKS = []  # each: (trial, event_name, rgb_path, depth_path, overlay_path, color_bgr)
-
-# t001_depth: 5 hand-picked activity-cluster events (from _dado_real_depth_multi.py)
-T001D_RGB = "Data/lfdws_t001_depth/zed_zed_node_rgb_color_rect_image_compressed"
-T001D_DEPTH = "Data/lfdws_t001_depth/zed_zed_node_depth_depth_registered_compressedDepth"
-T001D_EVENTS = [
-    ("plate_press",        "1782835513207923681", "1782835513163533696", "contact_receiver", (255, 0, 255)),
-    ("screwdriver_contact", "1782835527086969733", "1782835527053175454", "tool_contact",     (0, 165, 255)),
-    ("charger_grasp",      "1782835537622884551", "1782835537581977576", "charger_contact",  (0, 215, 255)),
-    ("charger_lift",       "1782835540835169730", "1782835540802038251", "charger_contact",  (0, 215, 255)),
-    ("charger_dock",       "1782835545525039497", "1782835545485007420", "charger_contact",  (0, 215, 255)),
-]
-T001D_SIDECAR = "figures/identify_depth_multi/objects_summary.csv"
-for name, rgb_id, depth_id, role, color in T001D_EVENTS:
-    TASKS.append(("lfdws_t001_depth", name, role, color,
-                  f"{T001D_RGB}/{rgb_id}.png", f"{T001D_DEPTH}/{depth_id}.png",
-                  T001D_SIDECAR, rgb_id))
-
-# t002_new: own event detection, cube grasped
-T002N_CSV = "Data/lfdws_t002_new/lfdws_t002_new_0.csv"
-T002N_RGB = "Data/lfdws_t002_new/zed_zed_node_rgb_color_rect_image_compressed"
-T002N_DEPTH = "Data/lfdws_t002_new/zed_zed_node_depth_depth_registered_compressedDepth"
-T002N_SIDECAR = "figures/t002new/identify/objects_summary.csv"
-for name, (rgb_id, depth_id) in detect_events_generic(T002N_CSV).items():
-    TASKS.append(("lfdws_t002_new", name, "grasped", (0, 255, 0),
-                  f"{T002N_RGB}/{rgb_id}.png", f"{T002N_DEPTH}/{depth_id}.png",
-                  T002N_SIDECAR, rgb_id))
-
-# t001_labexport: latch handle, own event detection (has both npy+png depth)
-T001L_CSV = "Data/lfdws_t001_labexport/lfdws_t001/lfdws_t001.csv"
-T001L_RGB = "Data/lfdws_t001_labexport/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed"
-T001L_DEPTH = "Data/lfdws_t001_labexport/lfdws_t001/zed_zed_node_depth_depth_registered_compressedDepth"
-T001L_SIDECAR = "figures/t001labexport/identify/objects_summary.csv"
-for name, (rgb_id, depth_id) in detect_events_generic(T001L_CSV).items():
-    TASKS.append(("lfdws_t001_labexport", name, "contact_receiver", (255, 0, 255),
-                  f"{T001L_RGB}/{rgb_id}.png", f"{T001L_DEPTH}/{depth_id}.npy",
-                  T001L_SIDECAR, rgb_id))
-
-# t004 / t005: gripper-only (no force), grasp event only
-for trial in ["lfdws_t004", "lfdws_t005"]:
-    csvp = f"Data/{trial}/{trial}_0.csv"
-    if not os.path.exists(csvp):
-        csvp = next((os.path.join(f"Data/{trial}", f) for f in os.listdir(f"Data/{trial}")
-                    if f.endswith(".csv")), None)
-    rgb = f"Data/{trial}/zed_zed_node_rgb_color_rect_image_compressed"
-    depth = f"Data/{trial}/zed_zed_node_depth_depth_registered_compressedDepth"
-    sidecar = f"figures/{trial.replace('lfdws_', '')}/identify/objects_summary.csv"
-    for name, (rgb_id, depth_id) in detect_events_generic(csvp).items():
-        if name != "grasp":
-            continue  # no force sensor -> press meaningless, release has no distinct object either
-        TASKS.append((trial, name, "grasped", (0, 255, 0),
-                      f"{rgb}/{rgb_id}.png", f"{depth}/{depth_id}.png",
-                      sidecar, rgb_id))
+# The evaluation set lives in Code/dado_eval_tasks.py so the second
+# label-free baseline (Code/baseline_sam_depth_ranking.py) is provably
+# scored on identical (recording, event) pairs. Verified identical to the
+# list previously inlined here.
+from dado_eval_tasks import TASKS  # noqa: E402
 
 
 def main():
