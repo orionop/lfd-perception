@@ -29,6 +29,10 @@ import os
 
 import numpy as np
 
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from event_utils import gripper_moved
+
 GRIP = "NS_1.franka_gripper.joint_states.position"
 FX = "bota_post.wrench_body_compensated.wrench.force.x"
 FY = "bota_post.wrench_body_compensated.wrench.force.y"
@@ -62,7 +66,9 @@ def detect_events_generic(csv_path):
     w = np.array([parse_gw(r[GRIP]) for r in rows])
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5*(w_open - w_closed)
-    closed = w < thr
+    # Guard: a gripper that never actuated puts this midpoint inside the
+    # sensor's noise band and manufactures grasp/release (event_utils.py).
+    closed = (w < thr) if gripper_moved(w) else np.zeros(len(w), dtype=bool)
     cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
     cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
     if len(cd):
@@ -70,7 +76,10 @@ def detect_events_generic(csv_path):
     if len(cu):
         out["release"] = int(cu[-1])
     if has_force:
-        fm_adj = np.where(closed, fm - baseline, -np.inf)
+        # With no real grasp cycle there is no held window to restrict to;
+        # search the whole recording rather than an empty mask.
+        fm_adj = (np.where(closed, fm - baseline, -np.inf)
+                  if closed.any() else fm - baseline)
         out["press"] = int(np.argmax(fm_adj))
     return out, len(rows)
 
@@ -96,10 +105,14 @@ TRIALS = [
      "grasp-window-restricted detector correctly isolates the real cube cycle "
      "-- found and fixed same-day, see figures/t002labexport/"),
     ("lfdws_t001_labexport", "Data/lfdws_t001_labexport/lfdws_t001/lfdws_t001.csv",
-     True, True, "PARTIAL",
-     "gripper-width crossing is noise (no real grasp in this clip, width stays "
-     "~0.08 throughout); force event (latch press, 11.15N) correctly detected "
-     "and manually confirmed against the frame"),
+     True, True, "FAIL (no span guard) / PASS (guarded)",
+     "gripper never actuates -- width spans 0.07999710-0.07999776 m, i.e. "
+     "6.6e-7 m of pure sensor noise. Without a minimum-travel guard the "
+     "midpoint threshold falls inside that noise band and reports a phantom "
+     "grasp at 0.06s and release at 7.66s, which then displaces the contact "
+     "event to 3.34s (true force peak: 11.15N at 5.08s). With the 1mm guard "
+     "in event_utils.py the detector correctly reports the press alone, at "
+     "the true peak."),
     ("lfdws_t004", "Data/lfdws_t004/lfdws_t004_0.csv", True, False,
      "PASS", "no wrench topic at all; gripper-only fallback correctly omits "
      "press; grasp event propagated + visually confirmed"),

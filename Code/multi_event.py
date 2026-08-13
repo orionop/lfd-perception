@@ -25,6 +25,10 @@ import json
 import os
 
 import numpy as np
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from event_utils import gripper_moved
 import pandas as pd
 from scipy.signal import find_peaks
 
@@ -51,7 +55,9 @@ def detect_all_events(df, force_peak_min_n=5.0, peak_distance_s=0.5):
     w = df[GRIP].apply(parse_gw).to_numpy()
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5 * (w_open - w_closed)
-    closed = w < thr
+    # Guard: a gripper that never actuated puts this midpoint inside the
+    # sensor's noise band and manufactures grasp/release (event_utils.py).
+    closed = (w < thr) if gripper_moved(w) else np.zeros(len(w), dtype=bool)
     cd = (np.where((~closed[:-1]) & (closed[1:]))[0] + 1).tolist()
     cu = (np.where((closed[:-1]) & (~closed[1:]))[0] + 1).tolist()
 

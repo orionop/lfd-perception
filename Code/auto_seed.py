@@ -24,6 +24,10 @@ import sys
 
 import cv2
 import numpy as np
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from event_utils import gripper_moved
 import pandas as pd
 import torch
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
@@ -88,7 +92,9 @@ def detect_events(df):
     w = df[GRIP].apply(parse_gw).to_numpy()
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5 * (w_open - w_closed)
-    closed = w < thr
+    # Guard: a gripper that never actuated puts this midpoint inside the
+    # sensor's noise band and manufactures grasp/release (event_utils.py).
+    closed = (w < thr) if gripper_moved(w) else np.zeros(len(w), dtype=bool)
     cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
     cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
     out = {}
@@ -100,7 +106,10 @@ def detect_events(df):
         print("[detect] no wrench topic -- gripper-only fallback "
               "(press skipped)", flush=True)
         return out
-    fm_adj = np.where(closed, fm - baseline, -np.inf)
+    # With no real grasp cycle there is no held window to restrict to;
+    # search the whole recording rather than an empty mask.
+    fm_adj = (np.where(closed, fm - baseline, -np.inf)
+              if closed.any() else fm - baseline)
     i = int(np.argmax(fm_adj))
     out["press"] = (float(t_rel[i]), i, str(df[IMG].iloc[i]))
     return out
