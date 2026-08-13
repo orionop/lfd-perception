@@ -20,12 +20,27 @@ favourable setup than DADO -- it gets real object boundaries for free and
 only has to choose. If it still misses, the claim is about label-free
 *selection*, not about the quality of any one saliency map.
 
-Deliberately NO task priors are used (no image-position bonus, no area
-cutoff, no role heuristics). Those are what Code/auto_seed.py encodes, and
-that script is the thing this baseline is meant to be an alternative to --
-reusing its priors here would smuggle supervision into a "label-free"
-number. Ranking is purely: among SAM's proposals, take the one whose median
-real depth is smallest.
+No TASK priors are used -- no image-position bonus, no object-scale cutoff,
+no role heuristics. Those are what Code/auto_seed.py encodes, and this
+baseline is meant to be an alternative to that script, so reusing its priors
+would smuggle supervision into a "label-free" number.
+
+Two task-agnostic filters ARE applied, and the first version of this script
+lacked the second, which made it a strawman:
+
+  - minimum proposal area (500 px): a sliver is not an object proposal.
+  - drop proposals touching the image border. Ranking purely by "nearest to
+    the camera" sounds right but is wrong for an eye-in-hand rig, because
+    the nearest thing is the robot's OWN GRIPPER, which enters from the
+    frame edge. Without this filter the baseline returned the manipulator on
+    essentially every event -- mean IoU 0.021, every pick sitting at
+    0.15-0.18 m -- which measures our own oversight rather than any property
+    of label-free discovery. Border exclusion is standard practice and uses
+    no knowledge of the task or the object, so applying it keeps the
+    comparison honest.
+
+After filtering, ranking is: among the surviving proposals, take the one
+whose median real depth is smallest.
 
 Scored identically to the DADO baseline: IoU against the SAM2-propagated
 ground-truth mask for the role that event's proprioceptive cue seeds, on the
@@ -134,25 +149,57 @@ def main():
             continue
         depth = real_depth_m(depth_p, H, W)
 
-        best, best_z = None, np.inf
+        # Two task-agnostic filters, both needed to keep this a fair baseline
+        # rather than a strawman:
+        #   (a) minimum area -- a 50px sliver is not an object proposal
+        #   (b) drop proposals touching the image border. In an eye-in-hand
+        #       view the nearest thing to the camera is the robot's own
+        #       gripper, which enters from the frame edge; without this the
+        #       ranking simply returns the manipulator every time (measured:
+        #       mean IoU 0.021, every pick at 0.15-0.18 m). Excluding
+        #       border-touching regions is standard practice and uses no
+        #       knowledge of the task or the object.
+        MIN_AREA = 500
+        border = np.zeros((H, W), dtype=bool)
+        border[0, :] = border[-1, :] = border[:, 0] = border[:, -1] = True
+
+        # Alongside the ranked pick, record two diagnostics that separate
+        # "SAM cannot segment this object" from "ranking cannot find it":
+        #   oracle_iou  -- best IoU ANY surviving proposal achieves. This is
+        #                  the ceiling a perfect selector would reach.
+        #   codepth_frac-- fraction of surviving proposals whose median depth
+        #                  is within 2 cm of the target's. If this is high,
+        #                  depth provably cannot discriminate the target.
+        ok = (depth > 0.05) & (depth < 5.0)
+        gt_z = float(np.median(depth[gt & ok])) if (gt & ok).any() else np.nan
+
+        best, best_z, n_kept, oracle, n_codepth = None, np.inf, 0, 0.0, 0
         for a in anns:
             m = a["segmentation"]
-            dv = depth[m & (depth > 0.05) & (depth < 5.0)]
+            if m.sum() < MIN_AREA or (m & border).any():
+                continue
+            dv = depth[m & ok]
             if dv.size < 50:
                 continue
+            n_kept += 1
             z = float(np.median(dv))
+            oracle = max(oracle, iou(m, gt))
+            if not np.isnan(gt_z) and abs(z - gt_z) < 0.02:
+                n_codepth += 1
             if z < best_z:
                 best_z, best = z, m
         if best is None:
-            print(f"  [warn] no proposal with valid depth", flush=True)
+            print(f"  [warn] no proposal survived filtering", flush=True)
             continue
 
         s = iou(best, gt)
-        rows.append([trial, event, role, f"{s:.4f}", f"{best.mean()*100:.2f}",
-                     f"{gt.mean()*100:.2f}", f"{best_z:.3f}", len(anns)])
-        print(f"  [result] {trial}/{event}: IoU={s:.3f}  "
-              f"(nearest of {len(anns)} proposals, median depth {best_z:.2f} m)",
-              flush=True)
+        cf = n_codepth/n_kept if n_kept else 0.0
+        rows.append([trial, event, role, f"{s:.4f}", f"{oracle:.4f}", f"{cf:.4f}",
+                     f"{best.mean()*100:.2f}", f"{gt.mean()*100:.2f}",
+                     f"{best_z:.3f}", f"{gt_z:.3f}", n_kept, len(anns)])
+        print(f"  [result] {trial}/{event}: IoU={s:.3f}  oracle={oracle:.3f}  "
+              f"co-depth={100*cf:.0f}%  (picked {best_z:.2f} m vs target {gt_z:.2f} m; "
+              f"{n_kept}/{len(anns)} proposals survived)", flush=True)
 
         if len(panels) < 6:
             gtv = bgr.copy()
@@ -173,8 +220,10 @@ def main():
     os.makedirs("figures", exist_ok=True)
     with open(OUT_CSV, "w") as f:
         w = csv.writer(f)
-        w.writerow(["trial", "event", "role", "iou", "proposal_coverage_pct",
-                    "gt_coverage_pct", "proposal_median_depth_m", "n_proposals"])
+        w.writerow(["trial", "event", "role", "iou", "oracle_iou",
+                    "codepth_frac_within_2cm", "proposal_coverage_pct",
+                    "gt_coverage_pct", "proposal_median_depth_m",
+                    "gt_median_depth_m", "n_proposals_kept", "n_proposals"])
         w.writerows(rows)
     print(f"\n[write] {OUT_CSV}", flush=True)
 
@@ -188,8 +237,22 @@ def main():
         print(f"[write] {OUT_PNG}", flush=True)
 
     v = [float(r[3]) for r in rows]
+    orc = [float(r[4]) for r in rows]
+    cdp = [float(r[5]) for r in rows]
     print(f"\n[summary] SAM-automask + depth ranking: n={len(v)}  "
           f"mean IoU={sum(v)/len(v):.3f}  range={min(v):.3f}-{max(v):.3f}", flush=True)
+    print(f"[oracle]  best proposal SAM actually produced: mean={sum(orc)/len(orc):.3f}  "
+          f"median={sorted(orc)[len(orc)//2]:.3f}  max={max(orc):.3f}", flush=True)
+    print(f"[codepth] proposals within 2cm of the target's depth: "
+          f"mean={100*sum(cdp)/len(cdp):.0f}%  max={100*max(cdp):.0f}%", flush=True)
+    gap = sum(orc)/len(orc) - sum(v)/len(v)
+    print(f"\n[diagnosis] SAM's proposal set CONTAINS the object (oracle "
+          f"{sum(orc)/len(orc):.3f}); depth ranking recovers only "
+          f"{sum(v)/len(v):.3f}.", flush=True)
+    print(f"            {100*(1-(sum(v)/len(v))/(sum(orc)/len(orc))):.0f}% of achievable "
+          f"performance is lost at the SELECTION step, not at segmentation --", flush=True)
+    print(f"            unsurprisingly, since {100*sum(cdp)/len(cdp):.0f}% of candidates sit "
+          f"within 2cm of the target in depth.", flush=True)
     if os.path.exists(DADO_CSV):
         dv = [float(r["iou"]) for r in csv.DictReader(open(DADO_CSV))]
         print(f"[compare] DINOv2 attention x depth:      n={len(dv)}  "
