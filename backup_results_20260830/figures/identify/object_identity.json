@@ -1,0 +1,21 @@
+{
+  "summary_csv": "figures/identify/objects_summary.csv",
+  "n_samples": 25,
+  "n_identities": 3,
+  "obj_to_identity": {
+    "2|contact_receiver": "identity_0_contact_receiver",
+    "1|grasped": "identity_0_contact_receiver"
+  },
+  "identity_role_histogram": {
+    "identity_0_contact_receiver": {
+      "contact_receiver": 9,
+      "grasped": 9
+    },
+    "identity_1_contact_receiver": {
+      "contact_receiver": 4
+    },
+    "identity_2_grasped": {
+      "grasped": 3
+    }
+  }
+}

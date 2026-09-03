@@ -1,0 +1,38 @@
+{
+  "seed_pixel": [
+    565,
+    110
+  ],
+  "per_recording": {
+    "lfdws_t001": {
+      "rate": 0.9548022598870056,
+      "n_hold_frames": 177,
+      "own_best_pixel": [
+        762,
+        11
+      ]
+    },
+    "lfdws_t002_new": {
+      "rate": 0.9644128113879004,
+      "n_hold_frames": 281,
+      "own_best_pixel": [
+        515,
+        117
+      ]
+    }
+  },
+  "region_min_rate": 0.9,
+  "region_px": 398,
+  "rejected": [
+    {
+      "trial": "lfdws_t004",
+      "why": "no carried object; track drifts over scene hardware"
+    },
+    {
+      "trial": "lfdws_t005",
+      "why": "no carried object; track locked on a rig bracket"
+    }
+  ],
+  "held_out_validated": false,
+  "note": "fitted jointly on all admitted recordings, so in-sample; a third carried-object recording is needed for held-out validation"
+}

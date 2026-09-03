@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "trial": "Data/lfdws_t001_labexport/lfdws_t001",
+  "status": "review_required",
+  "automatic": true,
+  "event_summary": {
+    "has_gripper": true,
+    "has_force": true,
+    "force_baseline_n": 0.27947323393720336,
+    "force_peak_min_n": 5.0,
+    "n_cycles": 1,
+    "n_grasps": 0,
+    "n_releases": 0,
+    "n_presses": 1,
+    "n_force_peaks_raw": 2,
+    "force_cluster_gap_s": 3.0
+  },
+  "proposal_provenance": {
+    "cache_version": 1,
+    "model": "vit_h",
+    "points_per_side": 24,
+    "pred_iou_thresh": 0.85,
+    "stability_score_thresh": 0.9,
+    "min_mask_region_area": 400,
+    "checkpoint": "sam_vit_h_4b8939.pth",
+    "checkpoint_size": 2564550879,
+    "checkpoint_mtime_ns": 1780068070070826016
+  },
+  "events": [
+    {
+      "event": "press",
+      "row_idx": 5077,
+      "t_rel_s": 5.077053,
+      "img_ts": "1783420306605416476",
+      "force_mag_n": 11.146127369773465,
+      "gripper_width_m": 0.07999776303768158
+    }
+  ],
+  "selections": [
+    {
+      "role": "contact_receiver",
+      "cycle_idx": 1,
+      "row_idx": 5077,
+      "event": "press",
+      "img_id": "1783420306605416476",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.8240576326239077,
+      "runner_up_score": 0.7871220802760505,
+      "distinct_runner_up_score": 0.7871220802760505,
+      "duplicate_suppression_iou": 0.5,
+      "confidence_margin": 0.03693555234785728,
+      "features": {
+        "score": 0.8240576326239077,
+        "region_overlap": 0.42198722934244837,
+        "region_proximity": 1.0,
+        "sam_quality": 0.9570721685886383,
+        "border_score": 0.75,
+        "appearance_novelty": 0.0,
+        "stationarity": 0.41510931223145003,
+        "temporal_stability": 1.0,
+        "area_fraction": 0.2925096450617284
+      },
+      "seed_point_xy": [
+        530.0,
+        220.0
+      ],
+      "seed_box_xyxy": [
+        372,
+        0,
+        823,
+        390
+      ],
+      "mask_px": 151637,
+      "proposal_cache_path": "proposal_cache/1783420306605416476.npz",
+      "candidate_count": 80,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            372,
+            0,
+            823,
+            390
+          ],
+          "mask_px": 151637,
+          "score": 0.8240576326239077,
+          "region_overlap": 0.42198722934244837,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9570721685886383,
+          "border_score": 0.75,
+          "appearance_novelty": 0.0,
+          "stationarity": 0.41510931223145003,
+          "temporal_stability": 1.0,
+          "area_fraction": 0.2925096450617284
+        },
+        {
+          "bbox_xyxy": [
+            420,
+            224,
+            584,
+            328
+          ],
+          "mask_px": 10685,
+          "score": 0.7871220802760505,
+          "region_overlap": 0.16204862216964677,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9773994982242584,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0,
+          "stationarity": 0.25925530972511146,
+          "temporal_stability": 1.0,
+          "area_fraction": 0.020611496913580246
+        },
+        {
+          "bbox_xyxy": [
+            422,
+            264,
+            584,
+            301
+          ],
+          "mask_px": 3685,
+          "score": 0.7545842602403127,
+          "region_overlap": 0.055886679709419594,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9374172687530518,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0,
+          "stationarity": 0.2518723554099023,
+          "temporal_stability": 1.0,
+          "area_fraction": 0.0071084104938271605
+        },
+        {
+          "bbox_xyxy": [
+            421,
+            231,
+            532,
+            274
+          ],
+          "mask_px": 3511,
+          "score": 0.7543510108312491,
+          "region_overlap": 0.05324779713969395,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9402604103088379,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0,
+          "stationarity": 0.31406365045112156,
+          "temporal_stability": 1.0,
+          "area_fraction": 0.006772762345679012
+        },
+        {
+          "bbox_xyxy": [
+            420,
+            291,
+            529,
+            328
+          ],
+          "mask_px": 2761,
+          "score": 0.7505567901458733,
+          "region_overlap": 0.04187330330466961,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9339230954647064,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0,
+          "stationarity": 0.21248202173103362,
+          "temporal_stability": 1.0,
+          "area_fraction": 0.0053260030864197535
+        }
+      ]
+    }
+  ],
+  "policy": {
+    "low_confidence": "abstain",
+    "production_sidecar_allowed": false
+  }
+}

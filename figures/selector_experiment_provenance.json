@@ -1,0 +1,15 @@
+{
+  "created": "2026-09-03",
+  "status": "local_selector_stop_condition_reached",
+  "frozen_inputs": {
+    "config/evaluation_manifest.yaml": "f7961e2e263c5de9cadc77e35a4824b7eeaa305c19cf0a1db50b70452fa7c6e7",
+    "config/deliverable_rig.yaml": "21b5d9c5c996168c0faf7532010f1f9ac0fcaf44c00cabba481f0492f530f06d"
+  },
+  "evidence": {
+    "figures/contact_ceiling_existing_features.json": "f75615a3050c668fe0ee27d0ac94a197f3526bd1f3916252c58bc0c05d6a7a89",
+    "figures/contact_flow_contrast_study.json": "4df1f5d1ce4ec4357e8b8e29553f9e60fd97a344b6f1a810cce68f276d3010dd",
+    "figures/grasp_attachment_study.json": "0acf8c7b1e74efd05051fe2281da0de15a485ae4704a8a2786f131665da07048"
+  },
+  "production_changes_from_feasibility_studies": false,
+  "stop_reason": "At the frozen 20 percent grasp anchor, only 3 of 5 correct objects are reachable at IoU >= 0.5; attachment features accept 0 of 5 even with all-data leakage. The rejected contact flow cue reaches only 0.40 group-separated precision."
+}

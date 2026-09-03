@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "purpose": "inference_only_no_reference_masks",
+  "source_manifest": "config/evaluation_manifest.yaml",
+  "source_manifest_sha256": "f7961e2e263c5de9cadc77e35a4824b7eeaa305c19cf0a1db50b70452fa7c6e7",
+  "counts": {
+    "grasped": 5,
+    "contact_receiver": 7
+  },
+  "cases": [
+    {
+      "case_id": "lfdws_t001__grasped__c1",
+      "recording_id": "lfdws_t001",
+      "independent_group": "t001_original",
+      "role": "grasped",
+      "cycle_idx": 1,
+      "img_id": "1779192192926879163",
+      "image": "images/lfdws_t001__grasped__c1.png",
+      "proposal_cache": "proposals/lfdws_t001__grasped__c1.npz",
+      "distinctnet": {
+        "primary": "pairs/lfdws_t001__grasped__c1__primary.png",
+        "partner_raw": "pairs/lfdws_t001__grasped__c1__partner_raw.png",
+        "partner_stabilized": "pairs/lfdws_t001__grasped__c1__partner_stabilized.png",
+        "partner_img_id": "1779192191187173163",
+        "stabilization_ok": false,
+        "stabilization_ecc": null
+      }
+    },
+    {
+      "case_id": "lfdws_t001__contact_receiver__c1",
+      "recording_id": "lfdws_t001",
+      "independent_group": "t001_original",
+      "role": "contact_receiver",
+      "cycle_idx": 1,
+      "img_id": "1779192196405413163",
+      "image": "images/lfdws_t001__contact_receiver__c1.png",
+      "proposal_cache": "proposals/lfdws_t001__contact_receiver__c1.npz"
+    },
+    {
+      "case_id": "lfdws_t001_depth__contact_receiver__c1",
+      "recording_id": "lfdws_t001_depth",
+      "independent_group": "t001_depth",
+      "role": "contact_receiver",
+      "cycle_idx": 1,
+      "img_id": "1782835513207923681",
+      "image": "images/lfdws_t001_depth__contact_receiver__c1.png",
+      "proposal_cache": "proposals/lfdws_t001_depth__contact_receiver__c1.npz"
+    },
+    {
+      "case_id": "lfdws_t001_depth__contact_receiver__c2",
+      "recording_id": "lfdws_t001_depth",
+      "independent_group": "t001_depth",
+      "role": "contact_receiver",
+      "cycle_idx": 2,
+      "img_id": "1782835528423483099",
+      "image": "images/lfdws_t001_depth__contact_receiver__c2.png",
+      "proposal_cache": "proposals/lfdws_t001_depth__contact_receiver__c2.npz"
+    },
+    {
+      "case_id": "lfdws_t001_depth__contact_receiver__c3",
+      "recording_id": "lfdws_t001_depth",
+      "independent_group": "t001_depth",
+      "role": "contact_receiver",
+      "cycle_idx": 3,
+      "img_id": "1782835537622884551",
+      "image": "images/lfdws_t001_depth__contact_receiver__c3.png",
+      "proposal_cache": "proposals/lfdws_t001_depth__contact_receiver__c3.npz"
+    },
+    {
+      "case_id": "lfdws_t001_depth__contact_receiver__c4",
+      "recording_id": "lfdws_t001_depth",
+      "independent_group": "t001_depth",
+      "role": "contact_receiver",
+      "cycle_idx": 4,
+      "img_id": "1782835540835169730",
+      "image": "images/lfdws_t001_depth__contact_receiver__c4.png",
+      "proposal_cache": "proposals/lfdws_t001_depth__contact_receiver__c4.npz"
+    },
+    {
+      "case_id": "lfdws_t001_depth__contact_receiver__c5",
+      "recording_id": "lfdws_t001_depth",
+      "independent_group": "t001_depth",
+      "role": "contact_receiver",
+      "cycle_idx": 5,
+      "img_id": "1782835546387763883",
+      "image": "images/lfdws_t001_depth__contact_receiver__c5.png",
+      "proposal_cache": "proposals/lfdws_t001_depth__contact_receiver__c5.npz"
+    },
+    {
+      "case_id": "lfdws_t001_labexport__contact_receiver__c1",
+      "recording_id": "lfdws_t001_labexport",
+      "independent_group": "t001_labexport",
+      "role": "contact_receiver",
+      "cycle_idx": 1,
+      "img_id": "1783420306605416476",
+      "image": "images/lfdws_t001_labexport__contact_receiver__c1.png",
+      "proposal_cache": "proposals/lfdws_t001_labexport__contact_receiver__c1.npz"
+    },
+    {
+      "case_id": "lfdws_t002_new__grasped__c1",
+      "recording_id": "lfdws_t002_new",
+      "independent_group": "t002_cube",
+      "role": "grasped",
+      "cycle_idx": 1,
+      "img_id": "1783420612921812562",
+      "image": "images/lfdws_t002_new__grasped__c1.png",
+      "proposal_cache": "proposals/lfdws_t002_new__grasped__c1.npz",
+      "distinctnet": {
+        "primary": "pairs/lfdws_t002_new__grasped__c1__primary.png",
+        "partner_raw": "pairs/lfdws_t002_new__grasped__c1__partner_raw.png",
+        "partner_stabilized": "pairs/lfdws_t002_new__grasped__c1__partner_stabilized.png",
+        "partner_img_id": "1783420610112429850",
+        "stabilization_ok": true,
+        "stabilization_ecc": 0.529780735999371
+      }
+    },
+    {
+      "case_id": "lfdws_t002_labexport__grasped__c1",
+      "recording_id": "lfdws_t002_labexport",
+      "independent_group": "t002_cube",
+      "role": "grasped",
+      "cycle_idx": 1,
+      "img_id": "1783420612943357476",
+      "image": "images/lfdws_t002_labexport__grasped__c1.png",
+      "proposal_cache": "proposals/lfdws_t002_labexport__grasped__c1.npz",
+      "distinctnet": {
+        "primary": "pairs/lfdws_t002_labexport__grasped__c1__primary.png",
+        "partner_raw": "pairs/lfdws_t002_labexport__grasped__c1__partner_raw.png",
+        "partner_stabilized": "pairs/lfdws_t002_labexport__grasped__c1__partner_stabilized.png",
+        "partner_img_id": "1783420610133445476",
+        "stabilization_ok": false,
+        "stabilization_ecc": null
+      }
+    },
+    {
+      "case_id": "lfdws_t004__grasped__c2",
+      "recording_id": "lfdws_t004",
+      "independent_group": "t004",
+      "role": "grasped",
+      "cycle_idx": 2,
+      "img_id": "1782993022322830673",
+      "image": "images/lfdws_t004__grasped__c2.png",
+      "proposal_cache": "proposals/lfdws_t004__grasped__c2.npz",
+      "distinctnet": {
+        "primary": "pairs/lfdws_t004__grasped__c2__primary.png",
+        "partner_raw": "pairs/lfdws_t004__grasped__c2__partner_raw.png",
+        "partner_stabilized": "pairs/lfdws_t004__grasped__c2__partner_stabilized.png",
+        "partner_img_id": "1782993021082162264",
+        "stabilization_ok": true,
+        "stabilization_ecc": 0.9271566500670546
+      }
+    },
+    {
+      "case_id": "lfdws_t005__grasped__c1",
+      "recording_id": "lfdws_t005",
+      "independent_group": "t005",
+      "role": "grasped",
+      "cycle_idx": 1,
+      "img_id": "1782993185795050907",
+      "image": "images/lfdws_t005__grasped__c1.png",
+      "proposal_cache": "proposals/lfdws_t005__grasped__c1.npz",
+      "distinctnet": {
+        "primary": "pairs/lfdws_t005__grasped__c1__primary.png",
+        "partner_raw": "pairs/lfdws_t005__grasped__c1__partner_raw.png",
+        "partner_stabilized": "pairs/lfdws_t005__grasped__c1__partner_stabilized.png",
+        "partner_img_id": "1782993186567454272",
+        "stabilization_ok": true,
+        "stabilization_ecc": 0.9383258050033891
+      }
+    }
+  ]
+}

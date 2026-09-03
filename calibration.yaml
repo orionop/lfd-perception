@@ -1,162 +1,53 @@
-# Camera + sensor calibration for the lfdws rig.
+# Machine-readable calibration state for Deliverable A.
 #
-# Until every block a script needs is marked filled: true, Code/project_ee.py
-# runs in "dry" mode (reports what it WOULD do, draws nothing geometric) so
-# the pipeline never silently uses fake numbers.
+# Transform convention:
+#   p_parent = T_parent_child @ p_child
+# A block may be used by production code only when filled: true.
 #
-# ---------------------------------------------------------------------------
-# RIG MODEL (per the lab's 2026-07-09 email + CAD drawings, REV02 bracket):
-#
-# The ZED Mini is EYE-IN-HAND: mounted on a rigid SLS-printed bracket bolted
-# to the gripper body, camera tilted ~30 deg looking down past the fingertips
-# at the workspace. There is NO fixed base->camera transform.
-#
-# current_pose (NS_1/franka_robot_state_broadcaster/current_pose) reports the
-# pose OF THE BOTA SENSONE ORIGIN in the robot base frame ("All robot and
-# force data is recorded in the origin of the Bota SensOne force sensor").
-# It is NOT the Franka Hand TCP. Consequences:
-#   T_base_bota(t)   = current_pose row t (position + quaternion)
-#   T_base_camera(t) = T_base_bota(t) @ T_bota_camera        (per frame)
-#   wrench           already in bota frame; rotate to base via current_pose
-#                    directly -- the old "bota_to_base mount transform" ask
-#                    is DISSOLVED, nothing extra needed from the lab for it.
-#
-# The single remaining fixed unknown is T_bota_camera (bota origin -> left
-# ZED-Mini lens optical frame). The CAD-reading approach (bota_to_camera
-# block below) left this ambiguous between two 63mm-apart candidates, and
-# Code/cad_candidate_sensitivity.py showed BOTH candidates project the
-# wrench ray entirely outside the image on every trial tested -- the
-# CAD-derived rotation is unreliable, not only the ambiguous translation.
-# Code/calibrate_hand_eye.py (hand-eye calibration, cv2.calibrateHandEye,
-# AX=XB) recovers this by direct measurement instead and is the
-# recommended path going forward; needs rig access + a physically
-# measured ChArUco board.
-#
-# Frames:
-#   base        : robot base (current_pose is expressed in this frame)
-#   bota_frame  : Bota SensONE measurement origin (current_pose's subject;
-#                 wrench topics are expressed here)
-#   camera      : ZED-Mini LEFT rect optical frame (the PNG frames live here)
-#
-# All 4x4 transforms are row-major homogeneous matrices mapping a point in the
-# CHILD frame to the PARENT frame:  p_parent = T_parent_child @ p_child.
-# ---------------------------------------------------------------------------
+# Historical derivations and retractions are archived in
+# Docs/calibration_history.md. LAB_DELIVERABLE_A.md is authoritative.
 
 camera_intrinsics:
   filled: true
-  # Source: lab-provided intrinsics.md (2026-07-09), block "HD1080 downscaled
-  # (by ZED ROS wrapper) to 540x960" -- matches the exported PNGs exactly
-  # (960 wide x 540 high, verified on lfdws_t001_new / lfdws_t002_new).
-  K: [[752.9597, 0.0,      472.6555],
-      [0.0,      752.9597, 271.9621],
-      [0.0,      0.0,      1.0]]
-  # plumb-bob distortion [k1,k2,p1,p2,k3]; rect images -> zeros. The lab file
-  # provided no distortion coefficients for the rectified stream.
+  status: trusted_lab_measurement
+  source: lab-provided intrinsics.md, 2026-07-09
+  stream: zed_left_rgb_rectified_960x540
+  K: [[752.9597, 0.0, 472.6555],
+      [0.0, 752.9597, 271.9621],
+      [0.0, 0.0, 1.0]]
   dist: [0, 0, 0, 0, 0]
   image_width: 960
   image_height: 540
-  # Other calibrations from the same file, for reference (unused):
-  #   HD1080 native (1920x1080): fx=1544.4000 fy=1544.6899 cx=917.54 cy=572.7920
-  #   720   (1280x720):          fx=772.67    fy=772.615   cx=641.06 cy=363.03
 
 bota_to_camera:
-  filled: false   # PRELIMINARY -- see notes below. Do not trust for
-                  # sub-cm-accurate wrench-line projection without a review
-                  # pass (ideally cross-checked against the lab's own CAD
-                  # extraction once that lands).
-  # T_bota_camera : camera-frame point -> bota-frame point. FIXED transform
-  # (rigid bracket, REV02).
-  #
-  # Two independent inputs combined here:
-  #  (1) CAD-derived housing ORIGIN + ORIENTATION -- extracted via
-  #      Code/cad_extract_transform.py by walking the assembly tree's
-  #      NEXT_ASSEMBLY_USAGE_OCCURRENCE + AXIS2_PLACEMENT_3D chain in
-  #      ZED-M_assy_body-bracket-gripper_REV02.STEP (pure rigid-body
-  #      placement math). Cross-checked against the PDF drawing's
-  #      independent dims (151.00/177.16/158.82/91.72 mm, 30.01 deg tilt)
-  #      and against FreeCAD's own Placement readout for the same part
-  #      (both matched exactly: origin [-8.70,-198.46,-25.89] mm root-frame,
-  #      45 deg about X). housing origin in bota frame: [133.583,-121.279,
-  #      25.888] mm.
-  #  (2) ZED Mini's PUBLISHED stereo baseline (63 mm, Stereolabs datasheet)
-  #      applied along the housing's own local X axis, which the CAD
-  #      confirms is EXACTLY the assembly-root global X axis (no tilt
-  #      component -- the 45 deg tilt is entirely in the housing's Y/Z, so
-  #      the stereo baseline stays "horizontal" as expected for a camera
-  #      that pitches to look down at a workspace while keeping its two
-  #      lenses level). That direction, expressed in the bota frame, is
-  #      [-0.7071, -0.7071, 0.0].
-  #
-  # Attempted first to find the lens bore directly in the STEP mesh
-  # (Code/cad_find_lens_occ.py, via pythonocc-core/OpenCascade): found two
-  # candidate cylindrical bores near the housing, but they are 88mm apart
-  # -- doesn't match the 63mm baseline, so they are almost certainly
-  # mounting/dowel holes for the housing shell, not the lens barrels.
-  #
-  # 2026-08-11 follow-up, exhaustive: re-ran the bore search with a wider
-  # radius net (2-20mm, was 3-13mm) -- same 88mm-apart pair, nothing new.
-  # Tested the "flat disc, not a bore" hypothesis the original script
-  # flagged but never checked (Code/cad_find_lens_planar.py): zero
-  # single-circular-edge planar faces anywhere in the same radius range.
-  # Then correctly ISOLATED the actual ZED-M_body_REV01_GJN solid itself
-  # (Code/cad_isolate_body_solids.py -- found by bounding-box proximity to
-  # the confirmed housing origin, since XCAF part labels are broken in
-  # this pythonocc-core build) and searched ONLY its 101 faces, cleanly
-  # separated from the bracket's many mounting-hole faces that were
-  # diluting the earlier whole-assembly scans: 33 cylindrical (all
-  # 0.3-5mm, fastener/standoff-sized) + 36 planar, zero lens-sized
-  # candidates either way. CONCLUSIVE: the bracket designer's ZED-M body
-  # solid is a simplified space-claim block (126 x 37.7 x 37.7mm, no
-  # lens-level detail at any fidelity) -- not merely "not yet found",
-  # genuinely not modelled in this file. No further mesh-mining of this
-  # STEP file is worth attempting.
-  #
-  # Cross-checked the isolated block's dimensions against Stereolabs' own
-  # official ZED Mini datasheet (generationrobots.com/media/
-  # zed-mini-camera-datasheet.pdf, Rev 2 Oct 2018): real body is
-  # 124.5 x 30.5 x 26.5mm, baseline 63mm -- the block's 126mm length axis
-  # matches the real 124.5mm length closely (~1.2%) and is confirmed
-  # aligned with the assembly's global X axis, which cross-validates (not
-  # contradicts) the existing "baseline direction = global X" finding
-  # below. The block's cross-section (37.7 x 37.7mm) is oversized vs the
-  # real 30.5 x 26.5mm, consistent with a rough clearance envelope rather
-  # than a precise body model. This datasheet has NO dimensioned
-  # mechanical drawing with lens positions for the Mini (unlike the
-  # original ZED's own datasheet, which does have one) -- no quick
-  # read-a-number-off-a-vendor-PDF shortcut available either. Stereolabs'
-  # own STEP/STL download (stereolabs.com/3dmodels) exists per their site
-  # but is behind a JS-rendered page not reachable by automated fetch in
-  # this session; worth trying again with a browser, or asking whether the
-  # lab already has it on file (many labs mounting a ZED Mini would).
-  #
-  # REMAINING UNKNOWNS (why this stays filled: false):
-  #  - which physical lens is "left" vs "right" -- not visually confirmed
-  #    against the ZED Mini's own markings, so the sign of the +/-31.5mm
-  #    shift below is a guess. The two candidates (bota frame, mm):
-  #      A: [111.309, -143.553, 25.888]
-  #      B: [155.857,  -99.006, 25.888]
-  #    T below uses candidate A; swap the translation for B if wrong.
-  #  - zero forward/Z offset assumed between the housing reference origin
-  #    and the lens plane (i.e. treats the lens as sitting exactly at the
-  #    CAD placement origin along the optical axis) -- ZED Mini's actual
-  #    lens-to-body depth offset (order 1-2 cm) is not accounted for.
-  #  - candidates A/B both assume the lens pair is symmetric about the
-  #    isolated placeholder block's centroid (plausible from the vendor's
-  #    own product photos, which show visually symmetric lens placement,
-  #    but not confirmed against real dimensioned geometry) -- this is a
-  #    refinement of the existing hypothesis, not new independent proof.
-  T: [[-0.7071, -0.5,    -0.5,     0.111309],
-      [-0.7071,  0.5,     0.5,    -0.143553],
-      [ 0.0,     0.7071, -0.7071,  0.025888],
-      [ 0.0,     0.0,     0.0,     1.0]]
+  filled: false
+  status: untrusted_experimental_candidate
+  direction: camera_frame_to_current_pose_subject_frame
+  units: metres
+  source: Mark Vlutters CAD derivation plus convention comparison, 2026-08-24
+  validation:
+    diagnostic_contact_hits: 6
+    diagnostic_contact_events: 7
+    independent_validation: false
+    note: >
+      The candidate is retained only to reproduce prior diagnostics. Its
+      rotation/translation-frame construction is unresolved and convention
+      variants were compared on the same small event set. Production geometry
+      must remain disabled.
+  promotion_requirements:
+    - independently recovered transform
+    - explicit current_pose subject frame and wrench frame
+    - reprojection validation
+    - held-out contact-seed validation
+  T: [[-0.70710678, 0.70710678, 0.0, 0.0],
+      [-0.5, -0.5, -0.70710678, 0.12099],
+      [-0.5, -0.5, 0.70710678, -0.12565],
+      [0.0, 0.0, 0.0, 1.0]]
 
 end_effector:
-  # current_pose is the BOTA SENSONE ORIGIN pose (see rig model above), not
-  # the TCP and not the flange. The fingertip/TCP offset below the bota
-  # origin is bracket+gripper CAD geometry; fill when extracted. Used only
-  # for seeding masks at the fingertips -- not needed for camera extrinsics
-  # or wrench projection.
-  current_pose_is: bota_origin
-  # bota origin -> fingertip TCP offset, metres, in the bota frame (approx
-  # -z down through the gripper). Placeholder until CAD extraction:
+  current_pose_is: unconfirmed_tool_or_measurement_frame
   bota_to_tcp: null
+  note: >
+    Do not infer this frame from eye-in-hand image projection because the
+    shared pose can cancel algebraically. It must be confirmed explicitly
+    before production geometric grounding is enabled.

@@ -1,0 +1,143 @@
+{
+  "protocol": "leave_one_recording_group_out",
+  "thresholds": {
+    "iou": 0.5,
+    "precision": 0.9,
+    "coverage": 0.75
+  },
+  "passed": false,
+  "summary": {
+    "grasped": {
+      "eligible": 3,
+      "accepted": 0,
+      "correct": 0,
+      "precision": 0.0,
+      "coverage": 0.0,
+      "independent_groups": 2,
+      "evidence_sufficient": false,
+      "passed": false
+    },
+    "contact": {
+      "eligible": 7,
+      "accepted": 2,
+      "correct": 2,
+      "precision": 1.0,
+      "coverage": 0.2857142857142857,
+      "independent_groups": 3,
+      "evidence_sufficient": true,
+      "passed": false
+    }
+  },
+  "rows": [
+    {
+      "recording": "lfdws_t001",
+      "group": "t001_original",
+      "role": "grasped",
+      "reference_role": "grasped",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001",
+      "group": "t001_original",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": true,
+      "iou": 0.9826974131011916,
+      "correct": true
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "group": "t001_depth",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": true,
+      "iou": 0.9088678605554357,
+      "correct": true
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "group": "t001_depth",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 2,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "group": "t001_depth",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 3,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "group": "t001_depth",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 4,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "group": "t001_depth",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 5,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001_labexport",
+      "group": "t001_labexport",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t002_new",
+      "group": "t002_cube",
+      "role": "grasped",
+      "reference_role": "grasped",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t002_labexport",
+      "group": "t002_cube",
+      "role": "grasped",
+      "reference_role": "grasped",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": false,
+      "iou": null,
+      "correct": false
+    }
+  ]
+}

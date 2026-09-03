@@ -1,0 +1,282 @@
+{
+  "study_type": "feature_family_feasibility_not_performance",
+  "search_space": {
+    "kind": "normalized_signed_linear_feature_subset_grid",
+    "coefficient_values_before_l1_normalization": [
+      -1,
+      0,
+      1
+    ],
+    "rules_tested_per_fit": 19683,
+    "scope_note": "bounded test of existing features plus one physically motivated force-anchored flow cue; not a proof over every nonlinear cue"
+  },
+  "features": [
+    "region_overlap",
+    "region_proximity",
+    "sam_quality",
+    "border_score",
+    "appearance_novelty",
+    "stationarity",
+    "temporal_stability",
+    "area_fraction",
+    "contact_flow_contrast"
+  ],
+  "thresholds": {
+    "iou": 0.5,
+    "margin": 0.1,
+    "precision": 0.9,
+    "coverage": 0.75,
+    "duplicate_suppression_iou": 0.5
+  },
+  "proposal_pool_oracle": {
+    "reachable": 7,
+    "eligible": 7,
+    "rows": [
+      {
+        "recording": "lfdws_t001",
+        "group": "t001_original",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.9826974131011916,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.9088678605554357,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 2,
+        "best_pool_iou": 0.980752472246429,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 3,
+        "best_pool_iou": 0.7923122694275854,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 4,
+        "best_pool_iou": 0.8925131095659405,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 5,
+        "best_pool_iou": 0.92862541122077,
+        "reachable": true
+      },
+      {
+        "recording": "lfdws_t001_labexport",
+        "group": "t001_labexport",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.9470198675496688,
+        "reachable": true
+      }
+    ]
+  },
+  "group_separated": {
+    "eligible": 7,
+    "accepted": 5,
+    "correct": 2,
+    "precision": 0.4,
+    "coverage": 0.7142857142857143,
+    "passed": false,
+    "rows": [
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 1,
+        "accepted": true,
+        "correct": true,
+        "margin": 0.18327206036952204,
+        "winner_iou": 0.9088678605554357,
+        "winner_bbox": [
+          242,
+          20,
+          726,
+          537
+        ]
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 2,
+        "accepted": true,
+        "correct": true,
+        "margin": 0.30161430681730594,
+        "winner_iou": 0.651191495793239,
+        "winner_bbox": [
+          394,
+          12,
+          531,
+          538
+        ]
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 3,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.03242148218272478,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          0,
+          2,
+          166,
+          159
+        ]
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 4,
+        "accepted": true,
+        "correct": false,
+        "margin": 0.31985139570959736,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          22,
+          406,
+          171,
+          538
+        ]
+      },
+      {
+        "recording": "lfdws_t001_depth",
+        "group": "t001_depth",
+        "cycle_idx": 5,
+        "accepted": true,
+        "correct": false,
+        "margin": 0.10993113684073147,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          699,
+          522,
+          772,
+          539
+        ]
+      },
+      {
+        "recording": "lfdws_t001_labexport",
+        "group": "t001_labexport",
+        "cycle_idx": 1,
+        "accepted": true,
+        "correct": false,
+        "margin": 0.1254325053893306,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          0,
+          210,
+          369,
+          537
+        ]
+      },
+      {
+        "recording": "lfdws_t001",
+        "group": "t001_original",
+        "cycle_idx": 1,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.09268881944753238,
+        "winner_iou": 0.9826974131011916,
+        "winner_bbox": [
+          456,
+          134,
+          721,
+          441
+        ]
+      }
+    ],
+    "folds": [
+      {
+        "heldout_group": "t001_depth",
+        "weights": {
+          "contact_flow_contrast": -1.0
+        },
+        "training": {
+          "eligible": 2,
+          "accepted": 1,
+          "correct": 1,
+          "precision": 1.0,
+          "coverage": 0.5
+        },
+        "heldout": {
+          "eligible": 5,
+          "accepted": 4,
+          "correct": 2,
+          "precision": 0.5,
+          "coverage": 0.8
+        }
+      },
+      {
+        "heldout_group": "t001_labexport",
+        "weights": {
+          "region_proximity": 0.3333333333333333,
+          "border_score": 0.3333333333333333,
+          "contact_flow_contrast": -0.3333333333333333
+        },
+        "training": {
+          "eligible": 6,
+          "accepted": 3,
+          "correct": 3,
+          "precision": 1.0,
+          "coverage": 0.5
+        },
+        "heldout": {
+          "eligible": 1,
+          "accepted": 1,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 1.0
+        }
+      },
+      {
+        "heldout_group": "t001_original",
+        "weights": {
+          "sam_quality": 0.3333333333333333,
+          "area_fraction": 0.3333333333333333,
+          "contact_flow_contrast": -0.3333333333333333
+        },
+        "training": {
+          "eligible": 6,
+          "accepted": 2,
+          "correct": 2,
+          "precision": 1.0,
+          "coverage": 0.3333333333333333
+        },
+        "heldout": {
+          "eligible": 1,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        }
+      }
+    ]
+  },
+  "optimistic_all_data_leakage": {
+    "eligible": 7,
+    "accepted": 3,
+    "correct": 3,
+    "precision": 1.0,
+    "coverage": 0.42857142857142855,
+    "weights": {
+      "region_overlap": 0.3333333333333333,
+      "sam_quality": -0.3333333333333333,
+      "contact_flow_contrast": -0.3333333333333333
+    },
+    "passed": false
+  },
+  "missing_cases": [],
+  "conclusion": "stop_tested_linear_reweighting_add_new_contact_cue"
+}

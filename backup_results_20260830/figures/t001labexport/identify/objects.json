@@ -1,0 +1,3244 @@
+{
+  "trial_dir": "Data/lfdws_t001_labexport/lfdws_t001",
+  "csv": "Data/lfdws_t001_labexport/lfdws_t001/lfdws_t001.csv",
+  "image_dir": "Data/lfdws_t001_labexport/lfdws_t001/zed_zed_node_rgb_color_rect_image_compressed",
+  "events": {
+    "press": {
+      "t_rel_s": 5.07504,
+      "row_idx": 5075,
+      "img_ts": "1783420306605416476"
+    }
+  },
+  "objects": {
+    "2": {
+      "role": "contact_receiver",
+      "color": [
+        255,
+        0,
+        255
+      ]
+    }
+  },
+  "frames": [
+    {
+      "frame_idx": 0,
+      "img_filename": "1783420300818485476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0000_1783420300818485476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10978,
+          "mask_px_overlay": 10829,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0000_1783420300818485476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 1,
+      "img_filename": "1783420300918709476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0001_1783420300918709476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10994,
+          "mask_px_overlay": 10842,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0001_1783420300918709476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 2,
+      "img_filename": "1783420300985709476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0002_1783420300985709476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10998,
+          "mask_px_overlay": 10844,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0002_1783420300985709476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 3,
+      "img_filename": "1783420301052713476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0003_1783420301052713476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10991,
+          "mask_px_overlay": 10842,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0003_1783420301052713476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 4,
+      "img_filename": "1783420301119591476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0004_1783420301119591476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10986,
+          "mask_px_overlay": 10834,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0004_1783420301119591476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 5,
+      "img_filename": "1783420301186471476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0005_1783420301186471476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10985,
+          "mask_px_overlay": 10837,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0005_1783420301186471476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 6,
+      "img_filename": "1783420301253219476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0006_1783420301253219476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10976,
+          "mask_px_overlay": 10823,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0006_1783420301253219476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 7,
+      "img_filename": "1783420301320221476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0007_1783420301320221476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10997,
+          "mask_px_overlay": 10850,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0007_1783420301320221476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 8,
+      "img_filename": "1783420301387222476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0008_1783420301387222476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10997,
+          "mask_px_overlay": 10849,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0008_1783420301387222476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 9,
+      "img_filename": "1783420301454104476.png",
+      "t_rel_s": null,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0009_1783420301454104476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10975,
+          "mask_px_overlay": 10823,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0009_1783420301454104476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 10,
+      "img_filename": "1783420301520975476.png",
+      "t_rel_s": 0.0,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0010_1783420301520975476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10996,
+          "mask_px_overlay": 10849,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0010_1783420301520975476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 11,
+      "img_filename": "1783420301587720476.png",
+      "t_rel_s": 0.007996,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0011_1783420301587720476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11005,
+          "mask_px_overlay": 10854,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0011_1783420301587720476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 12,
+      "img_filename": "1783420301654751476.png",
+      "t_rel_s": 0.074966,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0012_1783420301654751476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10983,
+          "mask_px_overlay": 10836,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0012_1783420301654751476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 13,
+      "img_filename": "1783420301721750476.png",
+      "t_rel_s": 0.142076,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0013_1783420301721750476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10978,
+          "mask_px_overlay": 10829,
+          "bbox_xyxy": [
+            412,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0013_1783420301721750476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 14,
+      "img_filename": "1783420301788625476.png",
+      "t_rel_s": 0.208107,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0014_1783420301788625476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10989,
+          "mask_px_overlay": 10838,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0014_1783420301788625476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 15,
+      "img_filename": "1783420301855500476.png",
+      "t_rel_s": 0.274994,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0015_1783420301855500476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10984,
+          "mask_px_overlay": 10835,
+          "bbox_xyxy": [
+            412,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0015_1783420301855500476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 16,
+      "img_filename": "1783420301922254476.png",
+      "t_rel_s": 0.342053,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0016_1783420301922254476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10976,
+          "mask_px_overlay": 10829,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0016_1783420301922254476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 17,
+      "img_filename": "1783420301989254476.png",
+      "t_rel_s": 0.408983,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0017_1783420301989254476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10987,
+          "mask_px_overlay": 10837,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0017_1783420301989254476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 18,
+      "img_filename": "1783420302056267476.png",
+      "t_rel_s": 0.475998,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0018_1783420302056267476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10988,
+          "mask_px_overlay": 10837,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0018_1783420302056267476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 19,
+      "img_filename": "1783420302123132476.png",
+      "t_rel_s": 0.542965,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0019_1783420302123132476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11007,
+          "mask_px_overlay": 10859,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0019_1783420302123132476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 20,
+      "img_filename": "1783420302190006476.png",
+      "t_rel_s": 0.609969,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0020_1783420302190006476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10987,
+          "mask_px_overlay": 10833,
+          "bbox_xyxy": [
+            412,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0020_1783420302190006476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 21,
+      "img_filename": "1783420302256758476.png",
+      "t_rel_s": 0.676052,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0021_1783420302256758476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10976,
+          "mask_px_overlay": 10827,
+          "bbox_xyxy": [
+            413,
+            218,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0021_1783420302256758476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 22,
+      "img_filename": "1783420302323761476.png",
+      "t_rel_s": 0.743998,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0022_1783420302323761476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10923,
+          "mask_px_overlay": 10776,
+          "bbox_xyxy": [
+            412,
+            218,
+            578,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0022_1783420302323761476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 23,
+      "img_filename": "1783420302390725476.png",
+      "t_rel_s": 0.810995,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0023_1783420302390725476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 9524,
+          "mask_px_overlay": 9463,
+          "bbox_xyxy": [
+            412,
+            217,
+            572,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0023_1783420302390725476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 24,
+      "img_filename": "1783420302457615476.png",
+      "t_rel_s": 0.876975,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0024_1783420302457615476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 5712,
+          "mask_px_overlay": 5689,
+          "bbox_xyxy": [
+            412,
+            217,
+            526,
+            318
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0024_1783420302457615476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 25,
+      "img_filename": "1783420302524487476.png",
+      "t_rel_s": 0.944095,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0025_1783420302524487476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 4056,
+          "mask_px_overlay": 4052,
+          "bbox_xyxy": [
+            412,
+            217,
+            526,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0025_1783420302524487476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 26,
+      "img_filename": "1783420302591261476.png",
+      "t_rel_s": 1.010961,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0026_1783420302591261476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 3693,
+          "mask_px_overlay": 3637,
+          "bbox_xyxy": [
+            412,
+            217,
+            578,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0026_1783420302591261476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 27,
+      "img_filename": "1783420302658263476.png",
+      "t_rel_s": 1.078007,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0027_1783420302658263476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 4947,
+          "mask_px_overlay": 4821,
+          "bbox_xyxy": [
+            412,
+            218,
+            578,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0027_1783420302658263476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 28,
+      "img_filename": "1783420302725270476.png",
+      "t_rel_s": 1.145027,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0028_1783420302725270476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 6646,
+          "mask_px_overlay": 6503,
+          "bbox_xyxy": [
+            413,
+            217,
+            579,
+            288
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0028_1783420302725270476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 29,
+      "img_filename": "1783420302792123476.png",
+      "t_rel_s": 1.21213,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0029_1783420302792123476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 6435,
+          "mask_px_overlay": 6299,
+          "bbox_xyxy": [
+            412,
+            217,
+            579,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0029_1783420302792123476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 30,
+      "img_filename": "1783420302859000476.png",
+      "t_rel_s": 1.279011,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0030_1783420302859000476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 3760,
+          "mask_px_overlay": 3757,
+          "bbox_xyxy": [
+            412,
+            217,
+            526,
+            312
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0030_1783420302859000476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 31,
+      "img_filename": "1783420302925873476.png",
+      "t_rel_s": 1.346005,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0031_1783420302925873476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 2324,
+          "mask_px_overlay": 2320,
+          "bbox_xyxy": [
+            412,
+            217,
+            526,
+            294
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0031_1783420302925873476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 32,
+      "img_filename": "1783420302992749476.png",
+      "t_rel_s": 1.413047,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0032_1783420302992749476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 1903,
+          "mask_px_overlay": 1899,
+          "bbox_xyxy": [
+            412,
+            217,
+            526,
+            290
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0032_1783420302992749476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 33,
+      "img_filename": "1783420303059609476.png",
+      "t_rel_s": 1.479033,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0033_1783420303059609476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 1288,
+          "mask_px_overlay": 1283,
+          "bbox_xyxy": [
+            412,
+            217,
+            513,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0033_1783420303059609476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 34,
+      "img_filename": "1783420303126620476.png",
+      "t_rel_s": 1.545929,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0034_1783420303126620476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 477,
+          "mask_px_overlay": 475,
+          "bbox_xyxy": [
+            411,
+            217,
+            505,
+            315
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0034_1783420303126620476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 35,
+      "img_filename": "1783420303193499476.png",
+      "t_rel_s": 1.613028,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0035_1783420303193499476.png",
+      "objects": []
+    },
+    {
+      "frame_idx": 36,
+      "img_filename": "1783420303260376476.png",
+      "t_rel_s": 1.680036,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0036_1783420303260376476.png",
+      "objects": []
+    },
+    {
+      "frame_idx": 37,
+      "img_filename": "1783420303327253476.png",
+      "t_rel_s": 1.746969,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0037_1783420303327253476.png",
+      "objects": []
+    },
+    {
+      "frame_idx": 38,
+      "img_filename": "1783420303394126476.png",
+      "t_rel_s": 1.814096,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0038_1783420303394126476.png",
+      "objects": []
+    },
+    {
+      "frame_idx": 39,
+      "img_filename": "1783420303461130476.png",
+      "t_rel_s": 1.881022,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0039_1783420303461130476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 740,
+          "mask_px_overlay": 739,
+          "bbox_xyxy": [
+            414,
+            218,
+            503,
+            239
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0039_1783420303461130476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 40,
+      "img_filename": "1783420303528007476.png",
+      "t_rel_s": 1.948227,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0040_1783420303528007476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 2594,
+          "mask_px_overlay": 2592,
+          "bbox_xyxy": [
+            414,
+            217,
+            514,
+            256
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0040_1783420303528007476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 41,
+      "img_filename": "1783420303594881476.png",
+      "t_rel_s": 2.01499,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0041_1783420303594881476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 5279,
+          "mask_px_overlay": 5210,
+          "bbox_xyxy": [
+            413,
+            217,
+            525,
+            277
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0041_1783420303594881476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 42,
+      "img_filename": "1783420303661634476.png",
+      "t_rel_s": 2.081081,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0042_1783420303661634476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 7544,
+          "mask_px_overlay": 7439,
+          "bbox_xyxy": [
+            413,
+            217,
+            547,
+            292
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0042_1783420303661634476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 43,
+      "img_filename": "1783420303728637476.png",
+      "t_rel_s": 2.148166,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0043_1783420303728637476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 9371,
+          "mask_px_overlay": 9245,
+          "bbox_xyxy": [
+            412,
+            217,
+            564,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0043_1783420303728637476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 44,
+      "img_filename": "1783420303795633476.png",
+      "t_rel_s": 2.21505,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0044_1783420303795633476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10522,
+          "mask_px_overlay": 10370,
+          "bbox_xyxy": [
+            413,
+            217,
+            579,
+            312
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0044_1783420303795633476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 45,
+      "img_filename": "1783420303862506476.png",
+      "t_rel_s": 2.282018,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0045_1783420303862506476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10557,
+          "mask_px_overlay": 10410,
+          "bbox_xyxy": [
+            412,
+            217,
+            579,
+            315
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0045_1783420303862506476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 46,
+      "img_filename": "1783420303929385476.png",
+      "t_rel_s": 2.349035,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0046_1783420303929385476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 9668,
+          "mask_px_overlay": 9518,
+          "bbox_xyxy": [
+            413,
+            217,
+            579,
+            309
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0046_1783420303929385476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 47,
+      "img_filename": "1783420303996137476.png",
+      "t_rel_s": 2.416052,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0047_1783420303996137476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8466,
+          "mask_px_overlay": 8314,
+          "bbox_xyxy": [
+            412,
+            217,
+            578,
+            302
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0047_1783420303996137476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 48,
+      "img_filename": "1783420304063136476.png",
+      "t_rel_s": 2.48305,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0048_1783420304063136476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10172,
+          "mask_px_overlay": 10030,
+          "bbox_xyxy": [
+            411,
+            216,
+            578,
+            312
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0048_1783420304063136476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 49,
+      "img_filename": "1783420304130136476.png",
+      "t_rel_s": 2.550004,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0049_1783420304130136476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10905,
+          "mask_px_overlay": 10760,
+          "bbox_xyxy": [
+            411,
+            216,
+            578,
+            317
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0049_1783420304130136476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 50,
+      "img_filename": "1783420304197013476.png",
+      "t_rel_s": 2.616953,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0050_1783420304197013476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11010,
+          "mask_px_overlay": 10856,
+          "bbox_xyxy": [
+            411,
+            216,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0050_1783420304197013476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 51,
+      "img_filename": "1783420304263912476.png",
+      "t_rel_s": 2.683947,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0051_1783420304263912476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11053,
+          "mask_px_overlay": 10899,
+          "bbox_xyxy": [
+            411,
+            216,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0051_1783420304263912476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 52,
+      "img_filename": "1783420304330648476.png",
+      "t_rel_s": 2.750034,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0052_1783420304330648476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10883,
+          "mask_px_overlay": 10729,
+          "bbox_xyxy": [
+            411,
+            217,
+            577,
+            317
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0052_1783420304330648476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 53,
+      "img_filename": "1783420304397634476.png",
+      "t_rel_s": 2.816951,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0053_1783420304397634476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 9762,
+          "mask_px_overlay": 9607,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            308
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0053_1783420304397634476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 54,
+      "img_filename": "1783420304464649476.png",
+      "t_rel_s": 2.884947,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0054_1783420304464649476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8169,
+          "mask_px_overlay": 8018,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0054_1783420304464649476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 55,
+      "img_filename": "1783420304531521476.png",
+      "t_rel_s": 2.950946,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0055_1783420304531521476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8105,
+          "mask_px_overlay": 7953,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0055_1783420304531521476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 56,
+      "img_filename": "1783420304598397476.png",
+      "t_rel_s": 3.017994,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0056_1783420304598397476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8436,
+          "mask_px_overlay": 8289,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0056_1783420304598397476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 57,
+      "img_filename": "1783420304665147476.png",
+      "t_rel_s": 3.085026,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0057_1783420304665147476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8695,
+          "mask_px_overlay": 8542,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0057_1783420304665147476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 58,
+      "img_filename": "1783420304732149476.png",
+      "t_rel_s": 3.151973,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0058_1783420304732149476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8837,
+          "mask_px_overlay": 8686,
+          "bbox_xyxy": [
+            411,
+            217,
+            577,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0058_1783420304732149476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 59,
+      "img_filename": "1783420304799149476.png",
+      "t_rel_s": 3.218963,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0059_1783420304799149476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8722,
+          "mask_px_overlay": 8602,
+          "bbox_xyxy": [
+            411,
+            217,
+            575,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0059_1783420304799149476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 60,
+      "img_filename": "1783420304866025476.png",
+      "t_rel_s": 3.286018,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0060_1783420304866025476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10154,
+          "mask_px_overlay": 10064,
+          "bbox_xyxy": [
+            411,
+            217,
+            535,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0060_1783420304866025476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 61,
+      "img_filename": "1783420304932900476.png",
+      "t_rel_s": 3.353014,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0061_1783420304932900476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11005,
+          "mask_px_overlay": 10852,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0061_1783420304932900476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 62,
+      "img_filename": "1783420304999658476.png",
+      "t_rel_s": 3.41997,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0062_1783420304999658476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11022,
+          "mask_px_overlay": 10865,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0062_1783420304999658476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 63,
+      "img_filename": "1783420305066666476.png",
+      "t_rel_s": 3.485988,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0063_1783420305066666476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11028,
+          "mask_px_overlay": 10873,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0063_1783420305066666476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 64,
+      "img_filename": "1783420305133674476.png",
+      "t_rel_s": 3.552967,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0064_1783420305133674476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10981,
+          "mask_px_overlay": 10826,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0064_1783420305133674476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 65,
+      "img_filename": "1783420305200530476.png",
+      "t_rel_s": 3.620003,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0065_1783420305200530476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10977,
+          "mask_px_overlay": 10826,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0065_1783420305200530476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 66,
+      "img_filename": "1783420305267406476.png",
+      "t_rel_s": 3.687026,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0066_1783420305267406476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10995,
+          "mask_px_overlay": 10841,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0066_1783420305267406476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 67,
+      "img_filename": "1783420305334158476.png",
+      "t_rel_s": 3.753937,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0067_1783420305334158476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10998,
+          "mask_px_overlay": 10843,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0067_1783420305334158476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 68,
+      "img_filename": "1783420305401162476.png",
+      "t_rel_s": 3.820961,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0068_1783420305401162476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11021,
+          "mask_px_overlay": 10872,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0068_1783420305401162476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 69,
+      "img_filename": "1783420305468161476.png",
+      "t_rel_s": 3.887966,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0069_1783420305468161476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11005,
+          "mask_px_overlay": 10847,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0069_1783420305468161476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 70,
+      "img_filename": "1783420305535037476.png",
+      "t_rel_s": 3.954941,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0070_1783420305535037476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11032,
+          "mask_px_overlay": 10883,
+          "bbox_xyxy": [
+            411,
+            217,
+            578,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0070_1783420305535037476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 71,
+      "img_filename": "1783420305601931476.png",
+      "t_rel_s": 4.021932,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0071_1783420305601931476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11003,
+          "mask_px_overlay": 10862,
+          "bbox_xyxy": [
+            413,
+            218,
+            580,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0071_1783420305601931476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 72,
+      "img_filename": "1783420305668682476.png",
+      "t_rel_s": 4.087991,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0072_1783420305668682476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10925,
+          "mask_px_overlay": 10783,
+          "bbox_xyxy": [
+            419,
+            219,
+            585,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0072_1783420305668682476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 73,
+      "img_filename": "1783420305735672476.png",
+      "t_rel_s": 4.154986,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0073_1783420305735672476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10863,
+          "mask_px_overlay": 10716,
+          "bbox_xyxy": [
+            419,
+            218,
+            584,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0073_1783420305735672476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 74,
+      "img_filename": "1783420305802664476.png",
+      "t_rel_s": 4.221965,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0074_1783420305802664476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10899,
+          "mask_px_overlay": 10745,
+          "bbox_xyxy": [
+            413,
+            218,
+            578,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0074_1783420305802664476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 75,
+      "img_filename": "1783420305869548476.png",
+      "t_rel_s": 4.288985,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0075_1783420305869548476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10809,
+          "mask_px_overlay": 10648,
+          "bbox_xyxy": [
+            415,
+            219,
+            579,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0075_1783420305869548476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 76,
+      "img_filename": "1783420305936417476.png",
+      "t_rel_s": 4.355966,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0076_1783420305936417476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10748,
+          "mask_px_overlay": 10613,
+          "bbox_xyxy": [
+            421,
+            218,
+            585,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0076_1783420305936417476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 77,
+      "img_filename": "1783420306003200476.png",
+      "t_rel_s": 4.422955,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0077_1783420306003200476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10678,
+          "mask_px_overlay": 10530,
+          "bbox_xyxy": [
+            417,
+            219,
+            581,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0077_1783420306003200476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 78,
+      "img_filename": "1783420306070191476.png",
+      "t_rel_s": 4.489913,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0078_1783420306070191476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10847,
+          "mask_px_overlay": 10692,
+          "bbox_xyxy": [
+            413,
+            219,
+            577,
+            323
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0078_1783420306070191476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 79,
+      "img_filename": "1783420306137171476.png",
+      "t_rel_s": 4.556928,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0079_1783420306137171476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10884,
+          "mask_px_overlay": 10729,
+          "bbox_xyxy": [
+            415,
+            219,
+            581,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0079_1783420306137171476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 80,
+      "img_filename": "1783420306204048476.png",
+      "t_rel_s": 4.623952,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0080_1783420306204048476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10840,
+          "mask_px_overlay": 10692,
+          "bbox_xyxy": [
+            416,
+            220,
+            581,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0080_1783420306204048476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 81,
+      "img_filename": "1783420306270921476.png",
+      "t_rel_s": 4.690988,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0081_1783420306270921476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10948,
+          "mask_px_overlay": 10796,
+          "bbox_xyxy": [
+            414,
+            218,
+            580,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0081_1783420306270921476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 82,
+      "img_filename": "1783420306337673476.png",
+      "t_rel_s": 4.756969,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0082_1783420306337673476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10838,
+          "mask_px_overlay": 10692,
+          "bbox_xyxy": [
+            416,
+            218,
+            581,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0082_1783420306337673476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 83,
+      "img_filename": "1783420306404673476.png",
+      "t_rel_s": 4.823999,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0083_1783420306404673476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10683,
+          "mask_px_overlay": 10548,
+          "bbox_xyxy": [
+            417,
+            219,
+            582,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0083_1783420306404673476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 84,
+      "img_filename": "1783420306471675476.png",
+      "t_rel_s": 4.891948,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0084_1783420306471675476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10827,
+          "mask_px_overlay": 10676,
+          "bbox_xyxy": [
+            416,
+            223,
+            582,
+            326
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0084_1783420306471675476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 85,
+      "img_filename": "1783420306538552476.png",
+      "t_rel_s": 4.957932,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0085_1783420306538552476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10767,
+          "mask_px_overlay": 10618,
+          "bbox_xyxy": [
+            420,
+            222,
+            585,
+            325
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0085_1783420306538552476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 86,
+      "img_filename": "1783420306605416476.png",
+      "t_rel_s": 5.024993,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0086_1783420306605416476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10815,
+          "mask_px_overlay": 10483,
+          "bbox_xyxy": [
+            420,
+            224,
+            585,
+            328
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0086_1783420306605416476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 87,
+      "img_filename": "1783420306672165476.png",
+      "t_rel_s": 5.091983,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0087_1783420306672165476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10801,
+          "mask_px_overlay": 10650,
+          "bbox_xyxy": [
+            422,
+            224,
+            586,
+            327
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0087_1783420306672165476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 88,
+      "img_filename": "1783420306739180476.png",
+      "t_rel_s": 5.159006,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0088_1783420306739180476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10679,
+          "mask_px_overlay": 10534,
+          "bbox_xyxy": [
+            423,
+            223,
+            587,
+            326
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0088_1783420306739180476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 89,
+      "img_filename": "1783420306806179476.png",
+      "t_rel_s": 5.226047,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0089_1783420306806179476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10738,
+          "mask_px_overlay": 10596,
+          "bbox_xyxy": [
+            422,
+            224,
+            587,
+            327
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0089_1783420306806179476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 90,
+      "img_filename": "1783420306873061476.png",
+      "t_rel_s": 5.292926,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0090_1783420306873061476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10661,
+          "mask_px_overlay": 10520,
+          "bbox_xyxy": [
+            425,
+            222,
+            589,
+            325
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0090_1783420306873061476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 91,
+      "img_filename": "1783420306939932476.png",
+      "t_rel_s": 5.359976,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0091_1783420306939932476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10716,
+          "mask_px_overlay": 10572,
+          "bbox_xyxy": [
+            424,
+            224,
+            588,
+            327
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0091_1783420306939932476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 92,
+      "img_filename": "1783420307006672476.png",
+      "t_rel_s": 5.425991,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0092_1783420307006672476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10786,
+          "mask_px_overlay": 10644,
+          "bbox_xyxy": [
+            422,
+            225,
+            587,
+            328
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0092_1783420307006672476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 93,
+      "img_filename": "1783420307073690476.png",
+      "t_rel_s": 5.493896,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0093_1783420307073690476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10801,
+          "mask_px_overlay": 10656,
+          "bbox_xyxy": [
+            423,
+            225,
+            587,
+            328
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0093_1783420307073690476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 94,
+      "img_filename": "1783420307140682476.png",
+      "t_rel_s": 5.560929,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0094_1783420307140682476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10789,
+          "mask_px_overlay": 10650,
+          "bbox_xyxy": [
+            423,
+            225,
+            588,
+            328
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0094_1783420307140682476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 95,
+      "img_filename": "1783420307207584476.png",
+      "t_rel_s": 5.627013,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0095_1783420307207584476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10713,
+          "mask_px_overlay": 10579,
+          "bbox_xyxy": [
+            423,
+            225,
+            587,
+            328
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0095_1783420307207584476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 96,
+      "img_filename": "1783420307274440476.png",
+      "t_rel_s": 5.693933,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0096_1783420307274440476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10673,
+          "mask_px_overlay": 10529,
+          "bbox_xyxy": [
+            423,
+            224,
+            587,
+            327
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0096_1783420307274440476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 97,
+      "img_filename": "1783420307341187476.png",
+      "t_rel_s": 5.761034,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0097_1783420307341187476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10722,
+          "mask_px_overlay": 10583,
+          "bbox_xyxy": [
+            423,
+            224,
+            587,
+            326
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0097_1783420307341187476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 98,
+      "img_filename": "1783420307408188476.png",
+      "t_rel_s": 5.828001,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0098_1783420307408188476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10681,
+          "mask_px_overlay": 10536,
+          "bbox_xyxy": [
+            423,
+            223,
+            587,
+            325
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0098_1783420307408188476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 99,
+      "img_filename": "1783420307475055476.png",
+      "t_rel_s": 5.894965,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0099_1783420307475055476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10731,
+          "mask_px_overlay": 10589,
+          "bbox_xyxy": [
+            422,
+            222,
+            587,
+            324
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0099_1783420307475055476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 100,
+      "img_filename": "1783420307542058476.png",
+      "t_rel_s": 5.961957,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0100_1783420307542058476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10734,
+          "mask_px_overlay": 10589,
+          "bbox_xyxy": [
+            422,
+            221,
+            586,
+            323
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0100_1783420307542058476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 101,
+      "img_filename": "1783420307608943476.png",
+      "t_rel_s": 6.029015,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0101_1783420307608943476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10839,
+          "mask_px_overlay": 10692,
+          "bbox_xyxy": [
+            421,
+            220,
+            586,
+            322
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0101_1783420307608943476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 102,
+      "img_filename": "1783420307675810476.png",
+      "t_rel_s": 6.09602,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0102_1783420307675810476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10819,
+          "mask_px_overlay": 10670,
+          "bbox_xyxy": [
+            420,
+            218,
+            586,
+            321
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0102_1783420307675810476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 103,
+      "img_filename": "1783420307742671476.png",
+      "t_rel_s": 6.162018,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0103_1783420307742671476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10846,
+          "mask_px_overlay": 10701,
+          "bbox_xyxy": [
+            420,
+            218,
+            585,
+            320
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0103_1783420307742671476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 104,
+      "img_filename": "1783420307809559476.png",
+      "t_rel_s": 6.228968,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0104_1783420307809559476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10897,
+          "mask_px_overlay": 10745,
+          "bbox_xyxy": [
+            419,
+            217,
+            585,
+            319
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0104_1783420307809559476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 105,
+      "img_filename": "1783420307876563476.png",
+      "t_rel_s": 6.296003,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0105_1783420307876563476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10867,
+          "mask_px_overlay": 10715,
+          "bbox_xyxy": [
+            418,
+            216,
+            584,
+            318
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0105_1783420307876563476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 106,
+      "img_filename": "1783420307943451476.png",
+      "t_rel_s": 6.363019,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0106_1783420307943451476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10881,
+          "mask_px_overlay": 10729,
+          "bbox_xyxy": [
+            418,
+            215,
+            584,
+            316
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0106_1783420307943451476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 107,
+      "img_filename": "1783420308010329476.png",
+      "t_rel_s": 6.429999,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0107_1783420308010329476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10927,
+          "mask_px_overlay": 10769,
+          "bbox_xyxy": [
+            417,
+            214,
+            583,
+            315
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0107_1783420308010329476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 108,
+      "img_filename": "1783420308077197476.png",
+      "t_rel_s": 6.496943,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0108_1783420308077197476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 9364,
+          "mask_px_overlay": 9210,
+          "bbox_xyxy": [
+            416,
+            212,
+            582,
+            314
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0108_1783420308077197476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 109,
+      "img_filename": "1783420308144073476.png",
+      "t_rel_s": 6.563877,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0109_1783420308144073476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 8879,
+          "mask_px_overlay": 8800,
+          "bbox_xyxy": [
+            415,
+            211,
+            530,
+            313
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0109_1783420308144073476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 110,
+      "img_filename": "1783420308211074476.png",
+      "t_rel_s": 6.630951,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0110_1783420308211074476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10757,
+          "mask_px_overlay": 10611,
+          "bbox_xyxy": [
+            414,
+            210,
+            577,
+            312
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0110_1783420308211074476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 111,
+      "img_filename": "1783420308277960476.png",
+      "t_rel_s": 6.698004,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0111_1783420308277960476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11094,
+          "mask_px_overlay": 10938,
+          "bbox_xyxy": [
+            414,
+            209,
+            581,
+            311
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0111_1783420308277960476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 112,
+      "img_filename": "1783420308345079476.png",
+      "t_rel_s": 6.764948,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0112_1783420308345079476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11083,
+          "mask_px_overlay": 10920,
+          "bbox_xyxy": [
+            413,
+            208,
+            581,
+            309
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0112_1783420308345079476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 113,
+      "img_filename": "1783420308411602476.png",
+      "t_rel_s": 6.830898,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0113_1783420308411602476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11115,
+          "mask_px_overlay": 10947,
+          "bbox_xyxy": [
+            413,
+            207,
+            580,
+            309
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0113_1783420308411602476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 114,
+      "img_filename": "1783420308478584476.png",
+      "t_rel_s": 6.897983,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0114_1783420308478584476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11163,
+          "mask_px_overlay": 11000,
+          "bbox_xyxy": [
+            412,
+            206,
+            580,
+            308
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0114_1783420308478584476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 115,
+      "img_filename": "1783420308545584476.png",
+      "t_rel_s": 6.964973,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0115_1783420308545584476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11096,
+          "mask_px_overlay": 10935,
+          "bbox_xyxy": [
+            412,
+            205,
+            579,
+            307
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0115_1783420308545584476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 116,
+      "img_filename": "1783420308612458476.png",
+      "t_rel_s": 7.031895,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0116_1783420308612458476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11190,
+          "mask_px_overlay": 11016,
+          "bbox_xyxy": [
+            411,
+            205,
+            579,
+            306
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0116_1783420308612458476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 117,
+      "img_filename": "1783420308679335476.png",
+      "t_rel_s": 7.098934,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0117_1783420308679335476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10372,
+          "mask_px_overlay": 10213,
+          "bbox_xyxy": [
+            411,
+            205,
+            579,
+            306
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0117_1783420308679335476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 118,
+      "img_filename": "1783420308746084476.png",
+      "t_rel_s": 7.165963,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0118_1783420308746084476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 10786,
+          "mask_px_overlay": 10631,
+          "bbox_xyxy": [
+            411,
+            205,
+            579,
+            306
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0118_1783420308746084476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 119,
+      "img_filename": "1783420308813081476.png",
+      "t_rel_s": 7.232933,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0119_1783420308813081476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11095,
+          "mask_px_overlay": 10935,
+          "bbox_xyxy": [
+            411,
+            204,
+            579,
+            306
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0119_1783420308813081476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 120,
+      "img_filename": "1783420308880085476.png",
+      "t_rel_s": 7.299927,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0120_1783420308880085476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11216,
+          "mask_px_overlay": 11043,
+          "bbox_xyxy": [
+            411,
+            204,
+            579,
+            306
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0120_1783420308880085476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 121,
+      "img_filename": "1783420308946981476.png",
+      "t_rel_s": 7.366925,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0121_1783420308946981476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11210,
+          "mask_px_overlay": 11035,
+          "bbox_xyxy": [
+            410,
+            204,
+            579,
+            305
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0121_1783420308946981476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 122,
+      "img_filename": "1783420309013857476.png",
+      "t_rel_s": 7.434057,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0122_1783420309013857476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11239,
+          "mask_px_overlay": 11080,
+          "bbox_xyxy": [
+            410,
+            203,
+            579,
+            305
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0122_1783420309013857476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 123,
+      "img_filename": "1783420309080596476.png",
+      "t_rel_s": 7.50004,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0123_1783420309080596476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11252,
+          "mask_px_overlay": 11086,
+          "bbox_xyxy": [
+            410,
+            203,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0123_1783420309080596476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 124,
+      "img_filename": "1783420309147592476.png",
+      "t_rel_s": 7.566982,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0124_1783420309147592476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11262,
+          "mask_px_overlay": 11087,
+          "bbox_xyxy": [
+            410,
+            203,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0124_1783420309147592476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 125,
+      "img_filename": "1783420309214592476.png",
+      "t_rel_s": 7.633994,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0125_1783420309214592476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11286,
+          "mask_px_overlay": 11109,
+          "bbox_xyxy": [
+            410,
+            203,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0125_1783420309214592476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 126,
+      "img_filename": "1783420309281469476.png",
+      "t_rel_s": 7.700931,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0126_1783420309281469476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11296,
+          "mask_px_overlay": 11135,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0126_1783420309281469476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 127,
+      "img_filename": "1783420309348359476.png",
+      "t_rel_s": 7.767993,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0127_1783420309348359476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11294,
+          "mask_px_overlay": 11136,
+          "bbox_xyxy": [
+            410,
+            203,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0127_1783420309348359476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 128,
+      "img_filename": "1783420309415113476.png",
+      "t_rel_s": 7.834563,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0128_1783420309415113476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11281,
+          "mask_px_overlay": 11128,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0128_1783420309415113476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 129,
+      "img_filename": "1783420309482097476.png",
+      "t_rel_s": 7.902076,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0129_1783420309482097476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11297,
+          "mask_px_overlay": 11140,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0129_1783420309482097476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 130,
+      "img_filename": "1783420309549117476.png",
+      "t_rel_s": 7.969005,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0130_1783420309549117476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11302,
+          "mask_px_overlay": 11145,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0130_1783420309549117476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 131,
+      "img_filename": "1783420309615969476.png",
+      "t_rel_s": 8.035968,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0131_1783420309615969476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11310,
+          "mask_px_overlay": 11155,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0131_1783420309615969476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 132,
+      "img_filename": "1783420309682848476.png",
+      "t_rel_s": 8.10298,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0132_1783420309682848476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11328,
+          "mask_px_overlay": 11165,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0132_1783420309682848476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 133,
+      "img_filename": "1783420309749606476.png",
+      "t_rel_s": 8.16898,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0133_1783420309749606476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11323,
+          "mask_px_overlay": 11159,
+          "bbox_xyxy": [
+            409,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0133_1783420309749606476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 134,
+      "img_filename": "1783420309816600476.png",
+      "t_rel_s": 8.235943,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0134_1783420309816600476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11342,
+          "mask_px_overlay": 11176,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0134_1783420309816600476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 135,
+      "img_filename": "1783420309883622476.png",
+      "t_rel_s": 8.303003,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0135_1783420309883622476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11331,
+          "mask_px_overlay": 11168,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0135_1783420309883622476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 136,
+      "img_filename": "1783420309950499476.png",
+      "t_rel_s": 8.369994,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0136_1783420309950499476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11310,
+          "mask_px_overlay": 11146,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0136_1783420309950499476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 137,
+      "img_filename": "1783420310017375476.png",
+      "t_rel_s": 8.436922,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0137_1783420310017375476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11340,
+          "mask_px_overlay": 11173,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0137_1783420310017375476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 138,
+      "img_filename": "1783420310084101476.png",
+      "t_rel_s": 8.504176,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0138_1783420310084101476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11311,
+          "mask_px_overlay": 11147,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0138_1783420310084101476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 139,
+      "img_filename": "1783420310151105476.png",
+      "t_rel_s": 8.571431,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0139_1783420310151105476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11295,
+          "mask_px_overlay": 11128,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0139_1783420310151105476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 140,
+      "img_filename": "1783420310218105476.png",
+      "t_rel_s": 8.637955,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0140_1783420310218105476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11340,
+          "mask_px_overlay": 11178,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0140_1783420310218105476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 141,
+      "img_filename": "1783420310285002476.png",
+      "t_rel_s": 8.704995,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0141_1783420310285002476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11304,
+          "mask_px_overlay": 11137,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0141_1783420310285002476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 142,
+      "img_filename": "1783420310351864476.png",
+      "t_rel_s": 8.771984,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0142_1783420310351864476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11319,
+          "mask_px_overlay": 11152,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0142_1783420310351864476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 143,
+      "img_filename": "1783420310418615476.png",
+      "t_rel_s": 8.837981,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0143_1783420310418615476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11323,
+          "mask_px_overlay": 11153,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0143_1783420310418615476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 144,
+      "img_filename": "1783420310485629476.png",
+      "t_rel_s": 8.904964,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0144_1783420310485629476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11332,
+          "mask_px_overlay": 11166,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0144_1783420310485629476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 145,
+      "img_filename": "1783420310552631476.png",
+      "t_rel_s": 8.97296,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0145_1783420310552631476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11319,
+          "mask_px_overlay": 11159,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0145_1783420310552631476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 146,
+      "img_filename": "1783420310619486476.png",
+      "t_rel_s": 9.038994,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0146_1783420310619486476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11305,
+          "mask_px_overlay": 11146,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0146_1783420310619486476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 147,
+      "img_filename": "1783420310686381476.png",
+      "t_rel_s": 9.106009,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0147_1783420310686381476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11316,
+          "mask_px_overlay": 11153,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0147_1783420310686381476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 148,
+      "img_filename": "1783420310786736476.png",
+      "t_rel_s": 9.206992,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0148_1783420310786736476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11330,
+          "mask_px_overlay": 11160,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0148_1783420310786736476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 149,
+      "img_filename": "1783420310853617476.png",
+      "t_rel_s": 9.273,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0149_1783420310853617476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11306,
+          "mask_px_overlay": 11143,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0149_1783420310853617476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 150,
+      "img_filename": "1783420310920369476.png",
+      "t_rel_s": 9.339981,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0150_1783420310920369476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11321,
+          "mask_px_overlay": 11153,
+          "bbox_xyxy": [
+            409,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0150_1783420310920369476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 151,
+      "img_filename": "1783420310987380476.png",
+      "t_rel_s": 9.406958,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0151_1783420310987380476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11346,
+          "mask_px_overlay": 11181,
+          "bbox_xyxy": [
+            409,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0151_1783420310987380476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 152,
+      "img_filename": "1783420311054390476.png",
+      "t_rel_s": 9.473965,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0152_1783420311054390476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11320,
+          "mask_px_overlay": 11153,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0152_1783420311054390476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 153,
+      "img_filename": "1783420311121247476.png",
+      "t_rel_s": 9.54099,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0153_1783420311121247476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11301,
+          "mask_px_overlay": 11138,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0153_1783420311121247476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 154,
+      "img_filename": "1783420311188125476.png",
+      "t_rel_s": 9.60794,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0154_1783420311188125476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11340,
+          "mask_px_overlay": 11172,
+          "bbox_xyxy": [
+            410,
+            202,
+            579,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0154_1783420311188125476.png"
+        }
+      ]
+    },
+    {
+      "frame_idx": 155,
+      "img_filename": "1783420311254892476.png",
+      "t_rel_s": 9.674986,
+      "overlay_path": "figures/t001labexport/identify/overlays/f0155_1783420311254892476.png",
+      "objects": [
+        {
+          "obj_id": 2,
+          "role": "contact_receiver",
+          "mask_px": 11337,
+          "mask_px_overlay": 11172,
+          "bbox_xyxy": [
+            410,
+            202,
+            578,
+            304
+          ],
+          "object_overlay_path": "figures/t001labexport/propagation_latch/f0155_1783420311254892476.png"
+        }
+      ]
+    }
+  ]
+}

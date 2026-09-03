@@ -1,0 +1,20 @@
+{
+  "recovered": false,
+  "offset_bota_m": [
+    -0.045,
+    -0.005,
+    0.055
+  ],
+  "in_mask": 16,
+  "n_samples": 17,
+  "loto_passed": 3,
+  "n_recordings": 3,
+  "grid_frac_as_good": 1.4193456816407636e-05,
+  "top_count": 3,
+  "top_extent_mm": [
+    17.5,
+    50.0,
+    72.5
+  ],
+  "basin_ok": false
+}

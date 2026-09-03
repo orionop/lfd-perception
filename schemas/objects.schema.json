@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://utwente.example/rlbd/objects.schema.json",
+  "title": "RLBD role-tagged object tracks",
+  "type": "object",
+  "required": ["schema_version", "trial_dir", "events", "objects", "frames"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "path_base": {"enum": ["working_directory", "sidecar_directory"]},
+    "trial_dir": {"type": "string", "minLength": 1},
+    "csv": {"type": "string", "minLength": 1},
+    "image_dir": {"type": "string", "minLength": 1},
+    "run": {
+      "type": "object",
+      "properties": {
+        "status": {"enum": ["accepted", "review_required", "manual"]},
+        "automatic": {"type": "boolean"},
+        "selection_report": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "events": {"type": "object"},
+    "objects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["role", "color"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "color": {
+            "type": "array", "minItems": 3, "maxItems": 3,
+            "items": {"type": "integer", "minimum": 0, "maximum": 255}
+          },
+          "source_color": {
+            "type": ["array", "null"], "minItems": 3, "maxItems": 3,
+            "items": {"type": "integer", "minimum": 0, "maximum": 255}
+          }
+        }
+      }
+    },
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["frame_idx", "img_filename", "objects"],
+        "properties": {
+          "frame_idx": {"type": "integer", "minimum": 0},
+          "img_filename": {"type": "string", "pattern": "\\.(png|jpg|jpeg)$"},
+          "t_rel_s": {"type": ["number", "null"], "minimum": 0},
+          "overlay_path": {"type": "string"},
+          "objects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["obj_id", "role", "mask_px", "bbox_xyxy"],
+              "properties": {
+                "obj_id": {"type": "integer", "minimum": 1},
+                "role": {"type": "string", "minLength": 1},
+                "mask_px": {"type": "integer", "minimum": 0},
+                "mask_px_overlay": {"type": "integer", "minimum": 0},
+                "bbox_xyxy": {
+                  "type": ["array", "null"], "minItems": 4, "maxItems": 4,
+                  "items": {"type": "integer"}
+                },
+                "object_overlay_path": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

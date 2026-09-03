@@ -6,6 +6,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Remote collaboration with University of Twente / NAKAMA Robotics Lab. The primary deliverable is a **vision system that identifies task-relevant objects in robot-demonstration data, integrated into the lab's ROS 2 LfD pipeline**. The lab records bags on a Franka FR3 with a Bota wrist F/T sensor, a Franka gripper, and a ZED RGB camera. The lab owns data collection and export; this repo owns the downstream vision module.
 
+## Authoritative workstream state
+
+- **A is the lab deliverable and has absolute priority.** Read
+  `LAB_DELIVERABLE_A.md` before planning work. It is the single source of truth
+  for scope, completion state, acceptance criteria, and execution order.
+- **B is the manuscript and is paused until A is fully complete.** Do not use
+  manuscript novelty, experiments, or deadlines to redirect A.
+- A is currently operational but semi-automatic, not complete. The open gates
+  are held-out automatic object selection, trusted geometric calibration, an
+  actual downstream ROS 2 integration test, and reproducible handover.
+- The corrected frozen evaluation on 2026-09-03 is grasped 0/5 accepted across
+  4 independent groups and contact 2/7 accepted correctly (precision 1.00,
+  coverage 0.286) across 3 groups. Ground truth is declared per cycle in
+  `config/evaluation_manifest.yaml`; do not reconstruct it by role category.
+- `figures/contact_ceiling_study.json` is the stop/go evidence for contact
+  ranking: the correct object is in the proposal pool 7/7. The 6,561-rule
+  eight-feature baseline failed; a 19,683-rule extension with force-anchored
+  local-flow contrast raised in-sample coverage but collapsed group-separated
+  precision to 0.40. Keep the proposal pool, reject that flow cue, seek a
+  different identity cue, and do not continue linear weight tuning.
+- `figures/grasp_attachment_study.json` executed the next bounded gate and
+  stopped it: at the frozen 20% hold anchor the correct proposal reaches IoU
+  0.5 in only 3/5 cases (both t002 exports are about 0.25), and even the
+  all-data attachment-feature fit accepts 0/5. Nothing from this study entered
+  production. Do not start contact-endpoint engineering or change the anchor
+  without a new explicit plan and re-freeze.
+- `calibration.yaml:bota_to_camera.filled` is `false`. Its retained matrix is
+  an experimental candidate only. A 6/7 diagnostic score does not promote it
+  to trusted calibration; only the validation specified in
+  `LAB_DELIVERABLE_A.md` can do that.
+- If historical comments, scripts, figures, the writeup, or the manuscript
+  conflict with `LAB_DELIVERABLE_A.md`, treat them as historical evidence and
+  follow `LAB_DELIVERABLE_A.md`.
+
 Data flow: the lab runs `ros2_unbag` + an in-house merge script on each bag, producing a single pose-synchronised CSV (`<trial>_0.csv`) and per-topic subfolders alongside a ZED PNG folder. We consume that output — we do not maintain the export side anymore. The schema is fixed (`lfdws_t001_0.csv` is the spec).
 
 Exception: `ros2_unbag` currently cannot export bags containing the ZED
@@ -18,7 +52,7 @@ consuming their output.
 ## Two parallel codebases in this repo
 
 1. **Legacy bag-extraction tooling** — `bag_to_csv.py` (the lab's original) and `unbag_pipeline.py` (a Python replacement, since superseded by `ros2_unbag` on the lab's side). Kept for reference; not the deliverable.
-2. **Current vision pipeline** — `analyze_demo.py` (events) → `prepare_sam2_frames.py` → `auto_seed.py` (seed picking) → `propagate_demo_bidir.py` / `propagate_object_n.py` (SAM 2 propagation, N objects) → `build_sidecar_multi.py` (canonical JSON sidecar). Working from the exported CSV+PNGs. `segment_events.py` (SAM 1) and the older `propagate_demo.py`/`propagate_cup.py`/`build_sidecar.py`/`identify_objects.py` two-role chain are earlier iterations, kept for reference but superseded — see "End-to-end run on a new bag" below.
+2. **Current vision pipeline** — `run_deliverable.py` is the sole canonical entry point: shared multi-cycle event detection → calibration-free role-aware SAM proposal selection → per-object SAM 2 box propagation → versioned JSON sidecar → quality gate. `auto_seed.py`, `analyze_demo.py`, and the older fixed-role scripts are diagnostic or legacy paths and must not be substituted into a production run.
 
 When asked about "the pipeline," the second meaning is current.
 
@@ -29,6 +63,11 @@ Code/        Python scripts (pipeline + figure generators)
 Docs/        writeup.tex / .pdf, setup_info.md, reference PDFs
 Data/        trial folders + legacy CSV (mostly gitignored)
 figures/     generated artifacts referenced by writeup.tex (kept at root)
+config/      deliverable_rig.yaml (frozen rig features), evaluation_manifest.yaml (per-cycle ground truth)
+schemas/     objects.schema.json — the versioned sidecar contract
+tests/       calibration-independent regression suite (unittest discover)
+scripts/     one-shot host-side orchestration (currently the interaction-bakeoff GPU runner)
+docker/      Dockerfiles for isolated external-model containers (bakeoff only)
 ```
 
 Run everything from the repo root — scripts and `writeup.tex` use cwd-relative
@@ -48,6 +87,19 @@ Do not unify them. Mixing SAM 2 deps into the analysis venv breaks pandas; mixin
 
 ## End-to-end run on a new bag
 
+Canonical command:
+
+```bash
+.venv_analysis/bin/python Code/run_deliverable.py \
+    --trial <trial_dir> --out <output_dir> --offload-video-to-cpu
+```
+
+Exit `0` is accepted, `2` is safe abstention/review required, and `1` is an
+execution failure. Only exit `0` may publish a production `objects.json`.
+
+The commands below expose individual stages for diagnosis; they are not the
+production orchestration contract.
+
 Assuming a bag has been exported into `<trial_dir>/` with the standard layout:
 
 ```bash
@@ -59,17 +111,12 @@ Assuming a bag has been exported into `<trial_dir>/` with the standard layout:
     --src <trial_dir>/zed_zed_node_rgb_color_rect_image_compressed \
     --dst frames_jpg
 
-# 3. auto-pick a SAM 2 seed point per role (no hard-coded image fractions)
-.venv_sam2/bin/python Code/auto_seed.py --trial <trial_dir> --ckpt sam_vit_h_4b8939.pth \
-    --out_csv <fig_dir>/auto_seed.csv --out_overlay <fig_dir>/auto_seed_overlay.png
+# 3. calibration-free, role-aware SAM proposal selection with abstention
+.venv_sam2/bin/python Code/select_objects.py --trial <trial_dir> \
+    --ckpt sam_vit_h_4b8939.pth --out <fig_dir>/selection
 
-# 4. propagate grasped + contact_receiver bidirectionally (add --offload_video_to_cpu
-#    for trials with enough frames to exceed device memory -- see below)
-.venv_sam2/bin/python Code/propagate_demo_bidir.py \
-    --trial <trial_dir> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg \
-    --out <fig_dir>/propagation_grasped
-# additional objects beyond the first two roles: seed manually, use --seed_box
-# instead of --seed_x/--seed_y for multi-coloured objects (see "Hard-coded knobs")
+# 4. propagate every accepted role/cycle box bidirectionally (the canonical
+#    runner performs this loop; this is the diagnostic single-object form)
 .venv_sam2/bin/python Code/propagate_object_n.py \
     --trial <trial_dir> --ckpt sam2.1_hiera_large.pt --jpg_dir frames_jpg \
     --obj_id 3 --role <role_name> --seed_img_id <id> --seed_box "x0,y0,x1,y1" \
@@ -93,7 +140,11 @@ Assuming a bag has been exported into `<trial_dir>/` with the standard layout:
 
 `Code/build_sidecar_multi.py` is the canonical sidecar builder — it takes any number of `--object obj_id:role:summary_csv:bgr_color` entries, so single-object and 4-object trials go through the same tool. `Code/build_sidecar.py` (fixed two-role: grasped + contact_receiver) and `Code/propagate_demo.py`/`Code/propagate_cup.py` (the two scripts it composes) are the earlier iteration — kept for reference/backward compat, not what to reach for on a new trial. `Code/identify_objects.py` was the intended single-script end-to-end but OOMs on M3 Pro (18 GB unified memory) when multiple SAM 2 objects share one model state; the split propagate-per-object pattern above is the working one. The JSON contract is the same across all of them.
 
-Step 3 (`auto_seed.py`) is optional: if the seed CSV doesn't exist, the propagation scripts fall back to hard-coded defaults tuned to the original trial — expect a manual reseed on a sufficiently different scene (see `Code/auto_seed.py`'s docstring and "Hard-coded knobs" below).
+`auto_seed.py`, constant-pixel prompts, and propagation-script hard-coded
+fallbacks are legacy baselines only. They are never an acceptable substitute
+for `select_objects.py` in a Deliverable A run. Low selector confidence must
+produce exit code 2 and a review report; it must not silently fall back to a
+recording-specific seed.
 
 Both propagation scripts take `--offload_video_to_cpu` (off by default). `lfdws_t001`'s 497 frames fit in device memory without it; `lfdws_t001_depth`'s 1013 frames do not (`init_state` tries to allocate the whole decoded video in one buffer — hit `RuntimeError: Invalid buffer size: 11.87 GiB` on MPS without the flag). Pass it for any trial with enough frames to exceed available device memory.
 
@@ -150,9 +201,11 @@ The merged CSV's image column is the literal PNG filename (without `.png`). Per-
 - **`Code/analyze_demo.py`'s `detect_events()` has no window restriction on the force-peak search** — it reports the single global-maximum force peak across the *whole* recording. This silently attributes the wrong phase's contact to the wrong event on any multi-cycle/multi-phase recording (confirmed on `lfdws_t002_labexport`, whose largest force peak is in an unrelated latch-contact phase, not the cube task). `Code/build_sidecar_multi.py`, `Code/auto_seed.py`, and `Code/multi_event.py` are unaffected — they all restrict the press search to the window between the detected grasp and release events. Don't trust `analyze_demo.py`'s `timeline.png`/`event_frames.png` at face value on a multi-cycle recording; cross-check with `multi_event.py` or by inspecting the seeded frame directly.
 - **Point vs. box SAM 2 prompts**: a point prompt on a multi-coloured object (e.g. a Rubik's cube) segments only the locally-contiguous coloured region under it, not the physical object. Worse, propagated across a full recording, a point-seeded track that loses the object (goes out of frame) drifts catastrophically onto unrelated background (measured: mean 48% of frame, peaking at 95%) rather than degrading to empty like a box-seeded track does. Use `--seed_box` (supported by `Code/propagate_object_n.py`) instead of `--seed_x`/`--seed_y` for any multi-coloured or irregularly-textured object.
 - **Some trials have MORE THAN ONE propagation run, and the filename does not tell you which is current.** `figures/t002new/` holds both `propagation_grasped_summary.csv` (the superseded point-prompt run, mean 2,350 px — one sticker face) and `propagation_grasped_box_summary.csv` (the corrected box-prompt run, mean 32,522 px — the whole cube). Rebuilding a sidecar from the wrong one silently swaps in a bad track and nothing errors. Before rebuilding any sidecar, check the mask_px stats of every candidate CSV against the existing `objects_summary.csv.bak`, and confirm the ratio is ~1. This mistake was made once during the 2026-08-12 audit and caught only by diffing rebuilds against their backups.
-- `Code/auto_seed.py`'s `score_mask` role priors (area fraction cap `< 0.4`, lower-half-of-frame bonus for `contact_receiver`) are tuned to `lfdws_t001`'s object scale and will reject a correct contact-receiver that's larger than 40% of the frame (e.g. a plate rather than a cup), or pick an empty-background mask on a multi-phase recording whose press event isn't near the true object. Reseed manually when that happens.
-- **`calibration.yaml`'s `bota_to_camera` is still unresolved, and CAD-mesh-mining is conclusively exhausted.** Two CAD-derived candidate lens positions (63mm apart, matching the ZED Mini's stereo baseline) were tested directly via `Code/cad_candidate_sensitivity.py`: both project the wrench ray entirely outside the image on every trial tested, meaning the CAD-derived *rotation* is unreliable, not just the ambiguous translation. A second, more thorough mesh-mining pass (`Code/cad_find_lens_planar.py` for flat-disc lens windows, `Code/cad_isolate_body_solids.py` to search the camera-body solid's faces in isolation instead of blended into the whole assembly) confirms this is not a search-parameter problem — the bracket designer's CAD model of the ZED-M body is a simplified space-claim block with zero lens-level geometry at any fidelity, cross-checked against Stereolabs' own official ZED Mini datasheet dimensions (124.5×30.5×26.5mm, 63mm baseline). No further mesh-mining of this STEP file is worth attempting. `Code/calibrate_hand_eye.py` (OpenCV hand-eye calibration, `cv2.calibrateHandEye`) is the intended path forward once real rig access is available — **currently on hold, no hardware trials until explicitly authorized** (2026-08-11 standing instruction). `Code/sim_wrench_ray_validation.py` is a pre-flight sanity check on the recovery *math* only (confirms Bota SensONE's real sensor noise isn't the bottleneck) — it does NOT validate calibration and must never be cited as if it does; the camera extrinsic is defined exactly in that simulation, which sidesteps the actual open problem.
-- The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf` (arm-only, flange `fr3_link8`); the Franka Hand TCP is `+0.1034 m` z past the flange. `current_pose` is published in the base frame, but as of the eye-in-hand rig-model correction it reports the **Bota SensONE origin**, not the TCP (see `calibration.yaml`'s header) — `bota_to_tcp` in `calibration.yaml`'s `end_effector` block is still `null`.
+- **`Code/auto_seed.py` scores 1/6 and should not be relied on.** Quantified 2026-08-29 by `Code/seed_scoreboard.py` (seed-inside-ground-truth-mask, 6 cells with valid ground truth across 4 independent recordings): `auto_seed` 1/6, the constant-pixel seeders 5/6. Its `score_mask` role priors (area fraction cap `< 0.4`, lower-half-of-frame bonus for `contact_receiver`) are tuned to `lfdws_t001`'s object scale and reject a correct contact-receiver larger than 40% of the frame (e.g. a plate rather than a cup), or pick an empty-background mask on a multi-phase recording whose press event isn't near the true object. Its one generalisation attempt is archived in `figures/identify/auto_seeds_VERIFY_generalized.csv` — it took contact_receiver from 64,297 px to 287,734 px, i.e. grabbed background, and was reverted. Reseed manually, or prefer the constant-pixel seeder for the grasped role. **Read the 1/6 vs 5/6 asymmetrically**: `auto_seed` is not fitted to these masks (though its priors are tuned to `lfdws_t001`, and it fails even there), whereas both constant pixels WERE fitted on exactly these tracks, so 5/6 is in-sample and is NOT a validated replacement. The honest held-out numbers are the ones measured separately: contact constant pixel 3/7 leave-one-recording-out (`Code/contact_seed_pixel.py`), grasped constant pixel not held-out-able at all with only two independent carried-object recordings.
+- **A seed at the mask centroid can still miss, because masks here are not convex.** On `lfdws_t001`'s cup the ground-truth mask is annular (one component, fill 0.777) and its own centroid lies OUTSIDE it — `auto_seed` lands 1.3 px from the centroid and still misses, which is a real failure (SAM 2 prompted in the hole segments the interior, not the cup) but a different one from being 246 px away. Judge seeds by inside/outside, never by distance to centroid alone.
+- **The grasped ground-truth mask is fragmented at the grasp TRANSITION frame** (`lfdws_t001`: 5 connected components, fill 0.321) and is not a fair target for a seeder fitted on the hold window. `Code/grasped_seed_pixel.py` fits over `gripper_closed_window()`, so score it there; `Code/seed_scoreboard.py` currently judges every seeder on `auto_seed`'s event frame, which is harsh on the constant-pixel seeder and is noted in its output.
+- **`calibration.yaml`'s `bota_to_camera` is still unresolved, and CAD-mesh-mining is conclusively exhausted.** Two CAD-derived candidate lens positions (63mm apart, matching the ZED Mini's stereo baseline) were tested directly via `Code/cad_candidate_sensitivity.py`: both project the wrench ray entirely outside the image on every trial tested, meaning the CAD-derived *rotation* is unreliable, not just the ambiguous translation. A second, more thorough mesh-mining pass (`Code/cad_find_lens_planar.py` for flat-disc lens windows, `Code/cad_isolate_body_solids.py` to search the camera-body solid's faces in isolation instead of blended into the whole assembly) confirms this is not a search-parameter problem — the bracket designer's CAD model of the ZED-M body is a simplified space-claim block with zero lens-level geometry at any fidelity, cross-checked against Stereolabs' own official ZED Mini datasheet dimensions (124.5×30.5×26.5mm, 63mm baseline). No further mesh-mining of this STEP file is worth attempting. `Code/calibrate_hand_eye.py` (OpenCV hand-eye calibration, `cv2.calibrateHandEye`) is the intended path forward once real rig access is available — **currently on hold, no hardware trials until explicitly authorized** (2026-08-11 standing instruction). **The camera extrinsic is on the critical path for the CONTACT seed only.** `Code/grasped_seed_pixel.py` removes it for the grasped role via the eye-in-hand pose cancellation; `Code/contact_seed_pixel.py` shows the same trick fails for the contact role (held-out 3/7 vs the ray's 6/7). `Code/sim_wrench_ray_validation.py` is a pre-flight sanity check on the recovery *math* only (confirms Bota SensONE's real sensor noise isn't the bottleneck) — it does NOT validate calibration and must never be cited as if it does; the camera extrinsic is defined exactly in that simulation, which sidesteps the actual open problem.
+- The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf` (arm-only, flange `fr3_link8`); the Franka Hand TCP is `+0.1034 m` z past the flange. `current_pose` is published in the base frame. Which link it reports is **still open**: Vlutters' 2026-08-28 email says it is the Franka *tool coordinate system*, configured at the force sensor's flange (the sensor/gripper contact face), and he is confirming against the robot settings. `bota_to_tcp` in `calibration.yaml`'s `end_effector` block is still `null`. **`Code/pose_frame_probe.py` cannot settle this** — its `score()` does `T_bb @ p` then projects with `T_bb @ T_bc`, so `current_pose` cancels algebraically and every sample yields the same pixel; its "zero offset 8/17 vs all six 104 mm placements 0/17" is evidence about `T_bota_camera` and the offset jointly, NOT about which link the topic publishes. Corrected 2026-08-29; the earlier claim here and in `calibration.yaml` overstated it.
 
 ## What the writeup is
 
@@ -198,11 +251,27 @@ Run twice to resolve refs. `.aux` / `.log` / `.out` are byproducts that can be l
 - `cad_find_lens_planar.py` — second lens-search hypothesis after `cad_find_lens_occ.py`'s cylindrical-bore scan came up empty: tests whether the lens is modelled as a flat circular disc face instead. Also empty, in the same STEP file.
 - `cad_isolate_body_solids.py` — isolates the ZED-M camera body's own solid (by bounding-box proximity, since XCAF part labels are broken in this pythonocc-core build) and searches only its faces, instead of the whole assembly at once. Conclusively confirms the body solid is a simplified space-claim block with no lens-level detail — not a search-parameter problem, the geometry genuinely isn't modelled.
 - `sim_wrench_ray_validation.py` — analytical Monte-Carlo pre-flight check on the Bicchi recovery math only (not a calibration substitute — see "Hard-coded knobs").
+- `grasped_seed_pixel.py` — the GRASPED seed as a constant image pixel. On an eye-in-hand rig the arm pose cancels algebraically (`p_cam = inv(T_bota_camera) @ p_bota`; verified byte-identical across random poses), so a hand-fixed point projects to the same pixel in every frame. Needs no depth and no `T_bota_camera`. Minimax pixel (565,110), 95.5% / 96.4% of hold frames on the two carried-object recordings; `held_out_validated: false` — only two independent carried-object demos exist.
+- `contact_seed_pixel.py` — the same test for the CONTACT role, scored on `contact_eval_set.py`'s shared 7 events so it is directly comparable to the wrench ray. **Negative result:** in-sample 6/7 but leave-one-recording-out 3/7, against 6/7 for the (unfitted) wrench-ray projection. At contact only the contact *point* is hand-fixed while the object extends arbitrarily from it, and object scale varies 14x across recordings (plate 28.8% of frame vs latch 2.0%), so no single pixel transfers. **`T_bota_camera` therefore stays on the critical path for the contact seed** — don't re-run this expecting a different answer without a changed formulation (e.g. a per-object-scale offset).
+- `seed_scoreboard.py` — the one scored table: every seeding method x every trial x every role, criterion "does the seed pixel fall inside the ground-truth mask on the frame it is placed at". Two passes: `--run_auto_seed` (needs `.venv_sam2` + the SAM 1 checkpoint, caches per-trial seeds into `figures/seed_scoreboard/`) then a scoring pass in `.venv_analysis`. Marks `lfdws_t004`/`t005` grasped cells as NO GROUND TRUTH rather than scoring them (no carried object), and tags `lfdws_t002_labexport` as the same bag as `lfdws_t002_new` so the two are never counted as independent evidence. Result: `auto_seed` 1/6, constant pixel 5/6.
+- `mark_sheet_decode.py` — decodes Mark Vlutters' CAD sheet from its drawing dimensions alone, with no rotation algebra, and scores every construction his numbers admit. Found that his translation is labelled "In rotated frame" while we insert it as measurement-frame: the adopted `T` puts the camera 133.5 mm from where his drawing puts it, against a 40.2 mm tolerance. Exactly one construction reproduces the drawing (0.00 mm) — his intended intrinsic rotation with `t = R @ t_rot` — but it scores 3/7 against the adopted 6/7.
+- `mark_sheet_azimuth.py` — his sheet is a side elevation, so it cannot fix azimuth about the tool axis; `T(phi) = Rz(phi) @ T_drawing` leaves radius, height and tilt invariant. Sweeping that free angle peaks at 5/7, never 6/7 (leave-one-recording-out mean 0.533 vs 0.143 chance), and the top plateau is 50 of 360 angles wide. Inconclusive by design — reports it as such rather than adopting a fitted angle.
 - `event_detection_accuracy_table.py` — recomputes event detection live across every trial and tabulates sensor profile / detected events / pass-fail, replacing prose claims about detector robustness with a checkable table.
 - `_dado_vs_groundtruth_t002labexport.py` / `_dado_vs_groundtruth_all_trials.py` — scores the DADO-style label-free proposer (DINOv2 attention × real depth) against the propagated ground-truth object mask, per event, across all trials with both real depth and a ground-truth mask. IoU is consistently low (~0.16 mean across 16 events) — the quantitative version of the qualitative DADO negative result.
 - `force_only_multi_event.py` — the force-only analogue of `multi_event.py`: groups `force_only_events.py`'s force-peaks into activity clusters by time-gap for trials with no gripper topic (no grasp/release to bound cycles otherwise). Companion, not a superseded duplicate.
 - `presence_signal.py` — standalone diagnostic: bbox-diagonal + centroid presence signal, more robust to partial occlusion than raw mask-pixel-count for judging whether a tracked object is genuinely present in a frame. Reads `objects_summary.csv`, doesn't touch the sidecar builders.
 - `auto_seed_depth_prior.py` — standalone experiment testing whether real per-pixel depth (depth-bearing trials only) as a near-camera prior improves `auto_seed.py`'s scoring; does not modify `auto_seed.py`, degrades to a no-op on trials without depth.
+- `run_deliverable.py` — the canonical Deliverable A entry point (see "End-to-end run on a new bag"): validates the export, runs `deliverable_events.py`'s multi-cycle detection, `select_objects.py`'s calibration-free proposal selection, per-object SAM 2 propagation, `build_sidecar_multi.py`, and the sidecar quality gate, in one command with exit codes `0`/`1`/`2`.
+- `deliverable_events.py` — shared multi-cycle event detector behind `run_deliverable.py`; groups every grasp/release/press into recording cycles (superset of `multi_event.py`'s single-role logic, used by the production runner specifically).
+- `select_objects.py` — the current role-aware SAM proposal selector with the safe-abstention contract (`low_score_or_margin` review-required, never a silent fallback). Scores every cached proposal against the frozen rig features in `config/deliverable_rig.yaml`, probes grasped cycles at multiple hold fractions, and merges fragmented proposals into local unions as extra candidates. This is what `auto_seed.py` was superseded by for production use.
+- `evaluate_selection.py` — the frozen evaluator: reads per-cycle declared ground truth from `config/evaluation_manifest.yaml` (schema v2 — never reconstruct ground truth by role category, see "Evaluation ground truth was defective" in `LAB_DELIVERABLE_A.md`), scores one or more selection reports against it, and reports precision/coverage per independent recording group.
+- `contact_ceiling_study.py` — the linear-rule feasibility sweeps behind the contact stop condition: the 6,561-rule eight-feature baseline and the 19,683-rule flow-contrast extension (`figures/contact_ceiling_existing_features.json`, `figures/contact_flow_contrast_study.json`). Practical stop tests, not proofs against every nonlinear method.
+- `grasp_attachment_study.py` — the attachment-transition feasibility gate (`figures/grasp_attachment_study.json`): tests whether a proposal or local union reaches IoU 0.5 at the frozen 20% hold anchor. Failed (3/5, 0/5 even with an all-data fit) — see `LAB_DELIVERABLE_A.md`; contact-endpoint engineering was not started as a result.
+- `verify_grasped_reference.py` — eye-in-hand drift evidence for the grasped-role admission rule: confirms a carried object holds a near-constant pixel while the scene sweeps past (`lfdws_t001` ratio 0.02, `lfdws_t005` 0.07 vs. `lfdws_t004`'s 0.59–1.40). Supporting evidence only, not the admission gate itself — see `LAB_DELIVERABLE_A.md` for why.
+- `validate_sidecar.py` / `sidecar_consumer.py` — the local schema validator against `schemas/objects.schema.json` and a minimal reference reader, standing in for the lab's actual downstream ROS 2 consumer until that integration test exists.
+- `export_interaction_bakeoff.py` — freezes the 5 grasp / 7 contact evaluation cases (event images, DistinctNet raw/stabilized frame pairs, cached SAM proposal `.npz`) into `figures/interaction_bakeoff/input/`, deliberately excluding reference masks so the bundle can't leak ground truth to an external model. Do not regenerate after seeing model results.
+- `run_hoi_detr_bakeoff.py` / `run_distinctnet_bakeoff.py` — GPU-only adapters that drive each external repo's own demo entry point (HOI-DETR's `demo/demo.py` module globals, DistinctNet's `Predictor`) against the frozen bundle and write a `predictions.json` stamped with a benchmark/checkpoint hash for provenance. Never edit the third-party repos in place — see `scripts/run_interaction_bakeoff_gpu.sh`.
+- `score_interaction_bakeoff.py` — maps external predictions onto the frozen cached SAM proposals (box→mask by IoU for HOI-DETR, mask→mask with a 0.50 floor for DistinctNet) and re-runs `evaluate_selection.py` against them; writes `verdict.json`. A missing HOI-DETR relation chain or a sub-0.50 DistinctNet match is an abstention, not a guess.
 
 ## Conventions from collaborator feedback (apply when extending)
 

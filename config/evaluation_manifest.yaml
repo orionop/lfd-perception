@@ -1,0 +1,122 @@
+version: 2
+protocol: leave_one_recording_group_out
+selection_iou_threshold: 0.50
+minimum_precision: 0.90
+minimum_coverage: 0.75
+
+# Duplicate exports of one physical recording share an independent_group and
+# must never be split between training and evaluation.
+#
+# GROUND TRUTH IS DECLARED PER CYCLE (schema version 2).
+#
+# Version 1 carried only a flat `eligible_roles` list, and the evaluator picked
+# the reference object by role *category*, collapsing contact_receiver /
+# tool_contact / charger_contact into one bucket and taking whichever overlay
+# recovered first. On lfdws_t001_depth, where a single frame holds two or three
+# contact objects, that scored the selector against an object the robot was not
+# touching in four of seven contact cases, and those four were the bulk of the
+# reported 0.286 contact coverage. Every scored cycle now names its reference
+# object explicitly.
+#
+# The two rules used to author these entries, both independent of the selector's
+# own scores and of anything the selector could be tuned toward:
+#
+#   contact cycles - the contacted object is the one nearest the camera at the
+#     press frame, read from this rig's real per-pixel depth inside each
+#     reference mask. On lfdws_t001_depth the rule agrees with visual inspection
+#     on every cycle where the frame is unambiguous, and resolves cycle 5, where
+#     the charger (164 mm) sits in front of both the screwdriver (245 mm) and
+#     the plate (336 mm).
+#
+#   grasped cycles - the reference mask must be the object held in the gripper
+#     at the frame the selector is actually scored on (20% into the closed
+#     hold, per deliverable_events.role_events). Verified by inspecting
+#     that exact frame. Code/verify_grasped_reference.py supplies supporting
+#     eye-in-hand drift evidence but is NOT the gate: it can only decide cycles
+#     whose held phase overlaps real camera motion, which on lfdws_t002_* it
+#     does not.
+
+recordings:
+  - id: lfdws_t001
+    independent_group: t001_original
+    trial: Data/lfdws_t001/lfdws_t001
+    reference_sidecar: figures/identify/objects_summary.csv
+    eligible_roles: [grasped, contact_receiver]
+    ground_truth:
+      # Carrot held throughout the hold; drift ratio 0.02 against a camera that
+      # moved 138 px (Code/verify_grasped_reference.py, 2026-09-03).
+      - {selector_role: grasped, cycle_idx: 1, reference_role: grasped}
+      # Cup is the only contact object in the scene.
+      - {selector_role: contact_receiver, cycle_idx: 1, reference_role: contact_receiver}
+
+  - id: lfdws_t001_depth
+    independent_group: t001_depth
+    trial: Data/lfdws_t001_depth
+    reference_sidecar: figures/identify_depth_multi/objects_summary.csv
+    eligible_roles: [contact_receiver, tool_contact, charger_contact]
+    ground_truth:
+      # Nearest-object-at-press, from real depth inside each reference mask.
+      # Median depth per candidate is quoted for each cycle.
+      - {selector_role: contact_receiver, cycle_idx: 1, reference_role: contact_receiver}   # plate 178 mm, only object present
+      - {selector_role: contact_receiver, cycle_idx: 2, reference_role: tool_contact}       # tool 185 mm vs plate 389 mm
+      - {selector_role: contact_receiver, cycle_idx: 3, reference_role: charger_contact}    # charger 204 mm; plate has no valid depth
+      - {selector_role: contact_receiver, cycle_idx: 4, reference_role: charger_contact}    # charger 169 mm; plate has no valid depth
+      - {selector_role: contact_receiver, cycle_idx: 5, reference_role: charger_contact}    # charger 173 mm vs tool 250 mm vs plate 448 mm
+
+  - id: lfdws_t001_labexport
+    independent_group: t001_labexport
+    trial: Data/lfdws_t001_labexport/lfdws_t001
+    reference_sidecar: figures/t001labexport/identify/objects_summary.csv
+    eligible_roles: [contact_receiver]
+    ground_truth:
+      - {selector_role: contact_receiver, cycle_idx: 1, reference_role: contact_receiver}
+
+  - id: lfdws_t002_new
+    independent_group: t002_cube
+    trial: Data/lfdws_t002_new
+    reference_sidecar: figures/t002new/identify/objects_summary.csv
+    eligible_roles: [grasped]
+    ground_truth:
+      # Cube held in the gripper at the scored frame, verified by inspection.
+      # The drift test reports not_carried here (median ratio 0.40) because the
+      # mask grows 30k -> 79k px while the object is still approaching, and the
+      # arm has nearly stopped by the time it stabilises; see that script's
+      # docstring. No contact entry: this sidecar has no contact reference track.
+      - {selector_role: grasped, cycle_idx: 1, reference_role: grasped}
+
+  - id: lfdws_t002_labexport
+    independent_group: t002_cube
+    trial: Data/lfdws_t002_labexport/lfdws_t002
+    reference_sidecar: figures/t002labexport/identify/objects_summary.csv
+    eligible_roles: [grasped]
+    ground_truth:
+      - {selector_role: grasped, cycle_idx: 1, reference_role: grasped}
+
+  - id: lfdws_t004
+    independent_group: t004
+    trial: Data/lfdws_t004
+    reference_sidecar: figures/t004/identify/objects_summary.csv
+    eligible_roles: [grasped]
+    ground_truth:
+      # At the early-hold scoring frame (row 66859), the nut is visibly held
+      # between the fingers. It is placed later in this same closed interval.
+      - {selector_role: grasped, cycle_idx: 2, reference_role: grasped}
+    note: >-
+      Cycle 2 is admitted only at the early-hold frame. The whole-hold drift
+      verdict remains not_carried because the robot later threads the nut onto
+      the pegboard while the gripper stays closed. Cycles 1, 3, and 4 remain
+      excluded: their reference masks do not show a carried object at the
+      selector frame.
+
+  - id: lfdws_t005
+    independent_group: t005
+    trial: Data/lfdws_t005
+    reference_sidecar: figures/t005/identify/objects_summary.csv
+    eligible_roles: [grasped]
+    ground_truth:
+      # Nut held between the fingers for the whole hold: mask stable at
+      # 4386 -> 4147 px, drift ratio 0.07 against 150 px of camera motion.
+      - {selector_role: grasped, cycle_idx: 1, reference_role: grasped}
+    note: >-
+      Cycle 2 is excluded: the reference track has ended by then and no
+      grasped mask exists at any probe frame in that hold.

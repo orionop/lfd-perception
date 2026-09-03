@@ -1,0 +1,55 @@
+{
+  "protocol": "leave_one_recording_group_out",
+  "thresholds": {
+    "iou": 0.5,
+    "precision": 0.9,
+    "coverage": 0.75
+  },
+  "passed": false,
+  "summary": {
+    "grasped": {
+      "eligible": 1,
+      "accepted": 1,
+      "correct": 0,
+      "precision": 0.0,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "evidence_sufficient": false,
+      "passed": false
+    },
+    "contact": {
+      "eligible": 1,
+      "accepted": 1,
+      "correct": 1,
+      "precision": 1.0,
+      "coverage": 1.0,
+      "independent_groups": 1,
+      "evidence_sufficient": false,
+      "passed": false
+    }
+  },
+  "rows": [
+    {
+      "recording": "lfdws_t001",
+      "group": "t001_original",
+      "role": "grasped",
+      "reference_role": "grasped",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": true,
+      "iou": 0.0,
+      "correct": false
+    },
+    {
+      "recording": "lfdws_t001",
+      "group": "t001_original",
+      "role": "contact_receiver",
+      "reference_role": "contact_receiver",
+      "cycle_idx": 1,
+      "automatic": true,
+      "accepted": true,
+      "iou": 0.9826974131011916,
+      "correct": true
+    }
+  ]
+}

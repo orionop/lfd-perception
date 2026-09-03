@@ -1,0 +1,653 @@
+{
+  "schema_version": "1.0",
+  "trial": "Data/lfdws_t004",
+  "status": "review_required",
+  "automatic": true,
+  "event_summary": {
+    "has_gripper": true,
+    "has_force": false,
+    "force_baseline_n": null,
+    "force_peak_min_n": 5.0,
+    "n_cycles": 4,
+    "n_grasps": 4,
+    "n_releases": 4,
+    "n_presses": 0,
+    "n_force_peaks_raw": 0,
+    "force_cluster_gap_s": 3.0
+  },
+  "proposal_provenance": {
+    "cache_version": 1,
+    "model": "vit_h",
+    "points_per_side": 24,
+    "pred_iou_thresh": 0.85,
+    "stability_score_thresh": 0.9,
+    "min_mask_region_area": 400,
+    "checkpoint": "sam_vit_h_4b8939.pth",
+    "checkpoint_size": 2564550879,
+    "checkpoint_mtime_ns": 1780068070070826016
+  },
+  "events": [
+    {
+      "event": "grasp",
+      "row_idx": 39421,
+      "t_rel_s": 39.46611456,
+      "img_ts": "1782992993619264182",
+      "force_mag_n": null,
+      "gripper_width_m": 0.019085360690951347
+    },
+    {
+      "event": "release",
+      "row_idx": 54598,
+      "t_rel_s": 54.66438272,
+      "img_ts": "1782993008775462265",
+      "force_mag_n": null,
+      "gripper_width_m": 0.03193304315209389
+    },
+    {
+      "event": "grasp",
+      "row_idx": 65150,
+      "t_rel_s": 65.228341504,
+      "img_ts": "1782993019344406587",
+      "force_mag_n": null,
+      "gripper_width_m": 0.02186962589621544
+    },
+    {
+      "event": "release",
+      "row_idx": 73699,
+      "t_rel_s": 73.784453888,
+      "img_ts": "1782993027873465110",
+      "force_mag_n": null,
+      "gripper_width_m": 0.032723668962717056
+    },
+    {
+      "event": "grasp",
+      "row_idx": 80054,
+      "t_rel_s": 80.15336192,
+      "img_ts": "1782993034296815085",
+      "force_mag_n": null,
+      "gripper_width_m": 0.024462804198265076
+    },
+    {
+      "event": "release",
+      "row_idx": 93542,
+      "t_rel_s": 93.658394112,
+      "img_ts": "1782993047810384420",
+      "force_mag_n": null,
+      "gripper_width_m": 0.03254374489188194
+    },
+    {
+      "event": "grasp",
+      "row_idx": 102937,
+      "t_rel_s": 103.06036992,
+      "img_ts": "1782993057180852326",
+      "force_mag_n": null,
+      "gripper_width_m": 0.025087950751185417
+    },
+    {
+      "event": "release",
+      "row_idx": 116709,
+      "t_rel_s": 116.8404608,
+      "img_ts": "1782993070925157603",
+      "force_mag_n": null,
+      "gripper_width_m": 0.0008641733438707888
+    }
+  ],
+  "selections": [
+    {
+      "role": "grasped",
+      "cycle_idx": 1,
+      "row_idx": 42456,
+      "event": "early_hold",
+      "img_id": "1782992998938496233",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.5769092442235114,
+      "runner_up_score": 0.5707329920599273,
+      "distinct_runner_up_score": 0.5707329920599273,
+      "duplicate_suppression_iou": 0.5,
+      "confidence_margin": 0.006176252163584084,
+      "features": {
+        "score": 0.5769092442235114,
+        "region_overlap": 0.006251688815740991,
+        "region_proximity": 1.0,
+        "sam_quality": 0.9876552522182465,
+        "border_score": 0.75,
+        "appearance_novelty": 0.4627451002597809,
+        "stationarity": 0.9639917763964349,
+        "temporal_stability": 0.5372548997402191,
+        "area_fraction": 0.0036574074074074074
+      },
+      "seed_point_xy": [
+        386.0,
+        0.0
+      ],
+      "seed_box_xyxy": [
+        366,
+        0,
+        422,
+        67
+      ],
+      "mask_px": 1896,
+      "hold_probe_count": 3,
+      "hold_support": 3,
+      "hold_probe_frames": [
+        "1782992996598368852",
+        "1782992997734415919",
+        "1782992998938496233"
+      ],
+      "proposal_cache_path": "proposal_cache/1782992998938496233.npz",
+      "candidate_count": 98,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            366,
+            0,
+            422,
+            67
+          ],
+          "mask_px": 1896,
+          "score": 0.5769092442235114,
+          "region_overlap": 0.006251688815740991,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9876552522182465,
+          "border_score": 0.75,
+          "appearance_novelty": 0.4627451002597809,
+          "stationarity": 0.9639917763964349,
+          "temporal_stability": 0.5372548997402191,
+          "area_fraction": 0.0036574074074074074
+        },
+        {
+          "bbox_xyxy": [
+            497,
+            0,
+            644,
+            127
+          ],
+          "mask_px": 13125,
+          "score": 0.5707329920599273,
+          "region_overlap": 0.14838693770879818,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9708556979894638,
+          "border_score": 0.75,
+          "appearance_novelty": 0.13333334028720856,
+          "stationarity": 0.861679375673538,
+          "temporal_stability": 0.8666666597127914,
+          "area_fraction": 0.02531828703703704
+        },
+        {
+          "bbox_xyxy": [
+            497,
+            0,
+            644,
+            127
+          ],
+          "mask_px": 13111,
+          "score": 0.5698642481965782,
+          "region_overlap": 0.14821435175482933,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9665209253629049,
+          "border_score": 0.75,
+          "appearance_novelty": 0.13333334028720856,
+          "stationarity": 0.860888761246157,
+          "temporal_stability": 0.8666666597127914,
+          "area_fraction": 0.025291280864197532
+        },
+        {
+          "bbox_xyxy": [
+            455,
+            0,
+            616,
+            127
+          ],
+          "mask_px": 9477,
+          "score": 0.5655778491859305,
+          "region_overlap": 0.10652606594058671,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9620981812477112,
+          "border_score": 0.75,
+          "appearance_novelty": 0.09019608050584793,
+          "stationarity": 0.9372969543449186,
+          "temporal_stability": 0.9098039194941521,
+          "area_fraction": 0.01828125
+        },
+        {
+          "bbox_xyxy": [
+            497,
+            0,
+            616,
+            127
+          ],
+          "mask_px": 8655,
+          "score": 0.5627713789406318,
+          "region_overlap": 0.09773486817675454,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9555612206459045,
+          "border_score": 0.75,
+          "appearance_novelty": 0.09019608050584793,
+          "stationarity": 0.9435519196564865,
+          "temporal_stability": 0.9098039194941521,
+          "area_fraction": 0.01669560185185185
+        }
+      ]
+    },
+    {
+      "role": "grasped",
+      "cycle_idx": 2,
+      "row_idx": 66859,
+      "event": "early_hold",
+      "img_id": "1782993022322830673",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.5035316636878392,
+      "runner_up_score": 0.49371374995726197,
+      "distinct_runner_up_score": 0.49371374995726197,
+      "duplicate_suppression_iou": 0.5,
+      "confidence_margin": 0.009817913730577221,
+      "features": {
+        "score": 0.5035316636878392,
+        "region_overlap": 0.010588807543122265,
+        "region_proximity": 1.0,
+        "sam_quality": 0.9872966408729553,
+        "border_score": 1.0,
+        "appearance_novelty": 0.07058823853731155,
+        "stationarity": 0.7233613053153598,
+        "temporal_stability": 0.9294117614626884,
+        "area_fraction": 0.0019232253086419752
+      },
+      "seed_point_xy": [
+        749.0,
+        45.0
+      ],
+      "seed_box_xyxy": [
+        730,
+        28,
+        761,
+        79
+      ],
+      "mask_px": 997,
+      "hold_probe_count": 3,
+      "hold_support": 1,
+      "hold_probe_frames": [
+        "1782993021082162264",
+        "1782993021720336963",
+        "1782993022322830673"
+      ],
+      "proposal_cache_path": "proposal_cache/1782993022322830673.npz",
+      "candidate_count": 131,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            730,
+            28,
+            761,
+            79
+          ],
+          "mask_px": 997,
+          "score": 0.5035316636878392,
+          "region_overlap": 0.010588807543122265,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9872966408729553,
+          "border_score": 1.0,
+          "appearance_novelty": 0.07058823853731155,
+          "stationarity": 0.7233613053153598,
+          "temporal_stability": 0.9294117614626884,
+          "area_fraction": 0.0019232253086419752
+        },
+        {
+          "bbox_xyxy": [
+            209,
+            0,
+            959,
+            537
+          ],
+          "mask_px": 212880,
+          "score": 0.49371374995726197,
+          "region_overlap": 0.21782388158988858,
+          "region_proximity": 1.0,
+          "sam_quality": 0.971449539065361,
+          "border_score": 0.5,
+          "appearance_novelty": 0.03529411926865578,
+          "stationarity": 0.4661427430706562,
+          "temporal_stability": 0.9647058807313442,
+          "area_fraction": 0.41064814814814815
+        },
+        {
+          "bbox_xyxy": [
+            209,
+            0,
+            959,
+            537
+          ],
+          "mask_px": 211806,
+          "score": 0.4919462832535183,
+          "region_overlap": 0.21593176979388445,
+          "region_proximity": 1.0,
+          "sam_quality": 0.960565596818924,
+          "border_score": 0.5,
+          "appearance_novelty": 0.03529411926865578,
+          "stationarity": 0.46877956187977277,
+          "temporal_stability": 0.9647058807313442,
+          "area_fraction": 0.40857638888888886
+        },
+        {
+          "bbox_xyxy": [
+            395,
+            68,
+            437,
+            126
+          ],
+          "mask_px": 2375,
+          "score": 0.44286894457578235,
+          "region_overlap": 0.02078584877613715,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9877052009105682,
+          "border_score": 1.0,
+          "appearance_novelty": 0.01568627543747425,
+          "stationarity": 0.42934744911900846,
+          "temporal_stability": 0.9843137245625257,
+          "area_fraction": 0.004581404320987655
+        },
+        {
+          "bbox_xyxy": [
+            476,
+            247,
+            511,
+            293
+          ],
+          "mask_px": 1164,
+          "score": 0.43271741762504506,
+          "region_overlap": 0.0,
+          "region_proximity": 0.8434711358407646,
+          "sam_quality": 0.9523437023162842,
+          "border_score": 1.0,
+          "appearance_novelty": 0.06666667014360428,
+          "stationarity": 0.5333926244356368,
+          "temporal_stability": 0.9333333298563957,
+          "area_fraction": 0.0022453703703703702
+        }
+      ]
+    },
+    {
+      "role": "grasped",
+      "cycle_idx": 3,
+      "row_idx": 82751,
+      "event": "early_hold",
+      "img_id": "1782993037977657392",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.5261060044598795,
+      "runner_up_score": 0.46951348614018196,
+      "distinct_runner_up_score": 0.46951348614018196,
+      "duplicate_suppression_iou": 0.5,
+      "confidence_margin": 0.05659251831969758,
+      "features": {
+        "score": 0.5261060044598795,
+        "region_overlap": 0.008371755944571478,
+        "region_proximity": 1.0,
+        "sam_quality": 0.9047372937202454,
+        "border_score": 1.0,
+        "appearance_novelty": 0.03921568766236305,
+        "stationarity": 0.917718635275032,
+        "temporal_stability": 0.960784312337637,
+        "area_fraction": 0.0012924382716049383
+      },
+      "seed_point_xy": [
+        663.0,
+        194.0
+      ],
+      "seed_box_xyxy": [
+        648,
+        180,
+        676,
+        208
+      ],
+      "mask_px": 670,
+      "hold_probe_count": 3,
+      "hold_support": 2,
+      "hold_probe_frames": [
+        "1782993036972818997",
+        "1782993037977657392",
+        "1782993039013793334"
+      ],
+      "proposal_cache_path": "proposal_cache/1782993037977657392.npz",
+      "candidate_count": 120,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            648,
+            180,
+            676,
+            208
+          ],
+          "mask_px": 670,
+          "score": 0.5261060044598795,
+          "region_overlap": 0.008371755944571478,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9047372937202454,
+          "border_score": 1.0,
+          "appearance_novelty": 0.03921568766236305,
+          "stationarity": 0.917718635275032,
+          "temporal_stability": 0.960784312337637,
+          "area_fraction": 0.0012924382716049383
+        },
+        {
+          "bbox_xyxy": [
+            178,
+            0,
+            959,
+            537
+          ],
+          "mask_px": 220082,
+          "score": 0.46951348614018196,
+          "region_overlap": 0.20986474773739694,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9639613926410675,
+          "border_score": 0.5,
+          "appearance_novelty": 0.054901961237192154,
+          "stationarity": 0.35488209706106827,
+          "temporal_stability": 0.9450980387628078,
+          "area_fraction": 0.4245408950617284
+        },
+        {
+          "bbox_xyxy": [
+            178,
+            0,
+            959,
+            537
+          ],
+          "mask_px": 218981,
+          "score": 0.46760031183794853,
+          "region_overlap": 0.209150353227574,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9488188922405243,
+          "border_score": 0.5,
+          "appearance_novelty": 0.054901961237192154,
+          "stationarity": 0.35792329124249894,
+          "temporal_stability": 0.9450980387628078,
+          "area_fraction": 0.4224170524691358
+        },
+        {
+          "bbox_xyxy": [
+            388,
+            0,
+            453,
+            33
+          ],
+          "mask_px": 1622,
+          "score": 0.4570040700444079,
+          "region_overlap": 0.008908713487866357,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9795444011688232,
+          "border_score": 0.75,
+          "appearance_novelty": 0.05882352963089943,
+          "stationarity": 0.5678600359262065,
+          "temporal_stability": 0.9411764703691006,
+          "area_fraction": 0.003128858024691358
+        },
+        {
+          "bbox_xyxy": [
+            85,
+            51,
+            383,
+            537
+          ],
+          "mask_px": 27776,
+          "score": 0.4558680671412744,
+          "region_overlap": 0.0,
+          "region_proximity": 0.7615744412498274,
+          "sam_quality": 0.9730913043022156,
+          "border_score": 1.0,
+          "appearance_novelty": 0.09803921729326248,
+          "stationarity": 0.6793214178957087,
+          "temporal_stability": 0.9019607827067375,
+          "area_fraction": 0.053580246913580244
+        }
+      ]
+    },
+    {
+      "role": "grasped",
+      "cycle_idx": 4,
+      "row_idx": 105691,
+      "event": "early_hold",
+      "img_id": "1782993062029655008",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.5684374777471327,
+      "runner_up_score": 0.5663514197448377,
+      "distinct_runner_up_score": 0.5494186408723585,
+      "duplicate_suppression_iou": 0.5,
+      "confidence_margin": 0.019018836874774236,
+      "features": {
+        "score": 0.5684374777471327,
+        "region_overlap": 0.19017865627672717,
+        "region_proximity": 1.0,
+        "sam_quality": 0.964309960603714,
+        "border_score": 0.75,
+        "appearance_novelty": 0.16470588743686676,
+        "stationarity": 0.7662893260801721,
+        "temporal_stability": 0.8352941125631332,
+        "area_fraction": 0.03889467592592592
+      },
+      "seed_point_xy": [
+        516.0,
+        0.0
+      ],
+      "seed_box_xyxy": [
+        355,
+        0,
+        594,
+        127
+      ],
+      "mask_px": 20163,
+      "hold_probe_count": 3,
+      "hold_support": 2,
+      "hold_probe_frames": [
+        "1782993059954520111",
+        "1782993060959644876",
+        "1782993062029655008"
+      ],
+      "proposal_cache_path": "proposal_cache/1782993062029655008.npz",
+      "candidate_count": 104,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            355,
+            0,
+            594,
+            127
+          ],
+          "mask_px": 20163,
+          "score": 0.5684374777471327,
+          "region_overlap": 0.19017865627672717,
+          "region_proximity": 1.0,
+          "sam_quality": 0.964309960603714,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.7662893260801721,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.03889467592592592
+        },
+        {
+          "bbox_xyxy": [
+            355,
+            0,
+            592,
+            127
+          ],
+          "mask_px": 19764,
+          "score": 0.5663514197448377,
+          "region_overlap": 0.18534047582283142,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9662241737047831,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.7628901920372128,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.038125
+        },
+        {
+          "bbox_xyxy": [
+            355,
+            0,
+            592,
+            127
+          ],
+          "mask_px": 19766,
+          "score": 0.5661620582520489,
+          "region_overlap": 0.18542055186667775,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9647094640466902,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.7629392837401078,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.038128858024691355
+        },
+        {
+          "bbox_xyxy": [
+            355,
+            0,
+            594,
+            127
+          ],
+          "mask_px": 19940,
+          "score": 0.5660191447557513,
+          "region_overlap": 0.1873040380047506,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9587847650051117,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.7633721397981759,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.03846450617283951
+        },
+        {
+          "bbox_xyxy": [
+            355,
+            0,
+            592,
+            127
+          ],
+          "mask_px": 19796,
+          "score": 0.5653136783434694,
+          "region_overlap": 0.18567831436919496,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9582407942840031,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.76309780213982,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.03818672839506173
+        }
+      ]
+    }
+  ],
+  "policy": {
+    "low_confidence": "abstain",
+    "production_sidecar_allowed": false
+  }
+}

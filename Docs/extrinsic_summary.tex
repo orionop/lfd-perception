@@ -1,0 +1,97 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.6cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{parskip}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{5pt}{1pt}
+\titleformat{\section}{\normalfont\bfseries}{}{0pt}{}
+\setlength{\parskip}{3pt}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\large\bfseries Force sensor $\rightarrow$ camera extrinsic, and the grasped-object seed}\\[1pt]
+{\small Summary of values, 28 August 2026}
+\end{center}
+
+\textbf{Status.} Extrinsic resolved and validated. The grasped-object stage no longer depends on
+it, or on the tool-frame question. Nothing further is needed from your side; one more recording
+would help, noted at the end.
+
+\section{The discrepancy, and its cause}
+Both matrices are built from your two angles, $-135^\circ$ about $z$ and $+45^\circ$ about $x$.
+They differ only in the order the two rotations are composed, and since $R_z$ and $R_x$ do not
+commute that alone is the full $82.82^\circ$ between them.
+\[
+\underbrace{R_z(-135)\,R_x(45) =
+\begin{pmatrix} -0.7071 & 0.5 & -0.5\\ -0.7071 & -0.5 & 0.5\\ 0 & 0.7071 & 0.7071\end{pmatrix}}_{\text{your sheet; \texttt{"ZXY"}, intrinsic}}
+\qquad
+\underbrace{R_x(45)\,R_z(-135) =
+\begin{pmatrix} -0.7071 & 0.7071 & 0\\ -0.5 & -0.5 & -0.7071\\ -0.5 & -0.5 & 0.7071\end{pmatrix}}_{\text{matches recordings; \texttt{"zxy"}, extrinsic}}
+\]
+The sheet writes \texttt{from\_euler("Zxy", [-135,45,0])}. That string raises \texttt{ValueError}
+in scipy because it mixes cases, so what ran was one or the other: \texttt{"ZXY"} reproduces your
+handwritten matrix exactly, \texttt{"zxy"} gives the one matching the data. It is not a transpose
+and not a flipped axis; both were tested, and no relabelling of the measurement axes alone, nor
+of the camera axes alone, closes the gap.
+
+\section{Values in use}
+Applied as $p_{\text{measurement}} = T\, p_{\text{camera}}$; the inverse projects into the image.
+The translation is your sheet's value unchanged, negative $z$ included.
+\[
+R = R_x(45)\,R_z(-135), \qquad
+t = \begin{pmatrix} 0 & 120.99 & -125.65\end{pmatrix}^{\!\top}\text{mm}, \qquad
+\text{grasped seed pixel } (565,\,110)
+\]
+
+\section{Results}
+\begin{center}\small
+\begin{tabular}{llc}
+\toprule
+\multicolumn{3}{l}{\textit{Extrinsic}}\\
+Wrench ray lands on the contacted object & extrinsic ordering & \textbf{6 / 7 events}\\
+ & intrinsic ordering & 1 / 7 events\\
+ & null over 91{,}800 candidate transforms & 0.143\\
+Constructions scored & 2 matrices $\times$ 3 translations $\times$ 3 placements $\times$ 2 directions & 72\\
+ & best reachable from the intrinsic form & 4 / 7\\
+\midrule
+\multicolumn{3}{l}{\textit{Contact-object seeding, which the extrinsic unblocks}}\\
+Projected contact point seeds segmentation & vs.\ 0 / 6 for the previous vision-only heuristic & \textbf{5 / 7 events}\\
+Propagated track vs.\ prior hand-seeded track & mask-area ratio & 0.945\\
+\midrule
+\multicolumn{3}{l}{\textit{Grasped-object seeding}}\\
+Seed pixel inside the held object & carrot trial & \textbf{169 / 177} (95.5\%)\\
+ & cube trial & \textbf{271 / 281} (96.4\%)\\
+Pixels scoring $\ge 90\%$ on both & connected region, largest component 362\,px & 398\,px\\
+Validation status & fitted on both recordings & in-sample\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Why the grasped stage no longer needs the tool frame}
+On an eye-in-hand rig the arm pose cancels out of the projection, so a fixed offset in the
+measurement frame is exactly a fixed pixel (verified: std $0.0$\,px across samples). The seed can
+therefore be fitted directly from the recordings, with no CAD chain. For completeness, a point
+104\,mm along measurement-frame $+z$ projects into the image but never lands on the held object at
+any distance from $-40$ to $+300$\,mm in the carrot trial, which is why the tool-frame origin alone
+could not have been the answer.
+
+\section{Checks on your drawing, all passed}
+\begin{itemize}\itemsep0pt \parskip0pt \topsep2pt
+\item Handwritten matrix equals the intrinsic composition of your angles exactly.
+\item Orthonormal to $3.4\times10^{-9}$, determinant $1.000$.
+\item Your two translation vectors, $[174.40,\,3.3,\,0]$ global and $[0,\,120.99,\,-125.65]$ rotated,
+      agree in magnitude to $0.0007$\,mm.
+\item $91.72 + 12.28 = 104$\,mm, matching the CAD gripper-centre dimension.
+\item Intrinsic \texttt{ZXY} $\equiv$ extrinsic \texttt{yxz}, as you noted.
+\end{itemize}
+
+\section{One thing that would help}
+The grasped seed is fitted on the only two recordings that contain a carried object, so it cannot
+also be held out. One further pick-and-place recording, ideally the same object from a clearly
+different viewpoint, would turn it into a validated result. The pegboard trials cannot serve: the
+task there is a latch moved in place, so no object is carried.
+
+\end{document}

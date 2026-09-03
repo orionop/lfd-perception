@@ -5,6 +5,37 @@ Vision module for the lab's ROS 2 LfD pipeline. Given a demonstration bag
 objects per interaction phase and writes a JSON sidecar consumable by
 downstream LfD code.
 
+## Authoritative project status
+
+The lab deliverable is **A**. The manuscript is independent workstream **B**
+and is paused until A is complete. See [`LAB_DELIVERABLE_A.md`](LAB_DELIVERABLE_A.md)
+for A's scope, current status, acceptance criteria, and execution order. That
+file overrides historical experiment notes elsewhere in the repository.
+
+A is currently an operational semi-automatic pipeline, not a finished
+automatic deliverable. Event detection, SAM 2 tracking, and sidecar generation
+work on existing recordings. The remaining gates are reliable automatic object
+selection on held-out recordings, trusted camera/measurement calibration for
+geometric contact grounding, and a demonstrated downstream ROS 2 integration
+test.
+
+Current frozen evaluation (2026-09-03): grasped accepts 0/5 cases across four
+independent groups; contact accepts 2/7 correctly (precision 1.00, coverage
+0.286) across three groups. The contact proposal pool contains the correct
+object in 7/7 cases. A 6,561-rule baseline could not make the existing features
+meet the gate; a 19,683-rule extension with force-anchored local-flow contrast
+improved in-sample coverage but collapsed held-out precision to 0.40. Therefore
+that cue is rejected. A subsequent grasp attachment-transition gate also
+failed: the correct object was reachable at the frozen 20% anchor in only 3/5
+cases, and even an all-data fit accepted 0/5. No feasibility cue was promoted
+to production. See `LAB_DELIVERABLE_A.md` for the resulting stop condition.
+
+A bounded external-model compatibility test (HOI-DETR, DistinctNet) is prepped
+and awaiting RTX 4080 access — see `Docs/MONDAY_INTERACTION_BAKEOFF.md` for
+the run procedure and `LAB_DELIVERABLE_A.md` for the stop gate and current
+status. It is stop-gated and does not by itself authorize production
+integration.
+
 ## Pipeline
 
 ![Pipeline overview](figures/pipeline.png)
@@ -20,11 +51,12 @@ for an arbitrary number of tracked objects, aggregated into a JSON sidecar.
 
 Franka Research 3 arm, Franka Hand gripper, Bota SensONE wrist F/T sensor,
 ZED Mini RGB-D camera. The camera is **eye-in-hand**: mounted on a bracket
-bolted to the gripper, not fixed in the world. `current_pose` is the pose of
-the Bota sensor's own origin in the robot base frame (not the fingertip
-TCP), so the camera's pose in the base frame is a per-frame quantity derived
-from a single fixed `bota→camera` bracket transform. See `calibration.yaml`
-for the full derivation and current calibration status.
+bolted to the gripper, not fixed in the world. Its pose is therefore a
+per-frame quantity composed from `current_pose` and one fixed
+tool/measurement-to-camera transform. The exact subject frame of
+`current_pose`, and its origin relative to the drawing, must be recorded
+during calibration; it is not assumed here. See `calibration.yaml` for the
+machine-readable trust state.
 
 ## Layout
 
@@ -61,8 +93,31 @@ Checkpoints:
 
 ## End-to-end run on a bag
 
-Run from the repo root. `<trial>` is a bag folder exported by the lab's
-`ros2_unbag` pipeline (e.g. `Data/lfdws_t001/lfdws_t001`).
+The canonical Deliverable A entry point is:
+
+```bash
+.venv_analysis/bin/python Code/run_deliverable.py \
+    --trial <trial> --out <output_dir> --offload-video-to-cpu
+```
+
+It validates the export, detects all interaction cycles, selects role-tagged
+SAM box prompts, propagates each accepted object, builds the sidecar, and runs
+the output quality gate. Exit code `0` means accepted, `2` means automatic
+selection safely abstained and wrote review diagnostics, and `1` means an
+input or execution failure. A review-required run never publishes
+`objects.json`.
+Grasped-object selection probes multiple frames in the closed hold and requires
+per-frame confidence plus spatial consistency; temporal agreement alone cannot
+override a low-confidence winner.
+
+Use `--select-only` to stop after automatic selection. An operational manual
+recovery can be supplied as
+`--override role:cycle:x0,y0,x1,y1`; the resulting provenance is manual and is
+excluded from automatic evaluation.
+
+The lower-level commands below remain useful for diagnosis. Run from the repo
+root. `<trial>` is a bag folder exported by the lab's `ros2_unbag` pipeline
+(e.g. `Data/lfdws_t001/lfdws_t001`).
 
 ```bash
 # 1. detect grasp / release / force-contact events on the merged CSV
@@ -73,8 +128,9 @@ Run from the repo root. `<trial>` is a bag folder exported by the lab's
     --src <trial>/zed_zed_node_rgb_color_rect_image_compressed \
     --dst frames_jpg
 
-# 3. auto-pick a SAM 2 seed point per role (no hard-coded image fractions)
-.venv_sam2/bin/python Code/auto_seed.py --trial <trial> --ckpt sam_vit_h_4b8939.pth
+# 3. calibration-free role-aware proposal selection
+.venv_sam2/bin/python Code/select_objects.py \
+    --trial <trial> --out <fig_dir>/selection --ckpt sam_vit_h_4b8939.pth
 
 # 4. propagate each tracked object across the demo, bidirectionally
 # (add --offload_video_to_cpu if the trial has enough frames to exceed
@@ -124,20 +180,44 @@ Optional follow-ups:
 `bota→camera` bracket transform). Until both are marked `filled: true` it
 runs in a DRY mode that reports the bota/base-frame geometry but draws
 nothing, so no placeholder calibration is ever used. As of now, intrinsics
-are real (lab-provided); `bota→camera` is a documented preliminary CAD
-estimate that turned out not to be trustworthy (both candidate lens
-positions project the wrench ray outside the image on every real trial
-tested) — see `calibration.yaml` for the full derivation and open caveats.
+are real (lab-provided); `bota→camera` is `filled: false`. The retained matrix
+is an untrusted experimental candidate and must not be used as production
+calibration. See `LAB_DELIVERABLE_A.md` for the acceptance test.
 `calibrate_hand_eye.py` recovers `bota→camera` by direct measurement
 (ChArUco board + `cv2.calibrateHandEye`) instead of reading it off CAD,
 and is the recommended path once rig access is available; it never writes
 `calibration.yaml` automatically, only prints a result for manual review.
 The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf`.
 
-Step 3 (`auto_seed.py`) is optional: if the seed CSV doesn't exist, the
-propagation scripts fall back to hard-coded defaults tuned to the original
-trial — expect those to need a manual reseed on a sufficiently different
-scene (see `Code/auto_seed.py`'s docstring for the known failure mode).
+`auto_seed.py` and the propagation scripts' hard-coded fallback are legacy
+experimental paths and are not used by `run_deliverable.py`.
+
+The versioned sidecar contract is
+[`schemas/objects.schema.json`](schemas/objects.schema.json). Validate or read
+an output independently with `Code/validate_sidecar.py` and
+`Code/sidecar_consumer.py`.
+
+Run the calibration-independent regression suite with:
+
+```bash
+.venv_analysis/bin/python -m unittest discover -s tests -v
+```
+
+Automatic-selection evidence is reported separately from manual recovery.
+After generating selection reports for the recordings listed in
+`config/evaluation_manifest.yaml`, evaluate the frozen selector with repeated
+`--report recording_id:path/to/selection_report.json` arguments:
+
+```bash
+.venv_analysis/bin/python Code/evaluate_selection.py \
+    --report lfdws_t001:<output>/selection_report.json \
+    --report lfdws_t002_new:<output>/selection_report.json
+```
+
+The acceptance bar is at least 90% precision and 75% automatic coverage for
+both the grasped and contact categories, across at least three independent
+recording groups. Until that command passes on the required held-out evidence,
+the selector is implemented but not validated as the completed deliverable.
 
 If a bag arrives as a raw `.mcap` instead of a `ros2_unbag` export (e.g. the
 lab's exporter doesn't yet handle a depth topic, or the bag hasn't been run

@@ -1,0 +1,50 @@
+{
+  "seed_pixel": [
+    509,
+    233
+  ],
+  "worst_per_recording_rate": 0.8,
+  "in_sample_hits": "6/7",
+  "per_event_hits": "1111011",
+  "optimal_region_px": 232,
+  "region_px_all_recordings_ge_0.6": 637,
+  "held_out": [
+    {
+      "recording": "lfdws_t001",
+      "pixel": [
+        501,
+        236
+      ],
+      "hits": 1,
+      "n": 1
+    },
+    {
+      "recording": "lfdws_t001_depth",
+      "pixel": [
+        508,
+        277
+      ],
+      "hits": 2,
+      "n": 5
+    },
+    {
+      "recording": "lfdws_t001_labexport",
+      "pixel": [
+        513,
+        173
+      ],
+      "hits": 0,
+      "n": 1
+    }
+  ],
+  "held_out_total": "3/7",
+  "wrench_ray_baseline": {
+    "hit_rate": 0.8571428571428571,
+    "mean_centroid_dist_px": 38.34373473589943,
+    "per_event_hits": "1111101",
+    "note": "same events, uses calibration.yaml T_bota_camera"
+  },
+  "n_events": 7,
+  "n_recordings": 3,
+  "caveat": "7 events; the 5 events inside lfdws_t001_depth are not independent of each other"
+}

@@ -28,6 +28,10 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from event_utils import gripper_moved
 import pandas as pd
 
 POSE_TS = "NS_1.franka_robot_state_broadcaster.current_pose.timestamp"
@@ -79,7 +83,13 @@ def detect_event_times(df, trel):
     w = df[GRIP].apply(parse_gw).to_numpy()
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5 * (w_open - w_closed)
-    closed = w < thr
+    # Guard: a gripper that never actuated puts this midpoint INSIDE the
+    # sensor's own noise band and manufactures grasp/release out of nothing.
+    # Measured on lfdws_t001_labexport: width spans 6.6e-7 m of pure noise yet
+    # the unguarded rule reported a grasp at 0.06 s and a release at 7.66 s,
+    # which then displaced the contact event from the true 11.15 N peak at
+    # 5.08 s to 3.34 s. See Code/event_utils.py.
+    closed = (w < thr) if gripper_moved(w) else np.zeros(len(w), dtype=bool)
     cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
     cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
     out = {}

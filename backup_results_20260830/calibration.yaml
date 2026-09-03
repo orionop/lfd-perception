@@ -1,0 +1,441 @@
+# Camera + sensor calibration for the lfdws rig.
+#
+# Until every block a script needs is marked filled: true, Code/project_ee.py
+# runs in "dry" mode (reports what it WOULD do, draws nothing geometric) so
+# the pipeline never silently uses fake numbers.
+#
+# ---------------------------------------------------------------------------
+# RIG MODEL (per the lab's 2026-07-09 email + CAD drawings, REV02 bracket):
+#
+# The ZED Mini is EYE-IN-HAND: mounted on a rigid SLS-printed bracket bolted
+# to the gripper body, camera tilted ~30 deg looking down past the fingertips
+# at the workspace. There is NO fixed base->camera transform.
+#
+# current_pose (NS_1/franka_robot_state_broadcaster/current_pose) reports the
+# pose OF THE BOTA SENSONE ORIGIN in the robot base frame ("All robot and
+# force data is recorded in the origin of the Bota SensOne force sensor").
+# It is NOT the Franka Hand TCP. Consequences:
+#   T_base_bota(t)   = current_pose row t (position + quaternion)
+#   T_base_camera(t) = T_base_bota(t) @ T_bota_camera        (per frame)
+#   wrench           already in bota frame; rotate to base via current_pose
+#                    directly -- the old "bota_to_base mount transform" ask
+#                    is DISSOLVED, nothing extra needed from the lab for it.
+#
+# The single remaining fixed unknown is T_bota_camera (bota origin -> left
+# ZED-Mini lens optical frame). The CAD-reading approach (bota_to_camera
+# block below) left this ambiguous between two 63mm-apart candidates, and
+# Code/cad_candidate_sensitivity.py showed BOTH candidates project the
+# wrench ray entirely outside the image on every trial tested -- the
+# CAD-derived rotation is unreliable, not only the ambiguous translation.
+# Code/calibrate_hand_eye.py (hand-eye calibration, cv2.calibrateHandEye,
+# AX=XB) recovers this by direct measurement instead and is the
+# recommended path going forward; needs rig access + a physically
+# measured ChArUco board.
+#
+# Frames:
+#   base        : robot base (current_pose is expressed in this frame)
+#   bota_frame  : Bota SensONE measurement origin (current_pose's subject;
+#                 wrench topics are expressed here)
+#   camera      : ZED-Mini LEFT rect optical frame (the PNG frames live here)
+#
+# All 4x4 transforms are row-major homogeneous matrices mapping a point in the
+# CHILD frame to the PARENT frame:  p_parent = T_parent_child @ p_child.
+# ---------------------------------------------------------------------------
+
+camera_intrinsics:
+  filled: true
+  # Source: lab-provided intrinsics.md (2026-07-09), block "HD1080 downscaled
+  # (by ZED ROS wrapper) to 540x960" -- matches the exported PNGs exactly
+  # (960 wide x 540 high, verified on lfdws_t001_new / lfdws_t002_new).
+  K: [[752.9597, 0.0,      472.6555],
+      [0.0,      752.9597, 271.9621],
+      [0.0,      0.0,      1.0]]
+  # plumb-bob distortion [k1,k2,p1,p2,k3]; rect images -> zeros. The lab file
+  # provided no distortion coefficients for the rectified stream.
+  dist: [0, 0, 0, 0, 0]
+  image_width: 960
+  image_height: 540
+  # Other calibrations from the same file, for reference (unused):
+  #   HD1080 native (1920x1080): fx=1544.4000 fy=1544.6899 cx=917.54 cy=572.7920
+  #   720   (1280x720):          fx=772.67    fy=772.615   cx=641.06 cy=363.03
+
+bota_to_camera:
+  filled: true
+  # =========================================================================
+  # RESOLVED 2026-08-24. Source: Mark Vlutters' own CAD derivation (with
+  # Menno), sent by email, NOT our mesh mining. Everything below the
+  # "SUPERSEDED" banner is the abandoned CAD-reading attempt, kept for
+  # reference per the no-deletions rule -- do not use those numbers.
+  #
+  # WHAT HE SENT, AND THE TWO CORRECTIONS APPLIED
+  #   rotation: he quoted scipy Rotation.from_euler("zxy", [-135, 45, 0]).
+  #     Lowercase axes in scipy mean EXTRINSIC, i.e. Ry @ Rx @ Rz. The matrix
+  #     he typed alongside it is the INTRINSIC form instead, and the two are
+  #     different. Extrinsic scores 6/7 on the validation below; his typed
+  #     matrix scores 1/7, which is chance. Extrinsic is used here.
+  #   translation: his scan reads "z: -125.65"; the typed email says +125.65.
+  #     Negative is the one that validates, by the same margin. Same
+  #     discrepancy appears in his earlier message (-114.64 written, 114.64
+  #     typed). t = [0, 120.99, -125.65] mm.
+  #   Both corrections were reported back to him 2026-08-24.
+  #
+  # CONFLICT RESOLVED 2026-08-27 -- see the RESOLUTION note at the end of
+  # this block. The history below is kept because it records what was tried.
+  #
+  # (WAS: UNRESOLVED CONFLICT, READ BEFORE CHANGING THIS BLOCK)
+  #   Mark replied the same day confirming he INTENDED INTRINSIC: capital
+  #   letters in from_euler, and the 45 deg x-rotation taken about the x-axis
+  #   that exists after the preceding z-rotation. His sheet is internally
+  #   self-consistent on that reading -- Rz(-135) @ Rx(45) does reproduce the
+  #   matrix he handwrote.
+  #
+  #   But intrinsic is empirically inconsistent with the recordings, and not
+  #   marginally. Everything below was tested against the 7 contact events:
+  #     both Euler compositions, both transposes, both transform directions,
+  #     all three translations that appear on his sheet (rotated, global, and
+  #     the side-box values), all 24 signed axis relabellings of the frame,
+  #     and all four wrench force/torque sign conventions.
+  #   Intrinsic NEVER exceeds 0.143, which is exactly the chance null.
+  #   Extrinsic scores 0.714-0.857 throughout and 0.857 at the best pairing.
+  #   With intrinsic the wrench ray barely enters the image (78 sampled
+  #   pixels in frame, against 596 for extrinsic), yet the contact object is
+  #   demonstrably in view since we have its propagated mask.
+  #
+  #   Extrinsic is additionally confirmed END TO END: propagating the plate
+  #   track on lfdws_t001_depth from a geometrically derived seed reproduces
+  #   the reference track at a mean mask_px ratio of 0.945, with max extent
+  #   agreeing to 0.4 percent (Code/seed_e2e_check.py).
+  #
+  #   The likely explanation is that the frame his rotation starts from is
+  #   not the frame the Bota publishes in, which would also explain why his
+  #   global-to-rotated translation conversion cannot be reproduced by any
+  #   convention (best residual 51 mm). That mapping is still unknown, and it
+  #   is what currently blocks geometric seeding of the GRASPED role.
+  #   UPDATE 2026-08-27, Mark's reply on the starting frame. He confirms his
+  #   rotation starts at the force sensor MEASUREMENT frame, same orientation
+  #   as the Franka flange frame (z pointing down in the pose he pictured),
+  #   which is exactly the frame the wrench topics are published in. So the
+  #   "his frame is a different frame" explanation above is NOT supported --
+  #   the starting frame is the one we assumed.
+  #
+  #   He also asked whether the matrix used here is the TRANSPOSE of the one
+  #   he handwrote. It is not, and the distinction matters:
+  #     handwritten (intrinsic)  Rz(-135) @ Rx(45)          -> 0.143 (chance)
+  #     its transpose                                       -> 0.000 as-given,
+  #                                                            0.429 inverted
+  #     used here (extrinsic)    Rx(45)  @ Rz(-135)         -> 0.857
+  #   The two differ by COMPOSITION ORDER, not by transposition; neither is
+  #   the transpose of the other (max elementwise difference 1.414). Both
+  #   transposes and both transform directions are in the 48-way sweep in
+  #   Code/verify_mark_transform.py and none of them beats 0.429.
+  #
+  #   Direction, for the record: this matrix is used in the frame convention
+  #   Mark describes, p_bota = T @ p_camera, so R's columns are the camera
+  #   axes expressed in the sensor frame. No transpose is applied on our side
+  #   (Code/wrench_ray.py: T_base_camera = T_base_bota @ T_bota_camera, then
+  #   project_points inverts it to map base points into camera coordinates).
+  #
+  #   So the residual puzzle is narrower than it was: same frame, same
+  #   direction, same angles, different composition order.
+  #
+  #   RETRACTION 2026-08-27. This block previously claimed his global-to-
+  #   rotated translation conversion "cannot be reproduced by any convention
+  #   (best residual 51 mm)". That is WRONG and the claim is withdrawn. His
+  #   scan decodes exactly, both drafts, by plain trigonometry:
+  #       y_rot = (X - 3.3)/sqrt(2)      z_rot = -(X + 3.3)/sqrt(2)
+  #     draft 1  X = 158.82         -> [0, 109.97, -114.64]   his v1, exact
+  #     draft 2  X = 158.82 + 15.58 -> [0, 120.99, -125.65]   his v2, exact
+  #   Both are norm preserving, so both are genuine rotations of his global
+  #   vector. The 51 mm figure came from testing only the six rotations in
+  #   Code/verify_mark_transform.py, none of which is the drawing-global to
+  #   measurement frame change -- a different rotation from the camera
+  #   orientation his matrix encodes. Testing one member of the correct
+  #   family in the camera slot also proves nothing; that was done on
+  #   2026-08-27, scored 0.143, and is likewise not evidence.
+  #
+  #   The rest of his sheet decodes exactly too:
+  #     lens           [158.82, -12.28, 0]   (-12.28 = 91.72 - 104)
+  #     +15.58 at 45deg carries lens -> camera sensor origin on BOTH axes
+  #     camera origin  [174.40, 3.30, 0]     matching his crossed-out
+  #                                          "12.28 -> 3.3" correction
+  #     gripper centre [0, -104, 0]          (104 = 12.28 + 91.72)
+  #   Mark's derivation contains no error that we have been able to find.
+  #
+  #   DO NOT swap this matrix for the intrinsic one on the strength of his
+  #   stated intent alone. Re-run Code/verify_mark_transform.py and
+  #   Code/seed_e2e_check.py first; the empirical result is what is trusted
+  #   here.
+  #
+  # OPEN: WHAT FRAME DOES current_pose PUBLISH?  (2026-08-27)
+  #   CLAUDE.md and this file both assert current_pose reports the Bota
+  #   SensONE origin, not the TCP. Code/pose_frame_probe.py contradicts that.
+  #   Scoring candidate gripper-centre offsets on whether they project inside
+  #   the propagated grasped mask, over 17 grasp samples in 4 trials:
+  #       zero offset (current_pose IS the gripper)     8/17
+  #       all six signed 104 mm placements              0/17
+  #         (+104x, -104x, +104y, -104z never project into frame at all)
+  #       measured t002 cluster  [-8.25, 13.1, -6.45]  13/17
+  #       measured t004/5        [-27.3, 16.25, 17.9]  11/17
+  #   The last two are the positive control and they pass, so the zeros are
+  #   real. This scoring uses masks and projection only, no depth, so the
+  #   8-bit depth-preview trap cannot explain it.
+  #
+  #   Mark's drawing puts the gripper centre 104 mm from his frame origin,
+  #   and that decodes exactly (see RETRACTION above). The recordings put it
+  #   within about 20 mm of current_pose's origin. Both cannot be true of the
+  #   same frame, so current_pose is most likely NOT his drawing origin.
+  #   Note the adopted t has |t| = 174.43 mm, which matches camera-from-his-
+  #   origin (174.43) and not camera-from-gripper (204.8), so this is not yet
+  #   resolved and should not be written up as if it were.
+  #
+  #   RETRACTED 2026-08-29. The probe above CANNOT answer this question.
+  #   Code/pose_frame_probe.py's score() computes T_bb @ p and then projects
+  #   with T_bb @ T_bc, so current_pose cancels exactly:
+  #       p_cam = inv(T_bb @ T_bc) @ (T_bb @ p) = inv(T_bc) @ p
+  #   Confirmed numerically -- four random arm poses give byte-identical
+  #   pixels. Every sample therefore scores the SAME pixel, and the 8/17 vs
+  #   0/17 spread is evidence about T_bota_camera and the offset jointly, not
+  #   about which link the topic publishes. The question remains open and is
+  #   answered by the lab's robot settings, not by our recordings. Vlutters
+  #   (2026-08-28) says it is the Franka tool frame configured at the force
+  #   sensor flange, and is confirming.
+  #
+  #   Nor does this block the GRASPED role any more: Code/grasped_seed_pixel.py
+  #   seeds it at a constant pixel using the same cancellation, needing no
+  #   offset and no extrinsic (95.5% / 96.4% of hold frames).
+  #   (SUPERSEDED) This, not the 104 mm axis direction, is what blocks the
+  #   GRASPED role.
+  #   The question for the lab is factual, not a derivation: which link does
+  #   franka_robot_state_broadcaster/current_pose publish, and where does it
+  #   sit relative to the drawing origin.
+  #
+  # RESOLUTION: WHY EXTRINSIC AND NOT THE INTRINSIC HE INTENDED (2026-08-27)
+  #   Code/why_extrinsic.py settles it from Mark's own drawing numbers plus
+  #   the ZED Mini datasheet FOV. No recordings, masks or scores involved, so
+  #   this is independent confirmation of the 6/7 result, not a restatement.
+  #
+  #   A camera-to-measurement rotation carries the optical axis in its THIRD
+  #   COLUMN, since z_camera = R @ [0,0,1]. Mark states z points down, so the
+  #   gripper centre is at [0, 0, +104] mm and the camera at his own
+  #   t = [0, 120.99, -125.65], i.e. 121 mm out along +y and 126 mm ABOVE the
+  #   sensor origin, on the bracket arm. Direction camera -> gripper is then
+  #   [0, -0.4661, 0.8847] at 259.6 mm range.
+  #
+  #     intrinsic  Rz(-135)@Rx(45)   axis [-0.5,  0.5,  0.7071]   66.9 deg off
+  #     extrinsic  Rx(45) @Rz(-135)  axis [ 0.0, -0.7071, 0.7071] 17.2 deg off
+  #
+  #   Both tilt down 45 degrees (elevation +45 in both cases); they differ
+  #   in AZIMUTH by 135 degrees (135 vs -90), which puts their optical axes
+  #   81.6 degrees apart. CORRECTED 2026-08-29: this line previously said 90
+  #   degrees, which is wrong -- the angles are recomputed in
+  #   Code/why_extrinsic.py and the audit below. The
+  #   ZED Mini's ~87 deg horizontal FOV gives a 43.5 deg half angle, so the
+  #   intrinsic reading puts the gripper OUTSIDE the field of view entirely
+  #   while the extrinsic one puts it well inside. That also explains the
+  #   earlier observation that the intrinsic ray placed only 78 sampled
+  #   pixels in frame against 596 for the extrinsic.
+  #
+  #   Physically: the bracket carries the camera up and outward, and the
+  #   camera then looks back inward and down across the gripper. Only the
+  #   extrinsic composition does that; the intrinsic one aims further out
+  #   along +y, away from the tool. So this is not a marginal statistical
+  #   preference between two plausible transforms.
+  #
+  #   IS IT AN AXIS FLIP?  NO (checked 2026-08-29, Code/audit_extrinsic.py).
+  #   Mark asked whether the discrepancy implies his measurement-frame axes
+  #   are flipped relative to ours. All 24 proper signed-axis relabellings P
+  #   were tried on both sides (P @ R_intrinsic and R_intrinsic @ P); NONE
+  #   yields the extrinsic matrix. The two differ by 82.82 deg about
+  #   [0.9125, 0.3780, 0.1566], which is not a coordinate-axis rotation, so a
+  #   relabelling of the frame cannot reconcile them. The cause is still
+  #   unexplained; only the composition order is known to differ.
+  #
+  #   Not yet reported to Mark; bundle it with the reply to the open
+  #   current_pose question rather than sending separately.
+  #
+  # TRANSLATION FRAME PROBLEM -- READ BEFORE TRUSTING THE 6/7 (2026-08-29)
+  #   Code/mark_sheet_decode.py, Code/mark_sheet_azimuth.py.
+  #
+  #   His sheet labels the vector "In rotated frame", not "In global". We have
+  #   been using it as the measurement-frame translation of T. Decoding his
+  #   drawing with NO rotation algebra (104 = 12.28 + 91.72; lens 158.82 mm
+  #   horizontal and 12.28 mm below his origin; +15.58 at 45 deg to the camera
+  #   origin) puts the camera 174.40 mm from the tool axis and 3.30 mm ABOVE
+  #   his origin. The adopted t puts it 120.99 mm out and 125.65 mm above:
+  #   133.5 mm away, against the 40.2 mm tolerance from
+  #   Code/calibration_sensitivity_sweep.py.
+  #
+  #   Exactly one construction reproduces the drawing, to 0.00 mm:
+  #       R = Rz(-135) @ Rx(45)               his intended INTRINSIC form
+  #       t = R @ [0, 120.99, -125.65] mm  =  [123.32, -123.32, -3.30] mm
+  #   It also aims best at the gripper (13.4 deg, vs 17.2 for the adopted).
+  #   It was never scored before: verify_mark_transform.py only ever paired
+  #   [R|t] with t as-is, and audit_extrinsic.py's [R|Rt] placements were
+  #   paired with the other rotations. It scores 3/7 as read.
+  #
+  #   His sheet is a SIDE ELEVATION, so it cannot fix azimuth about the tool
+  #   axis. T(phi) = Rz(phi) @ T_drawing leaves radius, height and tilt
+  #   invariant. Sweeping phi (Code/mark_sheet_azimuth.py) peaks at 5/7 at
+  #   44.7 px (phi 129), never 6/7; leave-one-recording-out mean 0.533 against
+  #   a 0.143 chance rate; the top plateau is 50 of 360 angles wide, so
+  #   azimuth is poorly constrained by 7 events.
+  #
+  #   STRUCTURE OF THE DISAGREEMENT, which the intrinsic/extrinsic framing hid:
+  #   at phi = 135 the drawing-consistent rotation collapses to plain Rx(45),
+  #   whose optical axis (azimuth -90, 45 deg down) is IDENTICAL to the adopted
+  #   Rx(45)Rz(-135). The two differ only by a 135 deg ROLL about the optical
+  #   axis, plus the 133.5 mm position gap. The fitted azimuth correction of
+  #   +135 deg exactly cancels his leading Rz(-135).
+  #
+  #   RETRACTION. This block has described Rx(45)Rz(-135) as "the extrinsic
+  #   reading of his angles". That wording is wrong and is withdrawn. The
+  #   extrinsic equivalent of his intrinsic ZXY[-135,45,0] is yxz[0,45,-135],
+  #   which reproduces HIS matrix exactly (axes and angles reverse together).
+  #   from_euler("zxy", [-135,45,0]) is a DIFFERENT physical rotation, not a
+  #   re-representation of his. It is only what scipy returns if his written
+  #   call is read with lowercase axis letters, which is how ours was obtained.
+  #
+  #   STATUS: the adopted T is NOT re-endorsed by any of this and its 6/7 is
+  #   one event ahead of a drawing-consistent 5/7, on 7 events. Do not treat
+  #   the extrinsic transform as settled. Two factual questions are out to
+  #   Mark: (a) is the "In rotated frame" vector expressed in the camera
+  #   frame, (b) is his drawing's measurement frame rotated about the tool
+  #   axis relative to the frame the wrench/pose topics publish in.
+  #
+  # VALIDATION (Code/verify_mark_transform.py, Code/wrench_ray_validate.py)
+  #   Projected the measured wrench line of action (Bicchi 1990) into the
+  #   image at every contact event that has both a wrench and a propagated
+  #   ground-truth mask, and checked whether it lands on that object.
+  #     6 of 7 events hit
+  #     mean distance to object centroid 41.1 px, against a mean object
+  #       radius of 122.8 px, i.e. within 0.33 object radii
+  #     null: a search over 91,800 candidate transforms
+  #       (Code/extrinsic_grid_search.py) had a MEDIAN hit rate of 0.143,
+  #       so this is far beyond chance
+  #     the one miss is lfdws_t001_depth/charger_lift, the weakest event at
+  #       6.06 N, and even that is only 1.13 object radii out
+  #   Nothing was fitted. Unlike the grid search (which overfitted badly,
+  #   in-fold 1.000 vs held-out 0.067), the only freedom here was choosing
+  #   among a small discrete set of convention readings of HIS numbers.
+  #
+  # THE TWO OLD OPEN QUESTIONS, BOTH NOW CLOSED EMPIRICALLY
+  #   which lens: displacing the optical centre by the 63 mm stereo baseline
+  #     drops the hit rate to 0.571 (-63 mm) and 0.429 (+63 mm), and the mean
+  #     distance from 41 px to 153/185 px. The supplied value is the correct
+  #     lens; the old A/B candidate ambiguity below is moot.
+  #   lens-to-imager depth offset: displacing +/-20 mm along the optical axis
+  #     leaves the hit rate unchanged at 0.857 (41.1 -> 37.7/46.2 px). Well
+  #     inside the 40.2 mm translation tolerance from
+  #     Code/calibration_sensitivity_sweep.py. Not worth deriving.
+  #
+  # NOTE a +5 mm shift along camera X scores 7/7 at 37.2 px. That is NOT
+  # adopted: it is a one-event improvement fitted on seven events, which is
+  # exactly the overfitting the grid search already demonstrated.
+  #
+  # T_bota_camera: maps a CAMERA-frame point into the BOTA frame.
+  T: [[-0.70710678,  0.70710678,  0.00000000,  0.00000000],
+      [-0.50000000, -0.50000000, -0.70710678,  0.12099000],
+      [-0.50000000, -0.50000000,  0.70710678, -0.12565000],
+      [ 0.0,         0.0,         0.0,         1.0]]
+  # =========================================================================
+  # SUPERSEDED: our own CAD mesh-mining attempt. Conclusively abandoned --
+  # both candidates below project the wrench ray entirely outside the image
+  # on every trial tested (Code/cad_candidate_sensitivity.py). Retained only
+  # so the dead end is not re-explored.
+  # T_bota_camera : camera-frame point -> bota-frame point. FIXED transform
+  # (rigid bracket, REV02).
+  #
+  # Two independent inputs combined here:
+  #  (1) CAD-derived housing ORIGIN + ORIENTATION -- extracted via
+  #      Code/cad_extract_transform.py by walking the assembly tree's
+  #      NEXT_ASSEMBLY_USAGE_OCCURRENCE + AXIS2_PLACEMENT_3D chain in
+  #      ZED-M_assy_body-bracket-gripper_REV02.STEP (pure rigid-body
+  #      placement math). Cross-checked against the PDF drawing's
+  #      independent dims (151.00/177.16/158.82/91.72 mm, 30.01 deg tilt)
+  #      and against FreeCAD's own Placement readout for the same part
+  #      (both matched exactly: origin [-8.70,-198.46,-25.89] mm root-frame,
+  #      45 deg about X). housing origin in bota frame: [133.583,-121.279,
+  #      25.888] mm.
+  #  (2) ZED Mini's PUBLISHED stereo baseline (63 mm, Stereolabs datasheet)
+  #      applied along the housing's own local X axis, which the CAD
+  #      confirms is EXACTLY the assembly-root global X axis (no tilt
+  #      component -- the 45 deg tilt is entirely in the housing's Y/Z, so
+  #      the stereo baseline stays "horizontal" as expected for a camera
+  #      that pitches to look down at a workspace while keeping its two
+  #      lenses level). That direction, expressed in the bota frame, is
+  #      [-0.7071, -0.7071, 0.0].
+  #
+  # Attempted first to find the lens bore directly in the STEP mesh
+  # (Code/cad_find_lens_occ.py, via pythonocc-core/OpenCascade): found two
+  # candidate cylindrical bores near the housing, but they are 88mm apart
+  # -- doesn't match the 63mm baseline, so they are almost certainly
+  # mounting/dowel holes for the housing shell, not the lens barrels.
+  #
+  # 2026-08-11 follow-up, exhaustive: re-ran the bore search with a wider
+  # radius net (2-20mm, was 3-13mm) -- same 88mm-apart pair, nothing new.
+  # Tested the "flat disc, not a bore" hypothesis the original script
+  # flagged but never checked (Code/cad_find_lens_planar.py): zero
+  # single-circular-edge planar faces anywhere in the same radius range.
+  # Then correctly ISOLATED the actual ZED-M_body_REV01_GJN solid itself
+  # (Code/cad_isolate_body_solids.py -- found by bounding-box proximity to
+  # the confirmed housing origin, since XCAF part labels are broken in
+  # this pythonocc-core build) and searched ONLY its 101 faces, cleanly
+  # separated from the bracket's many mounting-hole faces that were
+  # diluting the earlier whole-assembly scans: 33 cylindrical (all
+  # 0.3-5mm, fastener/standoff-sized) + 36 planar, zero lens-sized
+  # candidates either way. CONCLUSIVE: the bracket designer's ZED-M body
+  # solid is a simplified space-claim block (126 x 37.7 x 37.7mm, no
+  # lens-level detail at any fidelity) -- not merely "not yet found",
+  # genuinely not modelled in this file. No further mesh-mining of this
+  # STEP file is worth attempting.
+  #
+  # Cross-checked the isolated block's dimensions against Stereolabs' own
+  # official ZED Mini datasheet (generationrobots.com/media/
+  # zed-mini-camera-datasheet.pdf, Rev 2 Oct 2018): real body is
+  # 124.5 x 30.5 x 26.5mm, baseline 63mm -- the block's 126mm length axis
+  # matches the real 124.5mm length closely (~1.2%) and is confirmed
+  # aligned with the assembly's global X axis, which cross-validates (not
+  # contradicts) the existing "baseline direction = global X" finding
+  # below. The block's cross-section (37.7 x 37.7mm) is oversized vs the
+  # real 30.5 x 26.5mm, consistent with a rough clearance envelope rather
+  # than a precise body model. This datasheet has NO dimensioned
+  # mechanical drawing with lens positions for the Mini (unlike the
+  # original ZED's own datasheet, which does have one) -- no quick
+  # read-a-number-off-a-vendor-PDF shortcut available either. Stereolabs'
+  # own STEP/STL download (stereolabs.com/3dmodels) exists per their site
+  # but is behind a JS-rendered page not reachable by automated fetch in
+  # this session; worth trying again with a browser, or asking whether the
+  # lab already has it on file (many labs mounting a ZED Mini would).
+  #
+  # REMAINING UNKNOWNS (why this stays filled: false):
+  #  - which physical lens is "left" vs "right" -- not visually confirmed
+  #    against the ZED Mini's own markings, so the sign of the +/-31.5mm
+  #    shift below is a guess. The two candidates (bota frame, mm):
+  #      A: [111.309, -143.553, 25.888]
+  #      B: [155.857,  -99.006, 25.888]
+  #    T below uses candidate A; swap the translation for B if wrong.
+  #  - zero forward/Z offset assumed between the housing reference origin
+  #    and the lens plane (i.e. treats the lens as sitting exactly at the
+  #    CAD placement origin along the optical axis) -- ZED Mini's actual
+  #    lens-to-body depth offset (order 1-2 cm) is not accounted for.
+  #  - candidates A/B both assume the lens pair is symmetric about the
+  #    isolated placeholder block's centroid (plausible from the vendor's
+  #    own product photos, which show visually symmetric lens placement,
+  #    but not confirmed against real dimensioned geometry) -- this is a
+  #    refinement of the existing hypothesis, not new independent proof.
+  # (superseded, do not use)
+  T_superseded_cad_mining: [[-0.7071, -0.5,    -0.5,     0.111309],
+      [-0.7071,  0.5,     0.5,    -0.143553],
+      [ 0.0,     0.7071, -0.7071,  0.025888],
+      [ 0.0,     0.0,     0.0,     1.0]]
+
+end_effector:
+  # current_pose is the BOTA SENSONE ORIGIN pose (see rig model above), not
+  # the TCP and not the flange. The fingertip/TCP offset below the bota
+  # origin is bracket+gripper CAD geometry; fill when extracted. Used only
+  # for seeding masks at the fingertips -- not needed for camera extrinsics
+  # or wrench projection.
+  current_pose_is: bota_origin
+  # bota origin -> fingertip TCP offset, metres, in the bota frame (approx
+  # -z down through the gripper). Placeholder until CAD extraction:
+  bota_to_tcp: null

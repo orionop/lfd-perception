@@ -1,0 +1,310 @@
+{
+  "study_type": "grasp_attachment_feasibility_not_production",
+  "provenance": {
+    "manifest_sha256": "f7961e2e263c5de9cadc77e35a4824b7eeaa305c19cf0a1db50b70452fa7c6e7",
+    "rig_profile_sha256": "21b5d9c5c996168c0faf7532010f1f9ac0fcaf44c00cabba481f0492f530f06d",
+    "anchor": "first_hold_probe_20_percent",
+    "later_probes": [
+      "27.5_percent",
+      "35_percent"
+    ]
+  },
+  "features": [
+    "post_mask_iou",
+    "post_support",
+    "centroid_stability",
+    "area_stability",
+    "preclose_change",
+    "sam_quality",
+    "border_score"
+  ],
+  "search_space": {
+    "kind": "normalized_signed_linear_subset_grid",
+    "rules_tested_per_fit": 2186
+  },
+  "thresholds": {
+    "iou": 0.5,
+    "margin": 0.12,
+    "required_correct": 4,
+    "required_precision": 1.0,
+    "duplicate_suppression_iou": 0.5
+  },
+  "proposal_pool_oracle": {
+    "reachable": 3,
+    "eligible": 5,
+    "rows": [
+      {
+        "recording": "lfdws_t001",
+        "group": "t001_original",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.5002723523461209
+      },
+      {
+        "recording": "lfdws_t002_labexport",
+        "group": "t002_cube",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.26585134172405606
+      },
+      {
+        "recording": "lfdws_t002_new",
+        "group": "t002_cube",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.2497536945812808
+      },
+      {
+        "recording": "lfdws_t004",
+        "group": "t004",
+        "cycle_idx": 2,
+        "best_pool_iou": 0.7043377098221705
+      },
+      {
+        "recording": "lfdws_t005",
+        "group": "t005",
+        "cycle_idx": 1,
+        "best_pool_iou": 0.9735958827478183
+      }
+    ]
+  },
+  "optimistic_all_data_feasibility": {
+    "eligible": 5,
+    "accepted": 0,
+    "correct": 0,
+    "precision": 0.0,
+    "coverage": 0.0,
+    "weights": {
+      "post_mask_iou": -1.0
+    },
+    "passed_feasibility": false,
+    "rows": [
+      {
+        "accepted": false,
+        "correct": false,
+        "margin": 0.025017425711093586,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          218,
+          353,
+          292,
+          416
+        ]
+      },
+      {
+        "accepted": false,
+        "correct": false,
+        "margin": 0.001673801061971166,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          664,
+          315,
+          726,
+          338
+        ]
+      },
+      {
+        "accepted": false,
+        "correct": false,
+        "margin": 0.0008536341631064899,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          801,
+          236,
+          850,
+          253
+        ]
+      },
+      {
+        "accepted": false,
+        "correct": false,
+        "margin": 0.0007537138744661241,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          0,
+          0,
+          26,
+          38
+        ]
+      },
+      {
+        "accepted": false,
+        "correct": false,
+        "margin": 0.00014008684457029325,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          168,
+          358,
+          186,
+          398
+        ]
+      }
+    ]
+  },
+  "group_separated": {
+    "eligible": 5,
+    "accepted": 0,
+    "correct": 0,
+    "precision": 0.0,
+    "coverage": 0.0,
+    "rows": [
+      {
+        "recording": "lfdws_t001",
+        "group": "t001_original",
+        "cycle_idx": 1,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.025017425711093586,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          218,
+          353,
+          292,
+          416
+        ]
+      },
+      {
+        "recording": "lfdws_t002_labexport",
+        "group": "t002_cube",
+        "cycle_idx": 1,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.001673801061971166,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          664,
+          315,
+          726,
+          338
+        ]
+      },
+      {
+        "recording": "lfdws_t002_new",
+        "group": "t002_cube",
+        "cycle_idx": 1,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.0008536341631064899,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          801,
+          236,
+          850,
+          253
+        ]
+      },
+      {
+        "recording": "lfdws_t004",
+        "group": "t004",
+        "cycle_idx": 2,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.0007537138744661241,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          0,
+          0,
+          26,
+          38
+        ]
+      },
+      {
+        "recording": "lfdws_t005",
+        "group": "t005",
+        "cycle_idx": 1,
+        "accepted": false,
+        "correct": false,
+        "margin": 0.00014008684457029325,
+        "winner_iou": 0.0,
+        "winner_bbox": [
+          168,
+          358,
+          186,
+          398
+        ]
+      }
+    ],
+    "folds": [
+      {
+        "heldout_group": "t001_original",
+        "weights": {
+          "post_mask_iou": -1.0
+        },
+        "training": {
+          "eligible": 4,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        },
+        "heldout": {
+          "eligible": 1,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        }
+      },
+      {
+        "heldout_group": "t002_cube",
+        "weights": {
+          "post_mask_iou": -1.0
+        },
+        "training": {
+          "eligible": 3,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        },
+        "heldout": {
+          "eligible": 2,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        }
+      },
+      {
+        "heldout_group": "t004",
+        "weights": {
+          "post_mask_iou": -1.0
+        },
+        "training": {
+          "eligible": 4,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        },
+        "heldout": {
+          "eligible": 1,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        }
+      },
+      {
+        "heldout_group": "t005",
+        "weights": {
+          "post_mask_iou": -1.0
+        },
+        "training": {
+          "eligible": 4,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        },
+        "heldout": {
+          "eligible": 1,
+          "accepted": 0,
+          "correct": 0,
+          "precision": 0.0,
+          "coverage": 0.0
+        }
+      }
+    ],
+    "passed": false
+  },
+  "missing_cases": [],
+  "conclusion": "stop_attachment_features_lack_capacity"
+}

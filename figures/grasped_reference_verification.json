@@ -1,0 +1,630 @@
+{
+  "thresholds": {
+    "carried_max_ratio": 0.35,
+    "min_background_drift_fraction": 0.02
+  },
+  "cycles": [
+    {
+      "recording": "lfdws_t001",
+      "cycle_idx": 1,
+      "hold_rows": [
+        17156,
+        28922
+      ],
+      "verdict": "carried",
+      "reason": "static_in_camera_while_scene_moved",
+      "probe_count": 5,
+      "median_usable_ratio": 0.016,
+      "usable_segments": 3,
+      "segments": [
+        {
+          "rows": [
+            19509,
+            21274
+          ],
+          "mask_px": 11851,
+          "object_drift_px": 1.8,
+          "object_points": 228,
+          "background_drift_px": 111.67,
+          "background_points": 306,
+          "ratio": 0.016,
+          "usable": true
+        },
+        {
+          "rows": [
+            21274,
+            23039
+          ],
+          "mask_px": 19507,
+          "object_drift_px": 3.04,
+          "object_points": 251,
+          "background_drift_px": 251.99,
+          "background_points": 203,
+          "ratio": 0.012,
+          "usable": true
+        },
+        {
+          "rows": [
+            23039,
+            24803
+          ],
+          "mask_px": 11144,
+          "object_drift_px": 3.07,
+          "object_points": 121,
+          "background_drift_px": 84.73,
+          "background_points": 188,
+          "ratio": 0.036,
+          "usable": true
+        },
+        {
+          "rows": [
+            24803,
+            26568
+          ],
+          "mask_px": 10073,
+          "object_drift_px": 1.51,
+          "object_points": 251,
+          "background_drift_px": 2.62,
+          "background_points": 399,
+          "ratio": 0.575,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        11851,
+        19507,
+        11144,
+        10073,
+        10408
+      ],
+      "frames": [
+        "1779192191187173163",
+        "1779192192926879163",
+        "1779192194732985163",
+        "1779192196472163163",
+        "1779192198278940163"
+      ]
+    },
+    {
+      "recording": "lfdws_t002_new",
+      "cycle_idx": 1,
+      "hold_rows": [
+        29620,
+        48367
+      ],
+      "verdict": "not_carried",
+      "reason": "object_tracks_scene_motion",
+      "probe_count": 5,
+      "median_usable_ratio": 0.396,
+      "usable_segments": 3,
+      "segments": [
+        {
+          "rows": [
+            33369,
+            36181
+          ],
+          "mask_px": 30186,
+          "object_drift_px": 10.41,
+          "object_points": 388,
+          "background_drift_px": 123.85,
+          "background_points": 167,
+          "ratio": 0.084,
+          "usable": true
+        },
+        {
+          "rows": [
+            36181,
+            38993
+          ],
+          "mask_px": 56643,
+          "object_drift_px": 20.68,
+          "object_points": 359,
+          "background_drift_px": 52.19,
+          "background_points": 87,
+          "ratio": 0.396,
+          "usable": true
+        },
+        {
+          "rows": [
+            38993,
+            41805
+          ],
+          "mask_px": 75061,
+          "object_drift_px": 30.93,
+          "object_points": 195,
+          "background_drift_px": 36.07,
+          "background_points": 183,
+          "ratio": 0.858,
+          "usable": true
+        },
+        {
+          "rows": [
+            41805,
+            44617
+          ],
+          "mask_px": 78671,
+          "object_drift_px": 7.72,
+          "object_points": 400,
+          "background_drift_px": 3.87,
+          "background_points": 154,
+          "ratio": 1.995,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        30186,
+        56643,
+        75061,
+        78671,
+        79198
+      ],
+      "frames": [
+        "1783420610112429850",
+        "1783420612921812562",
+        "1783420615729930028",
+        "1783420618540504475",
+        "1783420621349793220"
+      ]
+    },
+    {
+      "recording": "lfdws_t002_labexport",
+      "cycle_idx": 1,
+      "hold_rows": [
+        29610,
+        48357
+      ],
+      "verdict": "carried",
+      "reason": "static_in_camera_while_scene_moved",
+      "probe_count": 5,
+      "median_usable_ratio": 0.32,
+      "usable_segments": 3,
+      "segments": [
+        {
+          "rows": [
+            33359,
+            36171
+          ],
+          "mask_px": 38503,
+          "object_drift_px": 11.72,
+          "object_points": 393,
+          "background_drift_px": 182.46,
+          "background_points": 158,
+          "ratio": 0.064,
+          "usable": true
+        },
+        {
+          "rows": [
+            36171,
+            38983
+          ],
+          "mask_px": 64103,
+          "object_drift_px": 17.42,
+          "object_points": 329,
+          "background_drift_px": 54.38,
+          "background_points": 67,
+          "ratio": 0.32,
+          "usable": true
+        },
+        {
+          "rows": [
+            38983,
+            41795
+          ],
+          "mask_px": 75689,
+          "object_drift_px": 29.47,
+          "object_points": 326,
+          "background_drift_px": 33.41,
+          "background_points": 170,
+          "ratio": 0.882,
+          "usable": true
+        },
+        {
+          "rows": [
+            41795,
+            44607
+          ],
+          "mask_px": 79349,
+          "object_drift_px": 7.46,
+          "object_points": 400,
+          "background_drift_px": 3.98,
+          "background_points": 149,
+          "ratio": 1.874,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        38503,
+        64103,
+        75689,
+        79349,
+        79762
+      ],
+      "frames": [
+        "1783420610133445476",
+        "1783420612943357476",
+        "1783420615753148476",
+        "1783420618562794476",
+        "1783420621372851476"
+      ]
+    },
+    {
+      "recording": "lfdws_t004",
+      "cycle_idx": 1,
+      "hold_rows": [
+        39421,
+        54598
+      ],
+      "verdict": "not_carried",
+      "reason": "object_tracks_scene_motion",
+      "probe_count": 5,
+      "median_usable_ratio": 0.592,
+      "usable_segments": 2,
+      "segments": [
+        {
+          "rows": [
+            42456,
+            44732
+          ],
+          "mask_px": 1675,
+          "object_drift_px": 74.33,
+          "object_points": 33,
+          "background_drift_px": 77.99,
+          "background_points": 399,
+          "ratio": 0.953,
+          "usable": true
+        },
+        {
+          "rows": [
+            44732,
+            47009
+          ],
+          "mask_px": 1243,
+          "object_drift_px": 18.03,
+          "object_points": 11,
+          "background_drift_px": 78.07,
+          "background_points": 250,
+          "ratio": 0.231,
+          "usable": true
+        },
+        {
+          "rows": [
+            47009,
+            49286
+          ],
+          "mask_px": 1210,
+          "object_drift_px": 5.47,
+          "object_points": 23,
+          "background_drift_px": 6.57,
+          "background_points": 400,
+          "ratio": 0.832,
+          "usable": false
+        },
+        {
+          "rows": [
+            49286,
+            51562
+          ],
+          "mask_px": 1212,
+          "object_drift_px": 7.66,
+          "object_points": 18,
+          "background_drift_px": 9.79,
+          "background_points": 400,
+          "ratio": 0.783,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        1675,
+        1243,
+        1210,
+        1212,
+        1137
+      ],
+      "frames": [
+        "1782992996598368852",
+        "1782992998938496233",
+        "1782993001213052477",
+        "1782993003454575667",
+        "1782993005762585576"
+      ]
+    },
+    {
+      "recording": "lfdws_t004",
+      "cycle_idx": 2,
+      "hold_rows": [
+        65150,
+        73699
+      ],
+      "verdict": "not_carried",
+      "reason": "object_tracks_scene_motion",
+      "probe_count": 5,
+      "median_usable_ratio": 1.231,
+      "usable_segments": 2,
+      "segments": [
+        {
+          "rows": [
+            66859,
+            68142
+          ],
+          "mask_px": 4254,
+          "object_drift_px": 0.66,
+          "object_points": 128,
+          "background_drift_px": 21.33,
+          "background_points": 232,
+          "ratio": 0.031,
+          "usable": false
+        },
+        {
+          "rows": [
+            68142,
+            69424
+          ],
+          "mask_px": 4234,
+          "object_drift_px": 182.85,
+          "object_points": 89,
+          "background_drift_px": 114.41,
+          "background_points": 311,
+          "ratio": 1.598,
+          "usable": true
+        },
+        {
+          "rows": [
+            69424,
+            70706
+          ],
+          "mask_px": 1931,
+          "object_drift_px": 85.35,
+          "object_points": 26,
+          "background_drift_px": 98.74,
+          "background_points": 344,
+          "ratio": 0.864,
+          "usable": true
+        },
+        {
+          "rows": [
+            70706,
+            71989
+          ],
+          "mask_px": 1178,
+          "object_drift_px": 8.2,
+          "object_points": 19,
+          "background_drift_px": 10.74,
+          "background_points": 398,
+          "ratio": 0.763,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        4254,
+        4234,
+        1931,
+        1178,
+        1107
+      ],
+      "frames": [
+        "1782993021082162264",
+        "1782993022322830673",
+        "1782993023593240445",
+        "1782993024937098103",
+        "1782993026201352953"
+      ]
+    },
+    {
+      "recording": "lfdws_t004",
+      "cycle_idx": 3,
+      "hold_rows": [
+        80054,
+        93542
+      ],
+      "verdict": "not_carried",
+      "reason": "object_tracks_scene_motion",
+      "probe_count": 5,
+      "median_usable_ratio": 0.903,
+      "usable_segments": 2,
+      "segments": [
+        {
+          "rows": [
+            82751,
+            84774
+          ],
+          "mask_px": 3721,
+          "object_drift_px": 219.04,
+          "object_points": 57,
+          "background_drift_px": 195.32,
+          "background_points": 89,
+          "ratio": 1.121,
+          "usable": true
+        },
+        {
+          "rows": [
+            84774,
+            86798
+          ],
+          "mask_px": 1955,
+          "object_drift_px": 82.69,
+          "object_points": 21,
+          "background_drift_px": 120.88,
+          "background_points": 317,
+          "ratio": 0.684,
+          "usable": true
+        },
+        {
+          "rows": [
+            86798,
+            88821
+          ],
+          "mask_px": 718,
+          "object_drift_px": 0.0,
+          "object_points": 0,
+          "background_drift_px": 128.72,
+          "background_points": 144,
+          "ratio": 0.0,
+          "usable": false
+        },
+        {
+          "rows": [
+            88821,
+            90844
+          ],
+          "mask_px": 624,
+          "object_drift_px": 0.0,
+          "object_points": 5,
+          "background_drift_px": 61.88,
+          "background_points": 107,
+          "ratio": 0.0,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        3721,
+        1955,
+        718,
+        624,
+        599
+      ],
+      "frames": [
+        "1782993036972818997",
+        "1782993039013793334",
+        "1782993041021201395",
+        "1782993043028766954",
+        "1782993045101290835"
+      ]
+    },
+    {
+      "recording": "lfdws_t004",
+      "cycle_idx": 4,
+      "hold_rows": [
+        102937,
+        116710
+      ],
+      "verdict": "not_carried",
+      "reason": "object_tracks_scene_motion",
+      "probe_count": 2,
+      "median_usable_ratio": 1.401,
+      "usable_segments": 1,
+      "segments": [
+        {
+          "rows": [
+            105691,
+            107757
+          ],
+          "mask_px": 2441,
+          "object_drift_px": 295.67,
+          "object_points": 25,
+          "background_drift_px": 211.03,
+          "background_points": 108,
+          "ratio": 1.401,
+          "usable": true
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        2441,
+        2640
+      ],
+      "frames": [
+        "1782993059954520111",
+        "1782993062029655008"
+      ]
+    },
+    {
+      "recording": "lfdws_t005",
+      "cycle_idx": 1,
+      "hold_rows": [
+        10687,
+        20975
+      ],
+      "verdict": "carried",
+      "reason": "static_in_camera_while_scene_moved",
+      "probe_count": 5,
+      "median_usable_ratio": 0.073,
+      "usable_segments": 3,
+      "segments": [
+        {
+          "rows": [
+            12744,
+            14287
+          ],
+          "mask_px": 4386,
+          "object_drift_px": 2.47,
+          "object_points": 97,
+          "background_drift_px": 29.04,
+          "background_points": 252,
+          "ratio": 0.085,
+          "usable": true
+        },
+        {
+          "rows": [
+            14287,
+            15831
+          ],
+          "mask_px": 4281,
+          "object_drift_px": 8.23,
+          "object_points": 114,
+          "background_drift_px": 124.98,
+          "background_points": 340,
+          "ratio": 0.066,
+          "usable": true
+        },
+        {
+          "rows": [
+            15831,
+            17374
+          ],
+          "mask_px": 4298,
+          "object_drift_px": 4.44,
+          "object_points": 117,
+          "background_drift_px": 60.81,
+          "background_points": 290,
+          "ratio": 0.073,
+          "usable": true
+        },
+        {
+          "rows": [
+            17374,
+            18917
+          ],
+          "mask_px": 4208,
+          "object_drift_px": 1.91,
+          "object_points": 112,
+          "background_drift_px": 15.09,
+          "background_points": 387,
+          "ratio": 0.127,
+          "usable": false
+        }
+      ],
+      "image_diagonal_px": 1101.5,
+      "mask_px": [
+        4386,
+        4281,
+        4298,
+        4208,
+        4135
+      ],
+      "frames": [
+        "1782993185795050907",
+        "1782993187335123738",
+        "1782993188907656253",
+        "1782993190447688193",
+        "1782993191986111546"
+      ]
+    },
+    {
+      "recording": "lfdws_t005",
+      "cycle_idx": 2,
+      "hold_rows": [
+        30082,
+        37460
+      ],
+      "verdict": "inconclusive",
+      "reason": "too_few_reference_frames",
+      "probe_count": 0
+    }
+  ]
+}

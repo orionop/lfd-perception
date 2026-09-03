@@ -1,0 +1,350 @@
+{
+  "schema_version": "1.0",
+  "trial": "Data/lfdws_t001/lfdws_t001",
+  "status": "review_required",
+  "automatic": true,
+  "event_summary": {
+    "has_gripper": true,
+    "has_force": true,
+    "force_baseline_n": 0.40406250580928604,
+    "force_peak_min_n": 5.0,
+    "n_cycles": 1,
+    "n_grasps": 1,
+    "n_releases": 1,
+    "n_presses": 4,
+    "n_force_peaks_raw": 4,
+    "force_cluster_gap_s": 3.0
+  },
+  "proposal_provenance": {
+    "cache_version": 1,
+    "model": "vit_h",
+    "points_per_side": 24,
+    "pred_iou_thresh": 0.85,
+    "stability_score_thresh": 0.9,
+    "min_mask_region_area": 400,
+    "checkpoint": "sam_vit_h_4b8939.pth",
+    "checkpoint_size": 2564550879,
+    "checkpoint_mtime_ns": 1780068070070826016
+  },
+  "events": [
+    {
+      "event": "grasp",
+      "row_idx": 17156,
+      "t_rel_s": 17.209941,
+      "img_ts": "1779192188845619163",
+      "force_mag_n": 3.070809024322208,
+      "gripper_width_m": 0.028248487040400505
+    },
+    {
+      "event": "press",
+      "row_idx": 17244,
+      "t_rel_s": 17.29798,
+      "img_ts": "1779192188912497163",
+      "force_mag_n": 14.894490788550831,
+      "gripper_width_m": 0.028248487040400505
+    },
+    {
+      "event": "press",
+      "row_idx": 24710,
+      "t_rel_s": 24.775959,
+      "img_ts": "1779192196405413163",
+      "force_mag_n": 26.37120635071973,
+      "gripper_width_m": 0.008795393630862236
+    },
+    {
+      "event": "press",
+      "row_idx": 25460,
+      "t_rel_s": 25.533918,
+      "img_ts": "1779192197141179163",
+      "force_mag_n": 21.854092916097652,
+      "gripper_width_m": 0.00880524329841137
+    },
+    {
+      "event": "press",
+      "row_idx": 25961,
+      "t_rel_s": 26.037871,
+      "img_ts": "1779192197676568163",
+      "force_mag_n": 10.184742458194904,
+      "gripper_width_m": 0.008807213045656681
+    },
+    {
+      "event": "release",
+      "row_idx": 28922,
+      "t_rel_s": 29.013919,
+      "img_ts": "1779192200620130163",
+      "force_mag_n": 1.8686811074255782,
+      "gripper_width_m": 0.045266661792993546
+    }
+  ],
+  "selections": [
+    {
+      "role": "grasped",
+      "cycle_idx": 1,
+      "row_idx": 23039,
+      "event": "mid_hold",
+      "img_id": "1779192192926879163",
+      "automatic": true,
+      "status": "review_required",
+      "reason": "low_score_or_margin",
+      "score": 0.6294685359770319,
+      "runner_up_score": 0.6043980665539948,
+      "confidence_margin": 0.025070469423037145,
+      "features": {
+        "score": 0.6294685359770319,
+        "region_overlap": 0.09031079495275772,
+        "region_proximity": 1.0,
+        "sam_quality": 0.9690100252628326,
+        "border_score": 1.0,
+        "appearance_novelty": 0.6431372761726379,
+        "stationarity": 0.9409726316843897,
+        "temporal_stability": 0.35686272382736206,
+        "area_fraction": 0.019469521604938273
+      },
+      "seed_point_xy": [
+        591.0,
+        200.0
+      ],
+      "seed_box_xyxy": [
+        511,
+        148,
+        655,
+        286
+      ],
+      "mask_px": 10093,
+      "hold_probe_count": 3,
+      "hold_support": 3,
+      "hold_probe_frames": [
+        "1779192192926879163",
+        "1779192194732985163",
+        "1779192196472163163"
+      ],
+      "proposal_cache_path": "proposal_cache/1779192192926879163.npz",
+      "candidate_count": 64,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            511,
+            148,
+            655,
+            286
+          ],
+          "mask_px": 10093,
+          "score": 0.6294685359770319,
+          "region_overlap": 0.09031079495275772,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9690100252628326,
+          "border_score": 1.0,
+          "appearance_novelty": 0.6431372761726379,
+          "stationarity": 0.9409726316843897,
+          "temporal_stability": 0.35686272382736206,
+          "area_fraction": 0.019469521604938273
+        },
+        {
+          "bbox_xyxy": [
+            538,
+            0,
+            703,
+            160
+          ],
+          "mask_px": 19349,
+          "score": 0.6043980665539948,
+          "region_overlap": 0.2191172501778748,
+          "region_proximity": 1.0,
+          "sam_quality": 0.999764084815979,
+          "border_score": 0.75,
+          "appearance_novelty": 0.08235294371843338,
+          "stationarity": 0.9100356094874922,
+          "temporal_stability": 0.9176470562815666,
+          "area_fraction": 0.03732445987654321
+        },
+        {
+          "bbox_xyxy": [
+            0,
+            149,
+            655,
+            537
+          ],
+          "mask_px": 131541,
+          "score": 0.5645395184751224,
+          "region_overlap": 0.04423276245002714,
+          "region_proximity": 1.0,
+          "sam_quality": 1.0,
+          "border_score": 0.75,
+          "appearance_novelty": 0.16470588743686676,
+          "stationarity": 0.9754373143696313,
+          "temporal_stability": 0.8352941125631332,
+          "area_fraction": 0.25374421296296296
+        },
+        {
+          "bbox_xyxy": [
+            512,
+            76,
+            554,
+            134
+          ],
+          "mask_px": 2309,
+          "score": 0.5393265187709935,
+          "region_overlap": 0.028851320113456036,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9820912480354309,
+          "border_score": 1.0,
+          "appearance_novelty": 0.019607843831181526,
+          "stationarity": 0.8997704257142555,
+          "temporal_stability": 0.9803921561688185,
+          "area_fraction": 0.004454089506172839
+        },
+        {
+          "bbox_xyxy": [
+            0,
+            49,
+            549,
+            339
+          ],
+          "mask_px": 39809,
+          "score": 0.5364186406953451,
+          "region_overlap": 0.054261383630093606,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9420403242111206,
+          "border_score": 0.75,
+          "appearance_novelty": 0.054901961237192154,
+          "stationarity": 0.915654558347125,
+          "temporal_stability": 0.9450980387628078,
+          "area_fraction": 0.0767920524691358
+        }
+      ]
+    },
+    {
+      "role": "contact_receiver",
+      "cycle_idx": 1,
+      "row_idx": 24710,
+      "event": "press",
+      "img_id": "1779192196405413163",
+      "automatic": true,
+      "status": "accepted",
+      "reason": null,
+      "score": 0.8746057620467746,
+      "runner_up_score": 0.7457219785123872,
+      "confidence_margin": 0.12888378353438745,
+      "features": {
+        "score": 0.8746057620467746,
+        "region_overlap": 0.5062661857195708,
+        "region_proximity": 1.0,
+        "sam_quality": 1.0,
+        "border_score": 1.0,
+        "appearance_novelty": 0.019607843831181526,
+        "stationarity": 0.5,
+        "temporal_stability": 0.9803921561688185,
+        "area_fraction": 0.12413001543209877
+      },
+      "seed_point_xy": [
+        579.0,
+        317.0
+      ],
+      "seed_box_xyxy": [
+        456,
+        134,
+        721,
+        441
+      ],
+      "mask_px": 64349,
+      "proposal_cache_path": "proposal_cache/1779192196405413163.npz",
+      "candidate_count": 35,
+      "top_candidates": [
+        {
+          "bbox_xyxy": [
+            456,
+            134,
+            721,
+            441
+          ],
+          "mask_px": 64349,
+          "score": 0.8746057620467746,
+          "region_overlap": 0.5062661857195708,
+          "region_proximity": 1.0,
+          "sam_quality": 1.0,
+          "border_score": 1.0,
+          "appearance_novelty": 0.019607843831181526,
+          "stationarity": 0.5,
+          "temporal_stability": 0.9803921561688185,
+          "area_fraction": 0.12413001543209877
+        },
+        {
+          "bbox_xyxy": [
+            363,
+            156,
+            403,
+            178
+          ],
+          "mask_px": 739,
+          "score": 0.7457219785123872,
+          "region_overlap": 0.0059139460503288875,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9773095548152924,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0235294122248888,
+          "stationarity": 0.5,
+          "temporal_stability": 0.9764705877751112,
+          "area_fraction": 0.00142554012345679
+        },
+        {
+          "bbox_xyxy": [
+            544,
+            143,
+            660,
+            169
+          ],
+          "mask_px": 1412,
+          "score": 0.7436971059166707,
+          "region_overlap": 0.020671364704099415,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9392147064208984,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0235294122248888,
+          "stationarity": 0.5,
+          "temporal_stability": 0.9764705877751112,
+          "area_fraction": 0.0027237654320987656
+        },
+        {
+          "bbox_xyxy": [
+            357,
+            263,
+            396,
+            293
+          ],
+          "mask_px": 827,
+          "score": 0.7399845674809531,
+          "region_overlap": 0.008397776703721604,
+          "region_proximity": 1.0,
+          "sam_quality": 0.9349204301834106,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0235294122248888,
+          "stationarity": 0.5,
+          "temporal_stability": 0.9764705877751112,
+          "area_fraction": 0.0015952932098765432
+        },
+        {
+          "bbox_xyxy": [
+            451,
+            133,
+            496,
+            225
+          ],
+          "mask_px": 2418,
+          "score": 0.7397317759170404,
+          "region_overlap": 0.03381781333655984,
+          "region_proximity": 1.0,
+          "sam_quality": 0.8908684253692627,
+          "border_score": 1.0,
+          "appearance_novelty": 0.0235294122248888,
+          "stationarity": 0.5,
+          "temporal_stability": 0.9764705877751112,
+          "area_fraction": 0.004664351851851852
+        }
+      ]
+    }
+  ],
+  "policy": {
+    "low_confidence": "abstain",
+    "production_sidecar_allowed": false
+  }
+}

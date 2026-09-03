@@ -1,0 +1,28 @@
+version: 1
+image_width: 960
+image_height: 540
+
+# Normalized image-space regions for the fixed eye-in-hand rig. These are
+# deliberately areas rather than recording-specific seed pixels. They are
+# frozen for evaluation and must not be edited after inspecting a held-out run.
+regions:
+  grasped:
+    polygon: [[0.43, 0.02], [0.78, 0.02], [0.82, 0.43], [0.42, 0.43]]
+    min_score: 0.42
+    confidence_margin_min: 0.12
+  contact_receiver:
+    polygon: [[0.40, 0.27], [0.70, 0.27], [0.73, 0.66], [0.38, 0.66]]
+    min_score: 0.38
+    confidence_margin_min: 0.10
+
+# SAM returns one object at several granularities. Candidates overlapping the
+# winner above this IoU are treated as the same object and suppressed before the
+# confidence margin is measured, so the margin reports separation from a
+# genuinely different object rather than mask granularity. Frozen for evaluation.
+duplicate_suppression_iou: 0.5
+
+proposal_filter:
+  min_area_fraction: 0.001
+  max_area_fraction: 0.65
+  max_border_sides: 2
+

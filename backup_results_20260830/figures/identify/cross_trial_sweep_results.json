@@ -1,0 +1,101 @@
+{
+  "results": [
+    {
+      "n_clusters": 20,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 11,
+      "config": "tight_blackout",
+      "threshold": 0.2
+    },
+    {
+      "n_clusters": 15,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 9,
+      "config": "tight_blackout",
+      "threshold": 0.3
+    },
+    {
+      "n_clusters": 12,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 8,
+      "config": "tight_blackout",
+      "threshold": 0.4
+    },
+    {
+      "n_clusters": 10,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 7,
+      "config": "tight_blackout",
+      "threshold": 0.5
+    },
+    {
+      "n_clusters": 6,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 1,
+      "max_fragmentation": 4,
+      "config": "tight_blackout",
+      "threshold": 0.6
+    },
+    {
+      "n_clusters": 3,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 2,
+      "config": "tight_blackout",
+      "threshold": 0.7
+    },
+    {
+      "n_clusters": 30,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 0,
+      "max_fragmentation": 11,
+      "config": "padded_context",
+      "threshold": 0.2
+    },
+    {
+      "n_clusters": 24,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 0,
+      "max_fragmentation": 9,
+      "config": "padded_context",
+      "threshold": 0.3
+    },
+    {
+      "n_clusters": 22,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 0,
+      "max_fragmentation": 8,
+      "config": "padded_context",
+      "threshold": 0.4
+    },
+    {
+      "n_clusters": 12,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 0,
+      "max_fragmentation": 5,
+      "config": "padded_context",
+      "threshold": 0.5
+    },
+    {
+      "n_clusters": 7,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 4,
+      "config": "padded_context",
+      "threshold": 0.6
+    },
+    {
+      "n_clusters": 4,
+      "n_gt_groups": 3,
+      "n_contaminated_clusters": 2,
+      "max_fragmentation": 3,
+      "config": "padded_context",
+      "threshold": 0.7
+    }
+  ],
+  "found_clean_config": false
+}

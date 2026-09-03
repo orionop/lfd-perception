@@ -1,0 +1,56 @@
+{
+  "sources": [
+    "figures/identify/objects_summary.csv",
+    "figures/identify_depth/objects_summary.csv",
+    "figures/t002new/identify/objects_summary.csv"
+  ],
+  "n_samples": 51,
+  "n_identities": 15,
+  "ground_truth_groups": [
+    "lfdws_t001_depth|2|contact_receiver",
+    "lfdws_t001|1|grasped",
+    "lfdws_t001|2|contact_receiver",
+    "lfdws_t002_new|1|grasped"
+  ],
+  "gt_to_clusters": {
+    "lfdws_t001|2|contact_receiver": [
+      1,
+      2,
+      4,
+      5
+    ],
+    "lfdws_t001|1|grasped": [
+      0,
+      2,
+      9
+    ],
+    "lfdws_t001_depth|2|contact_receiver": [
+      1,
+      2,
+      3,
+      8,
+      10,
+      11,
+      13,
+      14
+    ],
+    "lfdws_t002_new|1|grasped": [
+      1,
+      6,
+      7,
+      12
+    ]
+  },
+  "contaminated_clusters": {
+    "2": [
+      "lfdws_t001_depth|2|contact_receiver",
+      "lfdws_t001|1|grasped",
+      "lfdws_t001|2|contact_receiver"
+    ],
+    "1": [
+      "lfdws_t001_depth|2|contact_receiver",
+      "lfdws_t001|2|contact_receiver",
+      "lfdws_t002_new|1|grasped"
+    ]
+  }
+}

@@ -2,6 +2,11 @@
 .DS_Store
 __pycache__/
 *.pyc
+0.4
+
+# ----- auto-backup files (scripts back up the previous output to <path>.bak
+# before overwriting; see CLAUDE.md "Overlay captions..." / build_sidecar_multi.py) -----
+*.bak
 
 # ----- secrets / personal config -----
 .claude/settings.local.json
@@ -72,9 +77,9 @@ figures/t004/
 figures/t005/
 figures/t001labexport/
 figures/t002labexport/
+figures/propagation_plate_geoseed/
+figures/interaction_bakeoff/gpu_outputs/
 figures/*.mp4
-figures/*.mp4.bak
-figures/*_summary.csv.bak
 
 # ----- documents / PDFs -----
 # writeup.pdf is compiled from writeup.tex; reference PDFs (e.g. dado paper.pdf)
@@ -102,9 +107,18 @@ Docs/10aug_update.out
 Docs/twente-paper.aux
 Docs/twente-paper.log
 Docs/twente-paper.out
+Docs/extrinsic_summary.aux
+Docs/extrinsic_summary.log
+Docs/extrinsic_summary.out
+Docs/publication.aux
+Docs/publication.log
+Docs/publication.out
 Docs/figures_tex/*.aux
 Docs/figures_tex/*.log
 Docs/figures_tex/*.out
+figures/fig_pipeline_tikz.aux
+figures/fig_pipeline_tikz.log
+figures/fig_pipeline_tikz.out
 
 # per-trial diagnostic reports — regenerable from Code/trial_report.py
 Docs/reports/*.aux
@@ -116,3 +130,7 @@ Docs/reports/*.tex
 # (Existing trial_002 CSVs were committed before this rule and are kept.)
 *.csv
 !.gitignore_keep_csv
+
+# ----- interaction bakeoff GPU staging (cloned repos, checkpoints; see
+# scripts/run_interaction_bakeoff_gpu.sh and Docs/MONDAY_INTERACTION_BAKEOFF.md) -----
+.external/

@@ -108,22 +108,47 @@ def gripper_moved(widths):
     return span >= MIN_GRIPPER_SPAN_M
 
 
+def closed_runs(widths):
+    """[(start, end), ...] half-open index ranges where the gripper is closed.
+
+    Empty when the span guard trips. A run that touches either end of the
+    recording is still returned; the caller decides whether a truncated
+    cycle is usable.
+    """
+    c = gripper_closed_window(widths)
+    if not c.any():
+        return []
+    pad = np.concatenate(([False], c, [False]))
+    d = np.diff(pad.astype(np.int8))
+    starts = np.where(d == 1)[0]
+    ends = np.where(d == -1)[0]
+    return [(int(s), int(e)) for s, e in zip(starts, ends)]
+
+
 def gripper_transitions(widths):
-    """Return (grasp_idx, release_idx), either possibly None.
+    """Return (grasp_idx, release_idx) for the LONGEST closed interval.
 
     Applies the minimum-span guard, so a gripper that never moved yields
     (None, None) rather than transitions manufactured from noise.
+
+    BUG 3 (fixed 2026-08-30). This previously returned the FIRST close and
+    the LAST open, `cd[0]` and `cu[-1]`. On a recording with more than one
+    grasp cycle those belong to different cycles, so the reported grasp and
+    release bracket every cycle in between -- and because the press search
+    is restricted to that window, the contact event is drawn from the wrong
+    cycle too. It happened not to fire on any trial in this dataset
+    (lfdws_t002_labexport is three-phase but has exactly one closed
+    interval, samples 29610-48357), which is precisely why it survived: the
+    single-interval case is indistinguishable from the correct answer.
+    Taking the longest run is identical whenever there is one interval and
+    correct when there is more than one.
     """
-    w = np.asarray(widths, dtype=float)
-    if not gripper_moved(w):
+    runs = closed_runs(widths)
+    if not runs:
         return None, None
-    w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
-    thr = w_closed + 0.5 * (w_open - w_closed)
-    closed = w < thr
-    cd = np.where((~closed[:-1]) & (closed[1:]))[0] + 1
-    cu = np.where((closed[:-1]) & (~closed[1:]))[0] + 1
-    return (int(cd[0]) if len(cd) else None,
-            int(cu[-1]) if len(cu) else None)
+    s, e = max(runs, key=lambda r: r[1] - r[0])
+    n = len(np.asarray(widths, dtype=float))
+    return int(s), (int(e) if e < n else None)
 
 
 def gripper_closed_window(widths):
@@ -138,7 +163,7 @@ def gripper_closed_window(widths):
 
 
 def mask_from_overlay(ov_path, src_path, color_bgr, tol=40,
-                      min_px=MIN_MASK_PX):
+                      min_px=MIN_MASK_PX, other_colors=None):
     """Recover an alpha-blended mask from an overlay PNG, rejecting the
     solid-colour caption drawn in the same colour (see BUG 2 above).
 
@@ -175,6 +200,30 @@ def mask_from_overlay(ov_path, src_path, color_bgr, tol=40,
             comp = labels == lab
             if not comp[CAPTION_BAND_H:, :].any():
                 m &= ~comp
+    # BUG 4 (fixed 2026-08-30) -- two palette colours can share a signature.
+    #
+    # The per-channel test above reduces each channel to one bit ("driven up"
+    # vs "left alone"), so it distinguishes at most 8 colours. tool_contact
+    # (0,165,255) and charger_contact (0,215,255) have the SAME signature and
+    # were recovered as byte-identical masks from a shared overlay: measured
+    # on lfdws_t001_depth frame f0535, both returned 18796 px when the true
+    # areas were 69 px and 18727 px -- a 272x overstatement of the tool,
+    # which was in fact the charger.
+    #
+    # Overlays are composited with cv2.addWeighted(img, 1.0, layer, 0.5, 0),
+    # i.e. ov = src + 0.5*color before clipping, so diff ~= 0.5*color and the
+    # expected diff is a property of the colour alone. When the caller says
+    # which other colours share the image, keep only pixels closer to THIS
+    # colour's expected diff than to any other's. Saturated pixels are
+    # already excluded by the tests above, so this only ever removes pixels
+    # and is a no-op for a palette with no collision.
+    if other_colors and m.any():
+        want = np.abs(diff - 0.5 * np.asarray(color_bgr, float)).sum(axis=2)
+        for oc in other_colors:
+            if tuple(oc) == tuple(color_bgr):
+                continue
+            rival = np.abs(diff - 0.5 * np.asarray(oc, float)).sum(axis=2)
+            m &= want <= rival
     if m.sum() < min_px:
         return np.zeros(diff.shape[:2], dtype=bool)
     return m

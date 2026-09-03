@@ -39,6 +39,10 @@ import os
 
 import cv2
 import numpy as np
+
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from event_utils import gripper_moved
 import pandas as pd
 import yaml
 
@@ -106,8 +110,18 @@ def detect_press_event(df):
     w = df[GRIP].apply(parse_gw).to_numpy()
     w_open, w_closed = float(np.nanmax(w)), float(np.nanmin(w))
     thr = w_closed + 0.5*(w_open - w_closed)
-    closed = w < thr
-    fm_adj = np.where(closed, fm - baseline, -np.inf)
+    # Guard: a gripper that never actuated puts this midpoint INSIDE the
+    # sensor's own noise band and manufactures grasp/release out of nothing.
+    # Measured on lfdws_t001_labexport: width spans 6.6e-7 m of pure noise yet
+    # the unguarded rule reported a grasp at 0.06 s and a release at 7.66 s,
+    # which then displaced the contact event from the true 11.15 N peak at
+    # 5.08 s to 3.34 s. See Code/event_utils.py.
+    closed = (w < thr) if gripper_moved(w) else np.zeros(len(w), dtype=bool)
+    # With no real grasp cycle there is no held window to restrict to, so
+    # search the whole recording rather than an all -inf array whose argmax
+    # would silently return row 0.
+    fm_adj = (np.where(closed, fm - baseline, -np.inf)
+              if closed.any() else fm - baseline)
     return int(np.argmax(fm_adj))
 
 
