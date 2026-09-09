@@ -248,8 +248,10 @@ grasp / 7 contact cases, without touching the proposal pool or the evaluator.
 Full plan: `Docs/MONDAY_INTERACTION_BAKEOFF.md`. This is bounded, stop-gated,
 and does not re-open weight tuning on the existing features.
 
-Preparation complete, execution blocked only on RTX 4080 host access
-(available 2026-09-07):
+Preparation complete, execution blocked only on RTX 4080 host access. The
+2026-09-07 window passed unused; next attempt targets 2026-09-10. Nothing
+further is needed from Mark to run this — the bundle, adapters, and pinned
+repos are self-contained:
 
 - Benchmark bundle frozen: `figures/interaction_bakeoff/input/` (5 grasp + 7
   contact cases, event images, DistinctNet raw/stabilized frame pairs, cached
@@ -294,3 +296,71 @@ and wait for calibrated geometric evidence — do not resume heuristic-score
 tuning. No result from this test authorizes production integration by itself;
 only successful, stop-gate-passing evidence may be wired into the selector as
 optional ranking/seeding input, per the plan's integration step.
+
+## First physically-measured T_bota_camera: recovered, scored, rejected (2026-09-09)
+
+Mark sent a real ChArUco hand-eye recording (`lfdws_t002`, 94.9s, our own sent
+board: 5×7, `DICT_5X5_100`, 35mm/26mm nominal, exact-scale A4 PDF he printed at
+100% — no re-measurement needed since we control the print source). Merged via
+`Code/mcap_extract.py` (no synced master-topic CSV was provided) into
+`Data/charuco_calib_002`, then `Code/calibrate_hand_eye.py solve`:
+
+- board detected in 81,853/93,888 rows (87%);
+- 162 independent poses kept after near-duplicate filtering (script minimum
+  is 3, recommended 10-15 — 162 is a large, healthy set);
+- board-in-base-frame position residual std-dev across those 162 poses:
+  [3.7, 5.1, 3.2] mm — well inside the script's own >10-20mm "bad detection"
+  flag;
+- debug overlay (6 sample frames) visually confirmed correct board-axis
+  detection in every sample.
+
+This is real, internally self-consistent evidence — the first physically-
+measured `T_bota_camera` candidate that isn't a failed CAD guess. It is
+**not** a validated result: internal pose-agreement proves the rig moved
+rigidly and the solver is self-consistent, not that the recovered transform
+is metrically correct against physical reality.
+
+Scored against the same 7-event wrench-ray harness every prior candidate
+used (`Code/wrench_ray_validate.py --raw_R ... --raw_t_mm ...`, values taken
+directly from `calibration_handeye_result.yaml`, nothing refit):
+
+**3/7 hits — worse than the currently-adopted CAD-derived candidate's 6/7.**
+Misses: `lfdws_t001/press`, `lfdws_t001_labexport/press`,
+`lfdws_t001_depth/charger_grasp` (ray entirely outside frame, 0 pixels),
+`lfdws_t001_depth/charger_lift`. Hits: `lfdws_t001_depth/plate_press`,
+`screwdriver_contact`, `charger_dock`.
+
+**Verdict: REJECTED at this transform. Not written to `calibration.yaml`;
+`bota_to_camera.filled` stays `false`.** `Code/calibrate_hand_eye.py` never
+writes `calibration.yaml` automatically and the printed
+"REVIEW before pasting" instruction was followed.
+
+Most likely explanation, tying together the good internal residual and the
+bad external score: this calibration is only as correct as the assumption
+that `current_pose`'s origin coincides with the Bota sensor's actual
+force-measurement origin. AX=XB fitting is blind to a *constant* rigid offset
+between the two — it will still converge tightly (explaining the good
+residual) while silently absorbing that offset into `T_bota_camera`, which
+then miscarries the wrench line of action by exactly that offset (explaining
+the bad wrench-ray score, since the wrench itself is expressed in the true
+Bota frame per `wrench_ray.py`'s header comment). This is the same open
+question from Vlutters' 2026-08-28 email — whether `current_pose` reports the
+Bota sensor origin or the Franka tool frame at the sensor flange — now with
+concrete evidence that getting it wrong costs 3 of 7 real contact events, not
+just a documentation nicety.
+
+Also found while running this: `calibrate_hand_eye.py`'s console line
+`"[result] T_bota_camera (bota origin frame -> camera-frame point)"` describes
+the mapping direction backwards — the printed matrix is `R_cam2gripper`/
+`t_cam2gripper` straight from `cv2.calibrateHandEye`, i.e. it maps a
+camera-frame point INTO the bota frame, which is exactly what the script's own
+residual check and `wrench_ray.py`'s `T_base_camera = T_base_bota @
+T_bota_camera` composition both correctly assume. The matrix values and every
+downstream consumer are correct; only that one print statement's English is
+backwards. Not yet fixed — flagging here so it isn't mistaken for a data bug.
+
+Next step is not re-running this calibration hoping for a different number —
+the solve is already tight. It's resolving the `current_pose` frame question
+directly (Vlutters' pending confirmation), or re-deriving the calibration with
+an explicit free translational offset between `current_pose` and the true
+Bota origin as an additional unknown, rather than assuming they coincide.

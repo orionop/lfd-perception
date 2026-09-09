@@ -1,0 +1,28 @@
+T_bota_camera:
+- - -0.723466
+  - 0.472331
+  - -0.503488
+  - 0.108315
+- - -0.690179
+  - -0.511556
+  - 0.511823
+  - -0.123318
+- - -0.015813
+  - 0.717784
+  - 0.696086
+  - 0.018697
+- - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+n_poses_used: 162
+n_poses_detected_total: 81853
+board_in_base_position_std_m:
+- 0.0037
+- 0.0051
+- 0.0032
+square_size_m: 0.035
+marker_size_m: 0.026
+note: REVIEW residuals before pasting into calibration.yaml's bota_to_camera.T --
+  do not mark filled:true without checking the debug image and the std-dev residual
+  above.

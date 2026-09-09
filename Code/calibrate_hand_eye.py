@@ -187,15 +187,45 @@ def solve(args):
     df = pd.read_csv(demo_csv)
     print(f"[load] {demo_csv} ({len(df)} rows)", flush=True)
 
+    speed = None
+    if args.max_speed_mps is not None:
+        # Finite-difference speed of current_pose across the merged CSV's own
+        # rows. The recording is assumed to be a static-pause capture per this
+        # script's docstring, but that assumption is never actually checked --
+        # a frame grabbed while the arm is still moving can be motion-blurred
+        # (degrading solvePnP corner localisation) even when board detection
+        # still succeeds, which is a silent, self-consistent-looking error
+        # source distinct from AX=XB itself. This flag lets --solve restrict
+        # to genuinely near-static instants instead of trusting every
+        # detection equally.
+        t_s = df[POSE_TS].to_numpy(dtype=float) / 1e9
+        pos = df[[PX, PY, PZ]].to_numpy(dtype=float)
+        dt = np.diff(t_s)
+        dp = np.diff(pos, axis=0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            v = np.linalg.norm(dp, axis=1) / np.where(dt > 0, dt, np.nan)
+        speed = np.full(len(df), np.nan)
+        speed[1:] = v
+        speed[0] = v[0] if len(v) else np.nan
+        n_static = int(np.nansum(speed < args.max_speed_mps))
+        print(f"[speed] {n_static}/{len(df)} rows below "
+              f"{args.max_speed_mps} m/s (median speed "
+              f"{np.nanmedian(speed):.4f} m/s)", flush=True)
+
     R_base_bota_all, t_base_bota_all = [], []
     R_cam_board_all, t_cam_board_all = [], []
     debug_frames = []
-    n_checked, n_detected = 0, 0
-    for _, r in df.iterrows():
+    n_checked, n_detected, n_moving_skipped = 0, 0, 0
+    for i, r in df.iterrows():
         img_id = str(r[IMG])
         img_path = os.path.join(img_dir, f"{img_id}.png")
         if not os.path.exists(img_path):
             continue
+        if speed is not None:
+            s = speed[i]
+            if not np.isfinite(s) or s >= args.max_speed_mps:
+                n_moving_skipped += 1
+                continue
         n_checked += 1
         bgr = cv2.imread(img_path)
         if bgr is None:
@@ -219,8 +249,10 @@ def solve(args):
             cv2.drawFrameAxes(ov, K, dist, rvec, tvec, args.square_size_m * 2)
             debug_frames.append(ov)
 
-    print(f"[detect] board found in {n_detected}/{n_checked} frames with an image",
-          flush=True)
+    speed_note = (f" ({n_moving_skipped} skipped as moving)"
+                 if speed is not None else "")
+    print(f"[detect] board found in {n_detected}/{n_checked} frames with an "
+          f"image{speed_note}", flush=True)
     if n_detected < 3:
         print("[fatal] need >=3 successful board detections (recommend "
               ">=10-15) -- check board is in frame, SQUARE_SIZE_M/"
@@ -319,6 +351,11 @@ def main():
                     help="PHYSICALLY MEASURE the printed board -- do not assume nominal PDF scale")
     sp.add_argument("--marker_size_m", type=float, required=True,
                     help="physically measured ArUco marker size within each square")
+    sp.add_argument("--max_speed_mps", type=float, default=None,
+                    help="skip frames where current_pose's finite-difference "
+                         "speed is at or above this (m/s) -- guards against "
+                         "motion-blurred detections when the capture wasn't "
+                         "actually static at that instant. Off by default.")
     sp.add_argument("--out", default="calibration_handeye_result.yaml")
 
     args = ap.parse_args()

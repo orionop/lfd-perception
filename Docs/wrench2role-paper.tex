@@ -1,0 +1,428 @@
+% Canonical prospective manuscript for workstream B.
+% IMPORTANT: all numerical results are projected success values, not measured
+% evidence. Replace them from frozen evaluation artifacts before circulation.
+\documentclass[letterpaper,10pt,journal,twoside]{IEEEtran}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cite}
+
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\newcommand{\method}{Wrench2Role}
+
+\title{From Wrenches to Roles: Interaction-Grounded Object Segmentation\
+in Open-World Robot Demonstrations}
+\author{Anonymous Authors}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fcolorbox{red}{red!5}{\parbox{0.94\columnwidth}{\small
+\textbf{Prospective draft.} Numerical results are expected success values used
+to design the completed paper. They are not measured results and must be
+replaced after the frozen experiments.}}
+\end{center}
+
+\begin{abstract}
+Robot demonstrations contain evidence not only of \emph{when} interaction
+occurs, but of \emph{which} visible objects participate in it. Most visual
+grounding pipelines nevertheless discard the gripper and force/torque signals
+recorded alongside video. We introduce \method, a class-agnostic method that
+assigns visual proposals the physical roles \emph{grasped object} and
+\emph{contact receiver}. Gripper transitions and attachment motion ground the
+grasped role, while a wrist wrench defines a 3-D line of action that is compared
+with each mask's depth support. An uncertainty-aware ranker fuses interaction
+and geometric evidence and abstains when the role is ambiguous; selected masks
+are propagated with a frozen video segmentation model. We train and stress-test
+the ranker in simulation with exact contact, instance, and transform ground
+truth, then freeze it for evaluation on 36 real Franka demonstrations with
+held-out objects, scenes, and recording sessions. In the projected successful
+study, \method{} reaches 0.94/0.82 precision/coverage for grasped objects and
+0.93/0.80 for contact receivers. It improves held-out simulated top-1 role
+accuracy by 13.5 percentage points over the stronger single-modality baseline
+and produces tracks with 0.84 mean IoU. Controlled perturbations identify when
+wrench geometry remains informative and when the system should abstain. These
+results establish measured interaction as a practical grounding signal for
+open-world object-role segmentation in robot learning from demonstration.
+\end{abstract}
+
+\section{Introduction}
+
+Learning from demonstration (LfD) seeks reusable task structure from
+human-guided or kinesthetic robot executions. Constraint and interaction models
+can infer \emph{how} an end effector moves or \emph{when} contact changes
+\cite{overbeek2025frontiers,overbeek2025adrr}, but reproduction also requires a
+visual answer to a more elementary question: which object was held, and which
+object received the interaction? Semantic detectors are an awkward fit because
+these are physical roles, not categories. A receiver may be a plate, tool,
+fixture, articulated part, or previously unseen object.
+
+Class-agnostic segmentation models can delineate almost any visible object, but
+they do not decide which proposal matters. Motion-based discovery can associate
+an unknown object with a gripper \cite{boerdijk2021whats}; human-interaction
+methods similarly associate hands with held objects
+\cite{higgins2023moves,narasimhaswamy2024hoist}. Contact-receiver identity is
+harder. Several objects may be close to the tool, the relevant surface may be
+occluded, and an eye-in-hand camera makes background motion an unreliable cue.
+Conversely, force/torque sensing detects physical interaction but does not
+directly identify an image region.
+
+Our hypothesis is that these modalities resolve complementary ambiguities. A
+gripper transition limits the grasped-object search temporally, and object
+motion relative to the gripper supplies attachment evidence. During external
+contact, the measured wrench defines a line of possible contact locations
+\cite{bicchi1990}. Once transformed into the camera frame, this line can be
+compared with the 3-D support of class-agnostic masks. Visual evidence resolves
+the wrench's along-line ambiguity; force geometry resolves ambiguity among
+visually plausible objects.
+
+We instantiate this idea in \method{} (Fig.~\ref{fig:overview}). The system
+detects interaction events, generates a common proposal set for every ablation,
+computes role-specific interaction and wrench-geometry evidence, and selects or
+rejects a candidate using calibrated confidence. Frozen SAM~2
+\cite{ravi2024sam2} then propagates the mask bidirectionally. Simulation
+provides exact labels and controlled corruptions; all thresholds are frozen
+before real-world testing.
+
+Our contributions are:
+\begin{itemize}
+  \item We formulate \emph{open-world object-role grounding}: assigning
+  class-agnostic masks the roles of grasped object and contact receiver from
+  synchronized eye-in-hand RGB-D, gripper state, pose, and wrist wrench.
+  \item We introduce uncertainty-aware fusion of attachment evidence and the
+  wrench line of action, with explicit abstention under ambiguous perception or
+  geometry.
+  \item We develop a simulation protocol with exact role ground truth and
+  controlled perturbations of calibration, synchronization, sensing, clutter,
+  and contact structure.
+  \item We evaluate a frozen model on object-, scene-, and session-held-out real
+  demonstrations against vision-only, interaction-only, and geometry-only
+  alternatives.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/pipeline.png}
+\caption{System overview. Events identify candidate moments, and all methods
+share one class-agnostic mask pool. Role-specific visual, attachment, and
+wrench-geometry evidence is fused with calibrated uncertainty. The system
+selects a role mask for propagation or safely abstains. This placeholder will
+be replaced by the final \method{} diagram.}
+\label{fig:overview}
+\end{figure}
+
+\section{Related Work}
+
+\subsection{Interaction-grounded object segmentation}
+
+``What's This?'' learns unknown object-in-gripper segmentation from robot
+motion without manual object labels \cite{boerdijk2021whats}. MOVES learns
+pixel grouping and hand--object association from manipulation video
+\cite{higgins2023moves}; HOIST-Former jointly identifies, segments, and tracks
+hand-held objects \cite{narasimhaswamy2024hoist}. HOI-DETR extends human-object
+interaction detection to a hand, first object, and second acted-upon object
+\cite{darkhalil2026hoi}. These works establish interaction as a powerful visual
+prior. Our camera instead moves with the robot, roles are inferred from robot
+measurements, and external contact must be assigned to an object instance.
+
+SAM \cite{kirillov2023sam} and SAM~2 \cite{ravi2024sam2} offer strong
+class-agnostic masks given a prompt. We use them as proposal and tracking
+infrastructure. Our problem is choosing the physically relevant proposal
+without an object name or recording-specific manual prompt.
+
+\subsection{Visual and force-based contact localisation}
+
+Im2Contact predicts dense extrinsic contact from a calibrated RGB-D view and
+robot proprioception without tactile or force sensing \cite{kim2023im2contact}.
+It demonstrates that task-aligned visual and end-effector cues can localise
+diverse contact. We instead ask which open-world instance occupies each
+physical role and explicitly incorporate a measured wrist wrench. The methods
+are complementary; neither motivates a claim that vision or force is universally
+sufficient.
+
+Intrinsic contact sensing constrains a single contact from a wrist wrench
+\cite{bicchi1990}. Bimbo \emph{et al.} use force/torque to infer possible
+contacts and update 3-D occupancy maps \cite{bimbo2022mapping}. Our output is
+instead an image-space, temporally propagated instance mask with a physical
+role. Hoi! provides large-scale synchronized visual, force, and tactile data
+across embodiments \cite{engelbracht2026hoi}; it motivates external evaluation
+but benchmarks a distinct articulated-interaction setting.
+
+\section{Problem Formulation}
+
+A demonstration is a synchronized sequence
+\begin{equation}
+\mathcal{D}=\{I_t,D_t,\mathbf{T}^{W}_{E,t},g_t,
+\mathbf{w}_t\}_{t=1}^{T},
+\end{equation}
+where $I_t,D_t$ are eye-in-hand RGB and depth,
+$\mathbf{T}^{W}_{E,t}$ is end-effector pose, $g_t$ is gripper state, and
+$\mathbf{w}_t=[\mathbf{f}_t^\top,\boldsymbol{\tau}_t^\top]^\top$ is wrist
+wrench. At event $e$, a class-agnostic segmenter produces candidates
+$\mathcal{M}_e=\{m_i\}_{i=1}^{N_e}$. We predict
+$m_e^{r}\in\mathcal{M}_e\cup\{\varnothing\}$ for
+$r\in\{\mathrm{grasped},\mathrm{receiver}\}$; $\varnothing$ denotes
+abstention. Category labels and object templates are unavailable.
+
+Evaluation separates candidate recall, role selection, and tracking. Proposal
+recall asks whether any $m_i$ overlaps the reference object. Selection measures
+top-$k$ role accuracy and precision as a function of automatic coverage.
+Tracking is evaluated only after successful selection.
+
+\section{Method}
+
+\subsection{Event-conditioned proposals}
+
+Grasp and release events are detected from gripper-width transitions after a
+minimum-travel test rejects noise. Contact candidates are peaks in gravity- and
+bias-compensated wrench magnitude, grouped into activity clusters and restricted
+to the active grasp interval when one exists. A short temporal window is
+retained rather than committing to one frame.
+
+At each anchor, a frozen class-agnostic segmenter produces masks at multiple
+granularities. Near-duplicates are suppressed by mask IoU before confidence
+margins are computed. Depth validity, border truncation, and minimum support
+tests remove uninterpretable candidates; no category or recording-specific
+pixel prior is used.
+
+\subsection{Grasped-object evidence}
+
+For candidate $m_i$, the grasp descriptor $\boldsymbol{\phi}^{G}_i$ combines
+overlap with the projected gripper; change in support across closure; motion
+coherence with the end effector; residual motion relative to the background;
+and persistence during early hold. Persistence alone cannot promote a mask: a
+static fixture may be stable yet unrelated to the grasp. Features are aggregated
+across the event window using robust medians and dispersion estimates.
+
+\subsection{Wrench-grounded contact evidence}
+
+Under a single-resultant-contact model, force $\mathbf{f}$ and torque
+$\boldsymbol{\tau}$ define the closest point of the line of action to the sensor
+origin and its direction \cite{bicchi1990}:
+\begin{equation}
+\mathbf{r}_0=\frac{\mathbf{f}\times\boldsymbol{\tau}}
+{\lVert\mathbf{f}\rVert^2},\qquad
+\hat{\mathbf{f}}=\frac{\mathbf{f}}{\lVert\mathbf{f}\rVert}.
+\label{eq:line}
+\end{equation}
+The hand--eye transform and time-varying pose map this line into the camera
+frame. Valid depth pixels within $m_i$ yield $\mathcal{P}_i$. Geometric
+discrepancy is
+\begin{equation}
+d_i=\min_{\mathbf{p}\in\mathcal{P}_i,\,s\in\mathbb{R}}
+\|\mathbf{p}-(\mathbf{r}_0+s\hat{\mathbf{f}})\|_2.
+\label{eq:distance}
+\end{equation}
+The receiver descriptor $\boldsymbol{\phi}^{C}_i$ includes $d_i$, mask support
+near the line, depth continuity, force direction relative to the local surface,
+and temporal consistency around contact.
+
+A single projected line is overconfident under calibration, synchronization,
+and wrench error. We sample their estimated joint uncertainty, recompute
+Eq.~\eqref{eq:distance}, and retain its expectation and dispersion. Masks score
+highly only when their support remains plausible across likely sensing error.
+
+\subsection{Fusion, abstention, and propagation}
+
+A shallow role-specific network fuses visual/interaction evidence, geometry,
+and missing-modality indicators:
+\begin{equation}
+z_i^r=h_r(\boldsymbol{\phi}_i^G,\boldsymbol{\phi}_i^C,
+\boldsymbol{\phi}_i^V),\qquad
+p_i^r=\operatorname{softmax}_{i}(z_i^r).
+\end{equation}
+Training combines cross-entropy with pairwise ranking against hard negatives
+from the same frame. Temperature scaling on disjoint validation data calibrates
+$p_i^r$. The system accepts the top mask only if its probability and margin
+over the best non-duplicate candidate exceed frozen thresholds. Otherwise it
+abstains.
+
+Accepted masks seed frozen SAM~2 bidirectional propagation. Role, confidence,
+provenance, and per-frame masks are written to a versioned sidecar for
+downstream LfD.
+
+\section{Experimental Protocol}
+
+\subsection{Simulation and stress tests}
+
+Isaac Sim reproduces the Franka arm, gripper, eye-in-hand camera, and wrist
+sensor geometry. Scripted grasp--carry--contact episodes randomize object shape,
+distractors, lighting, texture, mass, friction, approach direction, and contact
+type. The simulator exports synchronized RGB, depth, pose, gripper, wrench,
+instance masks, contact pairs, contact points, and exact role labels.
+
+The prospective study contains 1,200/200/400 train/validation/test episodes.
+Test objects and scene assets never occur in training. Three independent
+generation and training seeds are used. Separate suites perturb extrinsic
+rotation and translation, time offset, wrench bias/noise, depth dropout,
+occlusion, clutter, and multiple contacts. Before generation, the virtual wrench
+is checked in ten deterministic scenes against analytically known loads.
+
+\subsection{Real-robot study}
+
+The real platform comprises a Franka Research~3, Franka Hand, eye-in-hand ZED
+Mini RGB-D camera, and Bota SensONE wrist force/torque sensor. A ChArUco hand--eye
+procedure estimates the camera-to-measurement transform. Frame names, direction,
+units, reprojection residuals, and independent physical checks are recorded
+before evaluation.
+
+After a separate pilot, the projected main dataset contains 36 independent
+demonstrations across 12 held/receiver object pairings, six scene layouts, and
+four recording sessions. Entire object identities and sessions are held out.
+Reference masks and roles are authored without method scores. Model, thresholds,
+and abstention policy are frozen after simulation and validation data.
+
+\subsection{Baselines and metrics}
+
+All internal baselines receive identical proposals: a region/size heuristic;
+DINOv2 \cite{oquab2023dinov2} attention with depth; a vision/interaction-only
+ranker; wrench geometry alone; and the full hybrid. DistinctNet and HOI-DETR are
+reported as out-of-domain transfer baselines where their outputs map fairly to
+robot roles. Receiver evaluation also includes an Im2Contact-style
+visual/end-effector baseline.
+
+Primary metrics are top-1 accuracy, precision--coverage curves, coverage at
+0.90 precision, and selective risk. We also report proposal recall, seed IoU,
+track IoU, 3-D contact discrepancy, and corruption sensitivity. Confidence
+intervals are clustered by session, never by video frame.
+
+\section{Expected Results}
+
+\subsection{Held-out role selection}
+
+Table~\ref{tab:real} shows the projected successful result. Attachment evidence
+substantially improves grasped-object ranking. Geometry alone is precise for
+contact receivers but abstains when depth or calibration uncertainty leaves
+several candidates near the line. Fusion is the only method expected to exceed
+the preregistered 0.90 precision and 0.75 coverage bar for both roles.
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Projected, not measured} held-out real selection. P/C is
+precision/coverage at the frozen operating point.}
+\label{tab:real}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{2}{c}{\textbf{Grasped}} &
+\multicolumn{2}{c}{\textbf{Receiver}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Method} & \textbf{Top-1} & \textbf{P/C} &
+\textbf{Top-1} & \textbf{P/C} \\
+\midrule
+Region/size & .44 & .61/.36 & .39 & .57/.31 \\
+DINOv2 + depth & .53 & .68/.43 & .48 & .64/.39 \\
+Vision/interaction & .81 & .88/.72 & .70 & .84/.63 \\
+Wrench geometry & -- & -- & .76 & .91/.68 \\
+\method{} & \textbf{.89} & \textbf{.94/.82} &
+\textbf{.87} & \textbf{.93/.80} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On object-and-scene-held-out simulation, the hybrid reaches a projected 89.3\%
+top-1 role accuracy, compared with 72.4\% for vision/interaction and 75.8\% for
+geometry. Its 13.5-point gain over the stronger component exceeds the
+predetermined continuation gate. Correct role masks occur in the proposal pool
+in a projected 96.8\% of events, leaving proposal failure as a measurable but
+secondary source of error.
+
+\subsection{Tracking and geometric accuracy}
+
+Accepted seeds achieve a projected mean IoU of 0.88; bidirectional propagation
+produces 0.84 mean track IoU while the object is visible. Explicit absence
+handling prevents persistent mask growth after an object leaves view. The
+projected median 3-D distance from the estimated line of action to the reference
+contact region is 1.7\,cm, with a 90th percentile of 3.8\,cm.
+
+\subsection{Ablation and robustness}
+
+Removing wrench geometry causes the largest receiver degradation; removing
+attachment evidence primarily affects grasped objects. Removing uncertainty
+sampling changes clean-condition accuracy little but makes confidence poorly
+calibrated under transform and timing errors. At a projected $5^\circ$
+extrinsic rotation error, uncertainty-aware fusion retains 0.79 coverage at
+0.90 precision, compared with 0.58 for deterministic fusion. At $10^\circ$,
+both degrade, but the uncertainty-aware system abstains rather than maintaining
+a falsely high acceptance rate. Multiple simultaneous contacts remain the
+dominant physical failure because a single resultant wrench need not identify
+either contact independently.
+
+\section{Discussion}
+
+The expected result does not imply that vision alone is incapable of contact
+understanding. Im2Contact and modern HOI systems demonstrate the opposite. The
+narrow conclusion is that measured interaction supplies complementary evidence
+for assigning open-world object \emph{roles}, especially when several masks are
+visually plausible. A common proposal pool and modality ablations test this
+without conflating proposal quality with role selection.
+
+Simulation supplies exact supervision and controlled perturbations, but cannot
+reproduce every Bota artifact, ZED failure, compliance effect, or latency.
+Simulation therefore establishes mechanism and sensitivity; held-out physical
+recordings establish transfer. Adjacent frames and duplicate exports are never
+treated as independent trials.
+
+The method assumes a dominant resultant contact and sufficient valid depth near
+a proposal. Transparent, reflective, and occluded objects can violate the
+latter; distributed or simultaneous contacts violate the former. Calibration
+uncertainty can be modelled but not made irrelevant. Such cases motivate
+abstention and are reported as reduced coverage rather than excluded failures.
+
+\section{Conclusion}
+
+We presented \method, a selective grounding method that converts robot
+interaction measurements into prompts for open-world video segmentation.
+Gripper transitions and attachment motion identify the grasped role; calibrated
+wrench geometry constrains the receiver; uncertainty-aware fusion resolves
+ambiguities remaining in either modality. If reproduced by the frozen
+experiments, the projected gains support a practical principle for robot LfD:
+the robot's physical interaction is not merely a control signal, but a grounding
+signal for visual object identity.
+
+\begin{thebibliography}{99}
+\bibitem{bicchi1990} A.~Bicchi, ``Intrinsic contact sensing for soft fingers,''
+in \emph{Proc. IEEE Int. Conf. Robot. Autom. (ICRA)}, 1990.
+\bibitem{kirillov2023sam} A.~Kirillov \emph{et al.}, ``Segment Anything,'' in
+\emph{Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)}, 2023.
+\bibitem{ravi2024sam2} N.~Ravi \emph{et al.}, ``SAM 2: Segment Anything in
+images and videos,'' in \emph{Proc. Int. Conf. Learn. Represent.}, 2025.
+\bibitem{oquab2023dinov2} M.~Oquab \emph{et al.}, ``DINOv2: Learning robust
+visual features without supervision,'' \emph{TMLR}, 2024.
+\bibitem{boerdijk2021whats} W.~Boerdijk, M.~Sundermeyer, M.~Durner, and
+R.~Triebel, ``What's This?---Learning to segment unknown objects from
+manipulation sequences,'' in \emph{Proc. ICRA}, 2021.
+\bibitem{higgins2023moves} R.~E.~L. Higgins and D.~F. Fouhey, ``MOVES:
+Manipulated objects in video enable segmentation,'' in \emph{Proc. CVPR}, 2023.
+\bibitem{narasimhaswamy2024hoist} S.~Narasimhaswamy, H.~A. Nguyen, L.~Huang,
+and M.~Hoai, ``HOIST-Former: Hand-held objects identification, segmentation,
+and tracking in the wild,'' in \emph{Proc. CVPR}, 2024.
+\bibitem{darkhalil2026hoi} A.~Darkhalil, D.~Damen, and D.~Fouhey, ``Improving
+and evaluating hand-object interaction detection,'' \emph{arXiv:2606.17384},
+2026.
+\bibitem{kim2023im2contact} L.~Kim, Y.~Li, M.~Posa, and D.~Jayaraman,
+``Im2Contact: Vision-based contact localization without touch or force
+sensing,'' in \emph{Proc. CoRL}, 2023, pp.~1533--1546.
+\bibitem{bimbo2022mapping} J.~Bimbo, A.~S. Morgan, and A.~M. Dollar,
+``Force-based simultaneous mapping and object reconstruction for robotic
+manipulation,'' \emph{IEEE Robot. Autom. Lett.}, vol.~7, no.~2,
+pp.~4749--4756, 2022.
+\bibitem{engelbracht2026hoi} T.~Engelbracht \emph{et al.}, ``Hoi!---A
+multimodal dataset for force-grounded, cross-view articulated manipulation,''
+in \emph{Proc. CVPR}, 2026, pp.~8880--8890.
+\bibitem{overbeek2025frontiers} A.~H.~G. Overbeek, D.~Dresscher,
+H.~van~der~Kooij, and M.~Vlutters, ``Versatile kinematics-based constraint
+identification applied to robot task reproduction,'' \emph{Frontiers Robot.
+AI}, vol.~12, art.~1574110, 2025.
+\bibitem{overbeek2025adrr} A.~H.~G. Overbeek, H.~van~der~Kooij, D.~Dresscher,
+and M.~Vlutters, ``Identifying physical interactions in contact-based robot
+manipulation for learning from demonstration,'' \emph{Advanced Robotics
+Research}, e202500109, 2025.
+\end{thebibliography}
+
+\end{document}
