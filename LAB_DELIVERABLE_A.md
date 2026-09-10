@@ -476,3 +476,55 @@ step: re-run `calibrate_hand_eye.py` on the same `charuco_calib_002` recording
 with `--max_speed_mps` set (added 2026-09-09, not yet tested) and re-score
 with `wrench_ray_validate.py` against the same 7 events.** No new recording
 or further confirmation from Mark is needed for this.
+
+## Six more things checked (2026-09-10, prompted by a direct "the code is
+wrong" push): five ruled out, one real but insufficient
+
+- **`--max_speed_mps` result** (the "next concrete step" above): done. 17
+  static-only poses, residual 3.2/5.6/1.4mm, but `wrench_ray_validate.py`
+  scores it identically 3/7, same events hit and missed as the unfiltered
+  run. Motion blur rejected (see the section above this one).
+- **ChArUco `legacyPattern` bug** (a real, documented OpenCV backward-
+  compatibility break for even-row-count boards): tested directly on our
+  exact 5×7 board — `legacyPattern=True` vs `False` produce a **pixel-
+  identical image (0/350,000 differing pixels)**. Our board has two odd
+  dimensions; this bug specifically requires an even row count. Not
+  applicable, ruled out.
+- **`CharucoBoard` constructor argument order** (squareLength vs
+  markerLength swap is a classic mistake): verified via keyword arguments
+  against the real OpenCV 4.13.0 API — our positional call matches exactly
+  (`squareLength=0.035 > markerLength=0.026`, correct). Ruled out.
+- **`cv2.calibrateHandEye` solver choice**: this script always used
+  `CALIB_HAND_EYE_TSAI`, and TSAI has documented reliability issues on some
+  inputs. Added `--method` and now compute all 5 OpenCV hand-eye solvers
+  (TSAI/PARK/HORAUD/ANDREFF/DANIILIDIS) from the same detected poses every
+  run. **All 5 agree tightly** (max 4.1mm translation, 0.40° rotation apart).
+  Independent algorithms converging together is evidence against a
+  method-specific bug, not for one. Ruled out.
+- **Board print scale** (never independently verified — only the source PDF
+  was checked exact, not what actually came off Mark's printer):
+  `Code/verify_board_scale.py` cross-checks solvePnP's assumed-35mm depth
+  against the ZED's own independently-measured stereo depth at the same
+  pixel, across 15 distinct static frames (dedup by image id — the first
+  version of this check accidentally measured the same one frame 15 times
+  and was fixed before trusting it). **Real signal: ZED depth is
+  consistently ~3-5% shorter than solvePnP assumes** (13/15 frames clustered
+  ratio 0.95-0.98; 2 early-transient frames read 1.12, likely depth
+  settling, not the main effect), implying a true square size around 34mm,
+  not 35mm. **This is real but too small to be the explanation**: a 3-5%
+  scale error propagates to roughly a 4-6mm translation shift, and the
+  `handeye_offset_search.py` ±50mm search already explored a translation
+  neighborhood 10x larger than that around this exact transform and found
+  nothing beating 4/7 in-fold. Recorded as a real, worth-fixing-eventually
+  finding, not as the answer.
+
+**Running tally: 5 hypotheses tested and rejected with direct evidence
+(frame offset, motion blur, ChArUco pattern bug, constructor arg order,
+solver method), 1 real-but-insufficient finding (board scale), 0 bugs found
+in our own scripts under direct audit.** What remains genuinely untested:
+camera intrinsics accuracy itself (currently `dist: [0,0,0,0,0]`, assumed
+rather than independently re-verified), and the standing possibility that
+the adopted CAD candidate's 6/7 is itself not a reliable target — this
+file has already shown a comparably-scored CAD sweep can have a
+50-of-360-degree plateau (`mark_sheet_azimuth.py`), meaning 6/7 alone does
+not prove that candidate is more correct than a candidate that scores 3/7.

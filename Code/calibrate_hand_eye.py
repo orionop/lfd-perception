@@ -278,15 +278,47 @@ def solve(args):
     print(f"[solve] cv2.calibrateHandEye on {len(R_gripper2base)} pose pairs "
           f"(eye-in-hand: board fixed in world, camera rigidly mounted on "
           f"the moving gripper/bota frame)", flush=True)
-    R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
-        R_gripper2base, t_gripper2base, R_target2cam, t_target2cam,
-        method=cv2.CALIB_HAND_EYE_TSAI)
+    # All 5 of OpenCV's hand-eye solvers, computed from the SAME detected
+    # pose pairs -- TSAI (the one this script has always used) is a known
+    # least-robust choice on real noisy data among the five; comparing all
+    # of them costs nothing extra (cv2.calibrateHandEye itself is near-
+    # instant) and tells us directly whether solver choice, not the input
+    # data, explains the wrench-ray gap.
+    METHODS = {
+        "TSAI": cv2.CALIB_HAND_EYE_TSAI,
+        "PARK": cv2.CALIB_HAND_EYE_PARK,
+        "HORAUD": cv2.CALIB_HAND_EYE_HORAUD,
+        "ANDREFF": cv2.CALIB_HAND_EYE_ANDREFF,
+        "DANIILIDIS": cv2.CALIB_HAND_EYE_DANIILIDIS,
+    }
+    candidates = {}
+    for name, m in METHODS.items():
+        R_c2g, t_c2g = cv2.calibrateHandEye(
+            R_gripper2base, t_gripper2base, R_target2cam, t_target2cam,
+            method=m)
+        T = np.eye(4)
+        T[:3, :3] = R_c2g
+        T[:3, 3] = t_c2g.reshape(3)
+        candidates[name] = T
+        print(f"  [{name:10s}] t={np.round(T[:3,3]*1000, 2).tolist()} mm", flush=True)
 
-    T_bota_camera = np.eye(4)
-    T_bota_camera[:3, :3] = R_cam2gripper
-    T_bota_camera[:3, 3] = t_cam2gripper.reshape(3)
-    print("\n[result] T_bota_camera (bota origin frame -> camera-frame point):")
+    method_name = args.method.upper()
+    if method_name not in candidates:
+        print(f"[fatal] unknown --method {args.method!r}, choose from "
+              f"{list(METHODS)}", flush=True)
+        return
+    T_bota_camera = candidates[method_name]
+    print(f"\n[result] T_bota_camera via {method_name} "
+          f"(bota origin frame -> camera-frame point):")
     print(T_bota_camera.round(6), flush=True)
+    for name, T in candidates.items():
+        if name == method_name:
+            continue
+        dt = np.linalg.norm(T[:3, 3] - T_bota_camera[:3, 3]) * 1000
+        dR = T[:3, :3] @ T_bota_camera[:3, :3].T
+        dang = np.degrees(np.arccos(np.clip((np.trace(dR) - 1) / 2, -1, 1)))
+        print(f"  [vs {name}] translation differs by {dt:.1f}mm, "
+              f"rotation differs by {dang:.2f} deg", flush=True)
 
     # residual check: reproject the board's known origin through each pose's
     # solved transform and compare against the directly-observed board pose
@@ -313,6 +345,9 @@ def solve(args):
 
     out_doc = {
         "T_bota_camera": T_bota_camera.round(6).tolist(),
+        "method": method_name,
+        "all_methods_t_mm": {n: np.round(T[:3, 3] * 1000, 3).tolist()
+                             for n, T in candidates.items()},
         "n_poses_used": len(keep_idx),
         "n_poses_detected_total": n_detected,
         "board_in_base_position_std_m": spread.round(4).tolist(),
@@ -356,6 +391,11 @@ def main():
                          "speed is at or above this (m/s) -- guards against "
                          "motion-blurred detections when the capture wasn't "
                          "actually static at that instant. Off by default.")
+    sp.add_argument("--method", default="TSAI",
+                    choices=["TSAI", "PARK", "HORAUD", "ANDREFF", "DANIILIDIS"],
+                    help="which of OpenCV's 5 hand-eye solvers to write to "
+                         "--out; all 5 are always computed and printed for "
+                         "comparison regardless of this choice")
     sp.add_argument("--out", default="calibration_handeye_result.yaml")
 
     args = ap.parse_args()
