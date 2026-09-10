@@ -364,3 +364,44 @@ the solve is already tight. It's resolving the `current_pose` frame question
 directly (Vlutters' pending confirmation), or re-deriving the calibration with
 an explicit free translational offset between `current_pose` and the true
 Bota origin as an additional unknown, rather than assuming they coincide.
+
+## The frame-offset hypothesis, tested directly: rejected (2026-09-10)
+
+Rather than wait on Vlutters' confirmation, the offset hypothesis above was
+tested using only evidence already in hand: `Code/handeye_offset_search.py`
+holds the hand-eye rotation fixed (a rigid translational offset between two
+points on the same end-effector stack cannot change recovered orientation)
+and grid-searches a bounded translation correction on top of it, scored
+against the same 7-event wrench-ray harness as every other candidate. The
+bound (±50mm) is physically motivated, not arbitrary: the Bota SensONE's own
+datasheet (`bota_sensone_dimensions.png`) gives 38.0mm as the sensor body's
+total robot-mounting-to-tool-mounting thickness, so any offset between
+`current_pose`'s claimed origin (Vlutters: the tool-mounting face) and the
+sensor's true F/T coordinate origin is bounded by that dimension.
+
+**Result: rejected, not confirmed.** The in-fold best (4/7, 0.571) already
+sits at the grid's dz=-50mm edge, meaning even ±50mm isn't large enough to
+reach an actual optimum in that direction — a bad sign on its own. Worse,
+**966 of the 9,261 candidates (10.4% of the entire grid) tie at that same
+best hit rate**, spanning the full ±50mm range on every axis: this is a
+broad plateau, not a peak, meaning these 7 events cannot pin the offset down
+to any value, physically plausible or not. Leave-one-recording-out
+cross-validation confirms this isn't just an ambiguous-but-real signal: every
+held-out fold scores 0/1 or 0/5 (one fold reaches a perfect in-fold 1.000 on
+2/2 training events and then 0/5 on the 5 held out) — zero generalization in
+any fold.
+
+**Conclusion:** a simple constant translational offset between `current_pose`
+and the true Bota origin does not explain why the 2026-09-09 hand-eye
+candidate scored 3/7 against the adopted candidate's 6/7. The frame question
+may still matter (Vlutters' confirmation is still open and still worth
+having), but it is evidently not a small, physically-bounded translation-only
+correction on top of an otherwise-correct rotation — which redirects the
+likely root cause back toward the ROTATION itself, and specifically toward
+the motion/sync issue already flagged: the calibration recording was
+continuous motion throughout (median arm speed 1cm/s, only 11% of samples
+under 1mm/s), not the static pauses `calibrate_hand_eye.py`'s protocol
+assumes, and unlike a fixed origin offset, motion-induced pose/detection
+error corrupts rotation too. `--max_speed_mps` (added 2026-09-09, still
+untested against the wrench-ray score) is the next concrete thing to actually
+try, not another offset search on this same rotation.
