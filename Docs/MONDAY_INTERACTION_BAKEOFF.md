@@ -46,5 +46,7 @@ figures/interaction_bakeoff/gpu_outputs/<run-id>/scored/verdict.json
 - No result authorizes production integration automatically.
 
 If neither model passes grasp, stop and wait for new recordings.  If contact
-fails, retain the known 7/7 proposal result and wait for calibrated geometric
-evidence.  Do not tune the fixed regions or confidence rules on these cases.
+fails, retain the known 7/7 proposal result and wait for new recordings or a
+different identity cue (the geometric/calibration path is archived, see
+`archive/wrench_force_calibration/` — do not fall back on it).  Do not tune
+the fixed regions or confidence rules on these cases.

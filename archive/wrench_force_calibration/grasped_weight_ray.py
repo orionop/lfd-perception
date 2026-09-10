@@ -63,6 +63,10 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# ARCHIVED (see archive/wrench_force_calibration/README.md): event_utils.py
+# stayed in the active Code/ tree, so reach back to it explicitly.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "Code"))
 from event_utils import gripper_closed_window, parse_gripper_width
 from geometric_seed import load_calib
 from wrench_ray import pose_to_T, ray_mask_score, ray_pixels, wrench_line_bota

@@ -57,6 +57,10 @@ import numpy as np
 
 import sys, os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+# ARCHIVED (see archive/wrench_force_calibration/README.md): event_utils.py
+# stayed in the active Code/ tree, so reach back to it explicitly.
+sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                 "..", "..", "Code"))
 from event_utils import gripper_moved
 import pandas as pd
 

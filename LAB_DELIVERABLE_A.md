@@ -1,6 +1,7 @@
 # Lab deliverable A — authoritative status
 
-Last updated: 2026-09-03 (ground truth, feasibility ceiling, and early-hold scoring corrected)
+Last updated: 2026-09-10 (sole focus clarified; wrench/force-calibration and
+manuscript B fully archived, see below)
 
 This file is the single source of truth for the lab deliverable. Historical
 notes in `calibration.yaml`, experimental scripts, figures, and the manuscript
@@ -8,12 +9,24 @@ must not override it.
 
 ## Scope
 
+**The sole focus of this repository is vision-based recognition of objects
+relevant to robot tasks, extracted from task demonstration data.** Concretely:
 Deliverable A is an offline vision module that takes a lab-exported robot
-demonstration and produces role-tagged object tracks in a JSON sidecar for the
-downstream ROS 2 learning-from-demonstration pipeline.
+demonstration and produces role-tagged object tracks (`grasped`,
+`contact_receiver`) in a JSON sidecar for the downstream ROS 2
+learning-from-demonstration pipeline.
 
-The manuscript is workstream B. B is paused until A meets every acceptance
-criterion below. Manuscript novelty is not an acceptance criterion for A.
+**Archived, not part of this scope (kept for reference, not deleted):**
+- Camera-to-force-sensor calibration and wrench-projected geometric contact
+  grounding — `archive/wrench_force_calibration/`. This was never something
+  the lab asked for; it was pursued as a candidate method for the
+  `contact_receiver` role and, more so, because it doubled as a research-paper
+  angle. It consumed real time without the active pipeline ever depending on
+  it (verified: `select_objects.py`, `evaluate_selection.py`,
+  `run_deliverable.py` have zero dependency on `calibration.yaml`'s
+  `bota_to_camera`/`end_effector` blocks or anything in that archive).
+- The manuscript/paper workstream ("B") — `archive/manuscript_b_paper/`. Not
+  being pursued.
 
 ## Current status
 
@@ -26,11 +39,12 @@ generation stages work on existing recordings. A is not complete yet because
 object initialization is not reliable on unseen recordings and the sidecar has
 not been demonstrated inside the lab's downstream ROS 2 consumer.
 
-Calibration status: camera intrinsics are trusted. The fixed extrinsic that
-maps camera-frame points into the `current_pose` subject frame is not trusted.
-The matrix retained in
-`calibration.yaml` is an experimental candidate only; production geometry is
-disabled with `bota_to_camera.filled: false`.
+Calibration status (archived — not a blocker for anything below; see
+`archive/wrench_force_calibration/`): camera intrinsics are trusted.
+`current_pose`'s frame is resolved (it is the Bota SensONE's own F/T
+measurement origin, confirmed by Vlutters 2026-09-10). The camera-to-sensor
+extrinsic itself is not trusted and production geometry stays disabled
+(`bota_to_camera.filled: false`) — this no longer matters for A's scope.
 
 Local implementation update (2026-09-03): the canonical multi-cycle event
 detector, calibration-free proposal selector, safe-abstention contract,
@@ -203,28 +217,22 @@ A is complete only when all of the following are demonstrated:
      failures. The old `auto_seed.py` result (1/6) and fitted constant pixels
      are baselines, not accepted solutions.
 
-2. Trusted geometric grounding
-   - Recover the fixed transform that maps camera-frame points into the
-     `current_pose` subject frame through an explicit calibration procedure,
-     preferably the existing ChArUco hand-eye workflow.
-   - Record the precise transform direction, frame names, units, and
-     `current_pose` subject frame.
-   - Validate with calibration reprojection error and independent physical or
-     image points before enabling `bota_to_camera.filled`.
-   - Evaluate wrench-projected contact seeds on held-out demonstrations.
-
-3. Downstream integration
+2. Downstream integration
    - Freeze and document the `objects.json` schema.
    - Run a generated sidecar through the lab's actual downstream ROS 2/LfD
      consumer, not only the local builder.
    - Preserve the command, environment, input recording, output, and pass/fail
      evidence as a reproducible integration test.
 
-4. Reproducible handover
+3. Reproducible handover
    - One documented canonical command path processes a new export.
    - Representative sensor combinations are regression-tested.
    - Setup, checkpoints, expected outputs, manual interventions, and known
      limitations are documented.
+
+(A former criterion 2, "trusted geometric grounding" via camera-to-force-sensor
+calibration, is archived — see the Scope section above and
+`archive/wrench_force_calibration/`. It is not required for A.)
 
 ## Current stop and next authorized decision
 
@@ -235,9 +243,8 @@ tuning automatically.
 
 The next work must begin with one explicit change of evidence, not another
 ranking variation: either revise the grasp proposal timing and re-freeze the
-evaluation before inspecting results, obtain diverse unseen recordings, or
-recover trusted geometric contact grounding. Actual downstream ROS 2
-integration remains an external final gate.
+evaluation before inspecting results, or obtain diverse unseen recordings.
+Actual downstream ROS 2 integration remains an external final gate.
 
 ## In progress: bounded external-model compatibility test (2026-09-03 → )
 
@@ -292,274 +299,30 @@ authoritative): grasp passes only with ≥4/5 accepted, all correct, across
 ≥3 independent groups; contact passes only with ≥6/7 accepted, all correct,
 across all 3 groups. If neither model passes grasp, stop model integration and
 wait for new recordings. If contact fails, retain the 7/7 proposal-pool result
-and wait for calibrated geometric evidence — do not resume heuristic-score
-tuning. No result from this test authorizes production integration by itself;
-only successful, stop-gate-passing evidence may be wired into the selector as
-optional ranking/seeding input, per the plan's integration step.
+and wait for new recordings or a different identity cue — do not resume
+heuristic-score tuning, and do not fall back on the archived geometric/wrench
+path (see Scope). No result from this test authorizes production integration
+by itself; only successful, stop-gate-passing evidence may be wired into the
+selector as optional ranking/seeding input, per the plan's integration step.
 
-## First physically-measured T_bota_camera: recovered, scored, rejected (2026-09-09)
 
-Mark sent a real ChArUco hand-eye recording (`lfdws_t002`, 94.9s, our own sent
-board: 5×7, `DICT_5X5_100`, 35mm/26mm nominal, exact-scale A4 PDF he printed at
-100% — no re-measurement needed since we control the print source). Merged via
-`Code/mcap_extract.py` (no synced master-topic CSV was provided) into
-`Data/charuco_calib_002`, then `Code/calibrate_hand_eye.py solve`:
+## Camera calibration / geometric contact grounding: archived (2026-09-10)
 
-- board detected in 81,853/93,888 rows (87%);
-- 162 independent poses kept after near-duplicate filtering (script minimum
-  is 3, recommended 10-15 — 162 is a large, healthy set);
-- board-in-base-frame position residual std-dev across those 162 poses:
-  [3.7, 5.1, 3.2] mm — well inside the script's own >10-20mm "bad detection"
-  flag;
-- debug overlay (6 sample frames) visually confirmed correct board-axis
-  detection in every sample.
+This was tracked here as a candidate path for the `contact_receiver` role for
+roughly six weeks (CAD-derived extrinsic guesses, Mark's dimension-sheet
+decode, a real ChArUco hand-eye calibration, and six independently-tested
+hypotheses for why that real calibration scored 3/7 against an untrusted CAD
+candidate's 6/7 on the shared contact-event set). None of it is required for
+this deliverable's actual scope — the active pipeline has zero dependency on
+`calibration.yaml`'s `bota_to_camera`/`end_effector` blocks or on anything
+this work produced. It is archived, not deleted:
 
-This is real, internally self-consistent evidence — the first physically-
-measured `T_bota_camera` candidate that isn't a failed CAD guess. It is
-**not** a validated result: internal pose-agreement proves the rig moved
-rigidly and the solver is self-consistent, not that the recovered transform
-is metrically correct against physical reality.
+- Full narrative, every hypothesis and result: `archive/wrench_force_calibration/CALIBRATION_LOG.md`
+- Every script, figure, and note: `archive/wrench_force_calibration/`
+- What's still true and kept live in `calibration.yaml`: `current_pose`'s
+  frame is resolved (`current_pose_is: bota_origin`, confirmed by Vlutters
+  2026-09-10) — that fact cost real effort to establish and is real,
+  independent of whether the broader calibration effort continues.
 
-Scored against the same 7-event wrench-ray harness every prior candidate
-used (`Code/wrench_ray_validate.py --raw_R ... --raw_t_mm ...`, values taken
-directly from `calibration_handeye_result.yaml`, nothing refit):
-
-**3/7 hits — worse than the currently-adopted CAD-derived candidate's 6/7.**
-Misses: `lfdws_t001/press`, `lfdws_t001_labexport/press`,
-`lfdws_t001_depth/charger_grasp` (ray entirely outside frame, 0 pixels),
-`lfdws_t001_depth/charger_lift`. Hits: `lfdws_t001_depth/plate_press`,
-`screwdriver_contact`, `charger_dock`.
-
-**Verdict: REJECTED at this transform. Not written to `calibration.yaml`;
-`bota_to_camera.filled` stays `false`.** `Code/calibrate_hand_eye.py` never
-writes `calibration.yaml` automatically and the printed
-"REVIEW before pasting" instruction was followed.
-
-Most likely explanation, tying together the good internal residual and the
-bad external score: this calibration is only as correct as the assumption
-that `current_pose`'s origin coincides with the Bota sensor's actual
-force-measurement origin. AX=XB fitting is blind to a *constant* rigid offset
-between the two — it will still converge tightly (explaining the good
-residual) while silently absorbing that offset into `T_bota_camera`, which
-then miscarries the wrench line of action by exactly that offset (explaining
-the bad wrench-ray score, since the wrench itself is expressed in the true
-Bota frame per `wrench_ray.py`'s header comment). This is the same open
-question from Vlutters' 2026-08-28 email — whether `current_pose` reports the
-Bota sensor origin or the Franka tool frame at the sensor flange — now with
-concrete evidence that getting it wrong costs 3 of 7 real contact events, not
-just a documentation nicety.
-
-Also found while running this: `calibrate_hand_eye.py`'s console line
-`"[result] T_bota_camera (bota origin frame -> camera-frame point)"` describes
-the mapping direction backwards — the printed matrix is `R_cam2gripper`/
-`t_cam2gripper` straight from `cv2.calibrateHandEye`, i.e. it maps a
-camera-frame point INTO the bota frame, which is exactly what the script's own
-residual check and `wrench_ray.py`'s `T_base_camera = T_base_bota @
-T_bota_camera` composition both correctly assume. The matrix values and every
-downstream consumer are correct; only that one print statement's English is
-backwards. Not yet fixed — flagging here so it isn't mistaken for a data bug.
-
-Next step is not re-running this calibration hoping for a different number —
-the solve is already tight. It's resolving the `current_pose` frame question
-directly (Vlutters' pending confirmation), or re-deriving the calibration with
-an explicit free translational offset between `current_pose` and the true
-Bota origin as an additional unknown, rather than assuming they coincide.
-
-## The frame-offset hypothesis, tested directly: rejected (2026-09-10)
-
-Rather than wait on Vlutters' confirmation, the offset hypothesis above was
-tested using only evidence already in hand: `Code/handeye_offset_search.py`
-holds the hand-eye rotation fixed (a rigid translational offset between two
-points on the same end-effector stack cannot change recovered orientation)
-and grid-searches a bounded translation correction on top of it, scored
-against the same 7-event wrench-ray harness as every other candidate. The
-bound (±50mm) is physically motivated, not arbitrary: the Bota SensONE's own
-datasheet (`bota_sensone_dimensions.png`) gives 38.0mm as the sensor body's
-total robot-mounting-to-tool-mounting thickness, so any offset between
-`current_pose`'s claimed origin (Vlutters: the tool-mounting face) and the
-sensor's true F/T coordinate origin is bounded by that dimension.
-
-**Result: rejected, not confirmed.** The in-fold best (4/7, 0.571) already
-sits at the grid's dz=-50mm edge, meaning even ±50mm isn't large enough to
-reach an actual optimum in that direction — a bad sign on its own. Worse,
-**966 of the 9,261 candidates (10.4% of the entire grid) tie at that same
-best hit rate**, spanning the full ±50mm range on every axis: this is a
-broad plateau, not a peak, meaning these 7 events cannot pin the offset down
-to any value, physically plausible or not. Leave-one-recording-out
-cross-validation confirms this isn't just an ambiguous-but-real signal: every
-held-out fold scores 0/1 or 0/5 (one fold reaches a perfect in-fold 1.000 on
-2/2 training events and then 0/5 on the 5 held out) — zero generalization in
-any fold.
-
-**Conclusion:** a simple constant translational offset between `current_pose`
-and the true Bota origin does not explain why the 2026-09-09 hand-eye
-candidate scored 3/7 against the adopted candidate's 6/7. The frame question
-may still matter (Vlutters' confirmation is still open and still worth
-having), but it is evidently not a small, physically-bounded translation-only
-correction on top of an otherwise-correct rotation — which redirects the
-likely root cause back toward the ROTATION itself, and specifically toward
-the motion/sync issue already flagged: the calibration recording was
-continuous motion throughout (median arm speed 1cm/s, only 11% of samples
-under 1mm/s), not the static pauses `calibrate_hand_eye.py`'s protocol
-assumes, and unlike a fixed origin offset, motion-induced pose/detection
-error corrupts rotation too. `--max_speed_mps` (added 2026-09-09, still
-untested against the wrench-ray score) is the next concrete thing to actually
-try, not another offset search on this same rotation.
-
-## The motion-blur hypothesis, tested directly: also rejected (2026-09-10)
-
-`calibrate_hand_eye.py --max_speed_mps 0.001` re-run on the same
-`charuco_calib_002` recording, restricted to instants with current_pose speed
-under 1mm/s: 10,500/93,888 rows qualified, board detected in 10,498, **17**
-independent poses survived dedup (well above the 3-minimum, near the
-recommended 10-15), residual std-dev [3.2, 5.6, 1.4]mm — as tight as the
-unfiltered solve.
-
-**Result: the recovered transform barely moved** (rotation differs only in
-the 3rd decimal, translation shifts 1-5mm from the 2026-09-09 all-frames
-result) **and `wrench_ray_validate.py` scores it identically: 3/7, the exact
-same three events hit and four missed.** Motion blur during capture is not
-the explanation for the 3/7-vs-6/7 gap either.
-
-Before concluding anything further, the scripts themselves were re-audited
-(prompted by a hunch, not a specific suspicion) while this run was in
-flight: `speed[i]`'s indexing against `df.iterrows()` was verified correct
-via direct checks on the merged CSV (timestamps strictly monotonic, zero
-duplicate/negative steps; DataFrame index is a plain `0..N-1` RangeIndex),
-and `calibrate_hand_eye.py`'s `quat_to_R` was diffed against
-`wrench_ray.py`'s independent copy — mathematically identical (only
-whitespace differs), same ROS (x,y,z,w) convention, same argument order in
-both call sites. No bug found in either script.
-
-**Two well-tested hypotheses are now rejected** (frame-origin offset,
-2026-09-10 morning; motion blur, this section) **with no bug found in the
-scripts that tested them.** The real hand-eye calibration still cannot beat
-the untrusted, unvalidated CAD candidate's 6/7 on this test. Two honest
-possibilities remain open, neither yet tested: (1) a real, still-unidentified
-error in the hand-eye recovery itself (untested: camera intrinsics, ZED
-left/right lens or rectification convention, board planarity/detection
-bias), or (2) the 7-event wrench-ray test is too thin to reliably distinguish
-a correct transform from a lucky one — this file has said as much about the
-*adopted* candidate before (`mark_sheet_azimuth.py`'s 50-of-360-degree
-plateau), and the same caveat now cuts against trusting either candidate's
-score alone. Do not re-run this calibration again expecting a different
-number from the same recording; the next real move is either a different
-kind of test of the two current candidates (not another candidate search),
-or a second independent calibration recording to check repeatability.
-
-## The current_pose frame question is now RESOLVED (2026-09-10)
-
-Vlutters confirmed it directly, from Franka Desk's End Effector panel (not a
-new recording, not new work): the active profile ("Bota + Hand + Bracket_r2 +
-ZED") configures Flange→TCP as `(x=0, y=0, z=0.035)` m with zero rotation,
-and "the TCP is placed 35 mm lower than the flange, such that it coincides
-with the measurement frame of the force sensor." He further confirmed
-`franka_robot_state_broadcaster/current_pose` publishes `O_T_EE` — the TCP
-pose in the base frame.
-
-**This means `current_pose` already reports the Bota SensONE's own F/T
-measurement frame directly** — position and (since the configured rotation
-offset is zero) orientation both. There is no separate current_pose-vs-Bota
-correction to apply. `calibration.yaml`'s `end_effector` block is updated:
-`current_pose_is: bota_origin`, `bota_to_tcp: [0, 0, 0]` (previously `null`).
-
-This retroactively explains, not just resolves, `Code/handeye_offset_search.py`'s
-result above: no bounded translational offset improved or generalized the
-2026-09-09 hand-eye candidate's 3/7 score **because there was never a
-frame-origin bug for an offset to fix.** The true offset is exactly zero, by
-design. The 3/7-vs-6/7 gap therefore has a different cause. The leading
-remaining, and now essentially the only remaining, hypothesis is that the
-calibration recording's continuous motion (median 1cm/s, only 11% of samples
-under 1mm/s) corrupted the recovered ROTATION during capture — an
-origin-offset search cannot detect or fix a rotation error. **Next concrete
-step: re-run `calibrate_hand_eye.py` on the same `charuco_calib_002` recording
-with `--max_speed_mps` set (added 2026-09-09, not yet tested) and re-score
-with `wrench_ray_validate.py` against the same 7 events.** No new recording
-or further confirmation from Mark is needed for this.
-
-## Six more things checked (2026-09-10, prompted by a direct "the code is
-wrong" push): five ruled out, one real but insufficient
-
-- **`--max_speed_mps` result** (the "next concrete step" above): done. 17
-  static-only poses, residual 3.2/5.6/1.4mm, but `wrench_ray_validate.py`
-  scores it identically 3/7, same events hit and missed as the unfiltered
-  run. Motion blur rejected (see the section above this one).
-- **ChArUco `legacyPattern` bug** (a real, documented OpenCV backward-
-  compatibility break for even-row-count boards): tested directly on our
-  exact 5×7 board — `legacyPattern=True` vs `False` produce a **pixel-
-  identical image (0/350,000 differing pixels)**. Our board has two odd
-  dimensions; this bug specifically requires an even row count. Not
-  applicable, ruled out.
-- **`CharucoBoard` constructor argument order** (squareLength vs
-  markerLength swap is a classic mistake): verified via keyword arguments
-  against the real OpenCV 4.13.0 API — our positional call matches exactly
-  (`squareLength=0.035 > markerLength=0.026`, correct). Ruled out.
-- **`cv2.calibrateHandEye` solver choice**: this script always used
-  `CALIB_HAND_EYE_TSAI`, and TSAI has documented reliability issues on some
-  inputs. Added `--method` and now compute all 5 OpenCV hand-eye solvers
-  (TSAI/PARK/HORAUD/ANDREFF/DANIILIDIS) from the same detected poses every
-  run. **All 5 agree tightly** (max 4.1mm translation, 0.40° rotation apart).
-  Independent algorithms converging together is evidence against a
-  method-specific bug, not for one. Ruled out.
-- **Board print scale** (never independently verified — only the source PDF
-  was checked exact, not what actually came off Mark's printer):
-  `Code/verify_board_scale.py` cross-checks solvePnP's assumed-35mm depth
-  against the ZED's own independently-measured stereo depth at the same
-  pixel, across 15 distinct static frames (dedup by image id — the first
-  version of this check accidentally measured the same one frame 15 times
-  and was fixed before trusting it). **Real signal: ZED depth is
-  consistently ~3-5% shorter than solvePnP assumes** (13/15 frames clustered
-  ratio 0.95-0.98; 2 early-transient frames read 1.12, likely depth
-  settling, not the main effect), implying a true square size around 34mm,
-  not 35mm. **This is real but too small to be the explanation**: a 3-5%
-  scale error propagates to roughly a 4-6mm translation shift, and the
-  `handeye_offset_search.py` ±50mm search already explored a translation
-  neighborhood 10x larger than that around this exact transform and found
-  nothing beating 4/7 in-fold. Recorded as a real, worth-fixing-eventually
-  finding, not as the answer.
-
-**Camera intrinsics, tested directly (same day):** `calibration.yaml`
-assumes `dist: [0,0,0,0,0]`, never independently re-verified. New
-`Code/verify_camera_intrinsics.py` runs a fresh `cv2.calibrateCamera()` from
-the same 17 diverse frames (via the identical detection + diversity filter
-as the hand-eye solve) and compares against the lab-provided K.
-**Reprojection RMS 0.27px (excellent fit). fx/fy within 0.3% of the lab
-values (negligible) but distortion is NOT actually zero:**
-`[0.0112, -0.0440, -0.0003, -0.0033, 0.0380]`, plus principal point off by
-~5.5px in x. Re-ran `calibrate_hand_eye.py --dist_override` (new flag) with
-these corrected coefficients: **the resulting transform shifted by only
-~1mm/negligible rotation, and `wrench_ray_validate.py` scores it identically
-— 3/7, the exact same three events hit and four missed.** Distortion
-correction rejected as the explanation too.
-
-**Running tally: 6 hypotheses tested and rejected with direct evidence**
-(frame offset, motion blur, ChArUco pattern bug, constructor arg order,
-solver method, camera distortion), **2 real-but-insufficient findings**
-(board scale ~3-5% off, distortion nonzero but small), **0 bugs found in
-our own scripts under direct, repeated audit.**
-
-The convergence itself is now the finding: six independent corrections —
-some testing real, measured discrepancies (distortion, board scale), others
-testing hypothetical bugs (frame offset, motion, solver, pattern) — all
-perturb `T_bota_camera` by only a few mm / a fraction of a degree, and every
-single one lands on the identical 3/7 with the identical three events hit.
-That is not the signature of an undiscovered code bug waiting to be found;
-a real bug of the size needed to flip 3/7 to 6/7 would show some sensitivity
-to at least one of these six corrections, and none showed any. It is much
-more consistent with `T_bota_camera` itself being close to correct, and the
-discrepancy being about which of the two candidates (the untrusted,
-never-validated CAD guess or this real, tightly-self-consistent measurement)
-the thin 7-event wrench-ray test can actually be trusted to discriminate —
-this file has already shown a comparably-scored CAD sweep can sit on a
-50-of-360-degree plateau (`mark_sheet_azimuth.py`), meaning the CAD
-candidate's 6/7 was never proven to reflect a more correct transform, only a
-better-scoring one on a thin test.
-
-Do not keep testing new correction hypotheses against this same recording
-and this same 7-event set — six rejections with a stable, convergent answer
-is the stop condition, not a reason to try a seventh. The next step that
-could actually move this is independent of guessing at code defects: a
-second calibration recording to check whether this transform reproduces
-(repeatability is evidence a single-recording test cannot provide), or
-more/independent contact events to give the wrench-ray test itself more
-power to discriminate between candidates.
+Do not resume this work as a path to improving `contact_receiver` selection
+without an explicit new decision to do so.

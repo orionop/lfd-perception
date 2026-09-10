@@ -7,19 +7,23 @@ downstream LfD code.
 
 ## Authoritative project status
 
-The lab deliverable is **A**. The manuscript is independent workstream **B**
-and is paused until A is complete. See [`LAB_DELIVERABLE_A.md`](LAB_DELIVERABLE_A.md)
-for A's scope, current status, acceptance criteria, and execution order. That
-file overrides historical experiment notes elsewhere in the repository.
-`MANUSCRIPT_B.md` and `Docs/wrench2role-paper.tex` are draft workstream-B
-material, parked until A clears its gates -- not current priorities.
+**The sole focus is vision-based recognition of objects relevant to robot
+tasks, extracted from task demonstration data.** See
+[`LAB_DELIVERABLE_A.md`](LAB_DELIVERABLE_A.md) for scope, current status,
+acceptance criteria, and execution order. That file overrides historical
+experiment notes elsewhere in the repository.
+
+**Archived, not part of this scope** (kept for reference, not deleted):
+camera-to-force-sensor calibration / wrench-projected geometric contact
+grounding (`archive/wrench_force_calibration/`) and the manuscript/paper
+workstream, formerly "B" (`archive/manuscript_b_paper/`). Neither is required
+for the deliverable and the active pipeline has zero dependency on either.
 
 A is currently an operational semi-automatic pipeline, not a finished
 automatic deliverable. Event detection, SAM 2 tracking, and sidecar generation
 work on existing recordings. The remaining gates are reliable automatic object
-selection on held-out recordings, trusted camera/measurement calibration for
-geometric contact grounding, and a demonstrated downstream ROS 2 integration
-test.
+selection on held-out recordings and a demonstrated downstream ROS 2
+integration test.
 
 Current frozen evaluation (2026-09-03): grasped accepts 0/5 cases across four
 independent groups; contact accepts 2/7 correctly (precision 1.00, coverage
@@ -53,12 +57,13 @@ for an arbitrary number of tracked objects, aggregated into a JSON sidecar.
 
 Franka Research 3 arm, Franka Hand gripper, Bota SensONE wrist F/T sensor,
 ZED Mini RGB-D camera. The camera is **eye-in-hand**: mounted on a bracket
-bolted to the gripper, not fixed in the world. Its pose is therefore a
-per-frame quantity composed from `current_pose` and one fixed
-tool/measurement-to-camera transform. The exact subject frame of
-`current_pose`, and its origin relative to the drawing, must be recorded
-during calibration; it is not assumed here. See `calibration.yaml` for the
-machine-readable trust state.
+bolted to the gripper, not fixed in the world. `current_pose` reports the
+Bota SensONE's own F/T measurement frame directly (confirmed by the lab,
+2026-09-10). The fixed transform from that frame to the camera
+(`bota_to_camera`) is not trusted and camera-to-force-sensor calibration is
+archived (`archive/wrench_force_calibration/`) — not required for this
+deliverable's scope. See `calibration.yaml` for the machine-readable trust
+state.
 
 ## Layout
 
@@ -174,31 +179,16 @@ Optional follow-ups:
 .venv_dado/bin/python Code/object_identity.py                     # stable identities per object_id, single trial
 .venv_dado/bin/python Code/object_identity_cross_trial.py         # same, pooled across multiple trials
 .venv_analysis/bin/python Code/trial_report.py --trial <trial> --sidecar_json <fig_dir>/identify/objects.json --fig_dir <fig_dir>   # one diagnostic PDF
-.venv_analysis/bin/python Code/project_ee.py --trial <trial>      # EE / wrench-line projection
-.venv_analysis/bin/python Code/calibrate_hand_eye.py solve --trial <calib_trial> --square_size_m <m> --marker_size_m <m> [--max_speed_mps <v>]  # recover bota→camera by hand-eye calibration
-.venv_analysis/bin/python Code/wrench_ray_validate.py --raw_R <9 vals> --raw_t_mm <3 vals>  # score any candidate bota→camera against the real 7-event contact set
 ```
 
-`project_ee.py` reads `calibration.yaml` (camera intrinsics, the fixed
-`bota→camera` bracket transform). Until both are marked `filled: true` it
-runs in a DRY mode that reports the bota/base-frame geometry but draws
-nothing, so no placeholder calibration is ever used. As of now, intrinsics
-are real (lab-provided); `bota→camera` is `filled: false`. The retained matrix
-is an untrusted experimental candidate and must not be used as production
-calibration. See `LAB_DELIVERABLE_A.md` for the acceptance test.
-`calibrate_hand_eye.py` recovers `bota→camera` by direct measurement
-(ChArUco board + `cv2.calibrateHandEye`) instead of reading it off CAD;
-it never writes `calibration.yaml` automatically, only prints a result for
-manual review. Run against Mark's first real calibration recording
-(2026-09-09), it produced a tight, internally self-consistent solve (162
-independent poses, board-position residual std-dev 3-5mm) that nonetheless
-scored 3/7 on `wrench_ray_validate.py`'s real-event test -- worse than the
-currently-adopted, unvalidated CAD candidate's 6/7. Rejected; `bota_to_camera`
-stays `filled: false`. `--max_speed_mps` guards against motion-blurred frames
-(the capture was continuous motion, not static pauses -- median arm speed
-1cm/s) but has not yet been tested against the wrench-ray score. See
-`LAB_DELIVERABLE_A.md` for the full writeup and current diagnosis.
-The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf`.
+Camera-to-force-sensor calibration (`project_ee.py`, `calibrate_hand_eye.py`,
+`wrench_ray_validate.py`) is archived — `archive/wrench_force_calibration/` —
+not required for this deliverable's scope; see that directory's `README.md`
+and `CALIBRATION_LOG.md`. `bota_to_camera.filled` stays `false`.
+`current_pose`'s frame is resolved though (it's the Bota SensONE's own F/T
+measurement frame — confirmed by the lab, 2026-09-10) and that fact stays
+live in `calibration.yaml`. The Franka Research 3 arm URDF is vendored at
+`Data/fr3.urdf`.
 
 `auto_seed.py` and the propagation scripts' hard-coded fallback are legacy
 experimental paths and are not used by `run_deliverable.py`.
@@ -255,5 +245,5 @@ never edited, only appended to.
 
 - `CLAUDE.md` — full pipeline notes, hard-coded knobs, conventions.
 - `Docs/setup_info.md` — legacy ROS 2 / bag-export setup notes.
-- `Docs/twente-paper.tex` — RA-L-format paper draft (separate from the
-  writeup; not the lab deliverable).
+- `archive/manuscript_b_paper/` — the archived paper draft and publication
+  strategy (not being pursued, not the lab deliverable).
