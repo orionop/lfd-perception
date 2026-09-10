@@ -45,9 +45,31 @@ bota_to_camera:
       [0.0, 0.0, 0.0, 1.0]]
 
 end_effector:
-  current_pose_is: unconfirmed_tool_or_measurement_frame
-  bota_to_tcp: null
+  current_pose_is: bota_origin
+  status: confirmed_by_lab_2026-09-10
+  source: >
+    Mark Vlutters, Franka Desk End Effector panel screenshot (archived at
+    Docs/flange_to_tcp_franka_desk.jpeg), "Bota + Hand + Bracket_r2 + ZED"
+    profile, ACTIVE, 2026-09-10. Desk's "Flange to TCP":
+    x=0, y=0, z=0.035 m, roll=pitch=yaw=0 deg. Mark: "The TCP is placed 35 mm
+    lower than the flange, such that it coincides with the measurement frame
+    of the force sensor" and "franka_robot_state_broadcaster/current_pose ...
+    publishes O_T_EE, which corresponds to the pose of the TCP relative to
+    the robot origin."
+  flange_to_tcp_m: [0.0, 0.0, 0.035]
+  flange_to_tcp_rpy_deg: [0.0, 0.0, 0.0]
+  bota_to_tcp: [0.0, 0.0, 0.0]
   note: >
-    Do not infer this frame from eye-in-hand image projection because the
-    shared pose can cancel algebraically. It must be confirmed explicitly
-    before production geometric grounding is enabled.
+    RESOLVED, closing the open question standing since Vlutters' 2026-08-28
+    email. current_pose already reports the Bota SensONE's own F/T
+    measurement frame directly (zero further offset, zero rotation
+    difference) -- there is no separate current_pose-vs-Bota-origin
+    correction to find. This also explains (not just correlates with)
+    Code/handeye_offset_search.py's 2026-09-10 result: no bounded
+    translational offset improved or generalized the 2026-09-09 hand-eye
+    candidate's 3/7 score, because the true offset is zero and there was
+    never a frame-origin bug to fix. The 3/7-vs-6/7 gap must have a
+    different cause -- the leading remaining hypothesis is the capture's
+    continuous motion (median 1cm/s, only 11% of samples under 1mm/s)
+    corrupting the recovered ROTATION, which an origin-offset search cannot
+    detect or fix. See LAB_DELIVERABLE_A.md.

@@ -405,3 +405,33 @@ assumes, and unlike a fixed origin offset, motion-induced pose/detection
 error corrupts rotation too. `--max_speed_mps` (added 2026-09-09, still
 untested against the wrench-ray score) is the next concrete thing to actually
 try, not another offset search on this same rotation.
+
+## The current_pose frame question is now RESOLVED (2026-09-10)
+
+Vlutters confirmed it directly, from Franka Desk's End Effector panel (not a
+new recording, not new work): the active profile ("Bota + Hand + Bracket_r2 +
+ZED") configures Flange→TCP as `(x=0, y=0, z=0.035)` m with zero rotation,
+and "the TCP is placed 35 mm lower than the flange, such that it coincides
+with the measurement frame of the force sensor." He further confirmed
+`franka_robot_state_broadcaster/current_pose` publishes `O_T_EE` — the TCP
+pose in the base frame.
+
+**This means `current_pose` already reports the Bota SensONE's own F/T
+measurement frame directly** — position and (since the configured rotation
+offset is zero) orientation both. There is no separate current_pose-vs-Bota
+correction to apply. `calibration.yaml`'s `end_effector` block is updated:
+`current_pose_is: bota_origin`, `bota_to_tcp: [0, 0, 0]` (previously `null`).
+
+This retroactively explains, not just resolves, `Code/handeye_offset_search.py`'s
+result above: no bounded translational offset improved or generalized the
+2026-09-09 hand-eye candidate's 3/7 score **because there was never a
+frame-origin bug for an offset to fix.** The true offset is exactly zero, by
+design. The 3/7-vs-6/7 gap therefore has a different cause. The leading
+remaining, and now essentially the only remaining, hypothesis is that the
+calibration recording's continuous motion (median 1cm/s, only 11% of samples
+under 1mm/s) corrupted the recovered ROTATION during capture — an
+origin-offset search cannot detect or fix a rotation error. **Next concrete
+step: re-run `calibrate_hand_eye.py` on the same `charuco_calib_002` recording
+with `--max_speed_mps` set (added 2026-09-09, not yet tested) and re-score
+with `wrench_ray_validate.py` against the same 7 events.** No new recording
+or further confirmation from Mark is needed for this.
