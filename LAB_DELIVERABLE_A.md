@@ -518,13 +518,48 @@ wrong" push): five ruled out, one real but insufficient
   nothing beating 4/7 in-fold. Recorded as a real, worth-fixing-eventually
   finding, not as the answer.
 
-**Running tally: 5 hypotheses tested and rejected with direct evidence
+**Camera intrinsics, tested directly (same day):** `calibration.yaml`
+assumes `dist: [0,0,0,0,0]`, never independently re-verified. New
+`Code/verify_camera_intrinsics.py` runs a fresh `cv2.calibrateCamera()` from
+the same 17 diverse frames (via the identical detection + diversity filter
+as the hand-eye solve) and compares against the lab-provided K.
+**Reprojection RMS 0.27px (excellent fit). fx/fy within 0.3% of the lab
+values (negligible) but distortion is NOT actually zero:**
+`[0.0112, -0.0440, -0.0003, -0.0033, 0.0380]`, plus principal point off by
+~5.5px in x. Re-ran `calibrate_hand_eye.py --dist_override` (new flag) with
+these corrected coefficients: **the resulting transform shifted by only
+~1mm/negligible rotation, and `wrench_ray_validate.py` scores it identically
+— 3/7, the exact same three events hit and four missed.** Distortion
+correction rejected as the explanation too.
+
+**Running tally: 6 hypotheses tested and rejected with direct evidence**
 (frame offset, motion blur, ChArUco pattern bug, constructor arg order,
-solver method), 1 real-but-insufficient finding (board scale), 0 bugs found
-in our own scripts under direct audit.** What remains genuinely untested:
-camera intrinsics accuracy itself (currently `dist: [0,0,0,0,0]`, assumed
-rather than independently re-verified), and the standing possibility that
-the adopted CAD candidate's 6/7 is itself not a reliable target — this
-file has already shown a comparably-scored CAD sweep can have a
-50-of-360-degree plateau (`mark_sheet_azimuth.py`), meaning 6/7 alone does
-not prove that candidate is more correct than a candidate that scores 3/7.
+solver method, camera distortion), **2 real-but-insufficient findings**
+(board scale ~3-5% off, distortion nonzero but small), **0 bugs found in
+our own scripts under direct, repeated audit.**
+
+The convergence itself is now the finding: six independent corrections —
+some testing real, measured discrepancies (distortion, board scale), others
+testing hypothetical bugs (frame offset, motion, solver, pattern) — all
+perturb `T_bota_camera` by only a few mm / a fraction of a degree, and every
+single one lands on the identical 3/7 with the identical three events hit.
+That is not the signature of an undiscovered code bug waiting to be found;
+a real bug of the size needed to flip 3/7 to 6/7 would show some sensitivity
+to at least one of these six corrections, and none showed any. It is much
+more consistent with `T_bota_camera` itself being close to correct, and the
+discrepancy being about which of the two candidates (the untrusted,
+never-validated CAD guess or this real, tightly-self-consistent measurement)
+the thin 7-event wrench-ray test can actually be trusted to discriminate —
+this file has already shown a comparably-scored CAD sweep can sit on a
+50-of-360-degree plateau (`mark_sheet_azimuth.py`), meaning the CAD
+candidate's 6/7 was never proven to reflect a more correct transform, only a
+better-scoring one on a thin test.
+
+Do not keep testing new correction hypotheses against this same recording
+and this same 7-event set — six rejections with a stable, convergent answer
+is the stop condition, not a reason to try a seventh. The next step that
+could actually move this is independent of guessing at code defects: a
+second calibration recording to check whether this transform reproduces
+(repeatability is evidence a single-recording test cannot provide), or
+more/independent contact events to give the wrench-ray test itself more
+power to discriminate between candidates.

@@ -1,0 +1,50 @@
+T_bota_camera:
+- - -0.727154
+  - 0.46742
+  - -0.502758
+  - 0.106409
+- - -0.686268
+  - -0.512947
+  - 0.515677
+  - -0.129347
+- - -0.01685
+  - 0.720003
+  - 0.693766
+  - 0.014852
+- - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+method: TSAI
+all_methods_t_mm:
+  TSAI:
+  - 106.409
+  - -129.347
+  - 14.852
+  PARK:
+  - 107.064
+  - -128.032
+  - 14.61
+  HORAUD:
+  - 107.086
+  - -127.976
+  - 14.609
+  ANDREFF:
+  - 102.991
+  - -124.929
+  - 17.139
+  DANIILIDIS:
+  - 105.709
+  - -126.614
+  - 12.963
+n_poses_used: 17
+n_poses_detected_total: 10498
+board_in_base_position_std_m:
+- 0.0033
+- 0.0057
+- 0.0014
+square_size_m: 0.035
+marker_size_m: 0.026
+note: REVIEW residuals before pasting into calibration.yaml's bota_to_camera.T --
+  do not mark filled:true without checking the debug image and the std-dev residual
+  above.

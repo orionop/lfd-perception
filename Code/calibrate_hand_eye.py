@@ -172,6 +172,10 @@ def solve(args):
         return
     K = np.array(calib["camera_intrinsics"]["K"], dtype=float)
     dist = np.array(calib["camera_intrinsics"]["dist"], dtype=float)
+    if args.dist_override is not None:
+        dist = np.array([float(x) for x in args.dist_override.split(",")])
+        print(f"[override] using --dist_override instead of calibration.yaml: "
+              f"{dist.tolist()}", flush=True)
 
     aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
     board = cv2.aruco.CharucoBoard(
@@ -386,6 +390,10 @@ def main():
                     help="PHYSICALLY MEASURE the printed board -- do not assume nominal PDF scale")
     sp.add_argument("--marker_size_m", type=float, required=True,
                     help="physically measured ArUco marker size within each square")
+    sp.add_argument("--dist_override", default=None,
+                    help="5 comma-separated distortion coeffs to use instead "
+                         "of calibration.yaml's (which assumes exactly zero) "
+                         "-- see Code/verify_camera_intrinsics.py")
     sp.add_argument("--max_speed_mps", type=float, default=None,
                     help="skip frames where current_pose's finite-difference "
                          "speed is at or above this (m/s) -- guards against "
