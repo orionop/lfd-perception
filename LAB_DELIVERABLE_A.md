@@ -406,6 +406,47 @@ error corrupts rotation too. `--max_speed_mps` (added 2026-09-09, still
 untested against the wrench-ray score) is the next concrete thing to actually
 try, not another offset search on this same rotation.
 
+## The motion-blur hypothesis, tested directly: also rejected (2026-09-10)
+
+`calibrate_hand_eye.py --max_speed_mps 0.001` re-run on the same
+`charuco_calib_002` recording, restricted to instants with current_pose speed
+under 1mm/s: 10,500/93,888 rows qualified, board detected in 10,498, **17**
+independent poses survived dedup (well above the 3-minimum, near the
+recommended 10-15), residual std-dev [3.2, 5.6, 1.4]mm — as tight as the
+unfiltered solve.
+
+**Result: the recovered transform barely moved** (rotation differs only in
+the 3rd decimal, translation shifts 1-5mm from the 2026-09-09 all-frames
+result) **and `wrench_ray_validate.py` scores it identically: 3/7, the exact
+same three events hit and four missed.** Motion blur during capture is not
+the explanation for the 3/7-vs-6/7 gap either.
+
+Before concluding anything further, the scripts themselves were re-audited
+(prompted by a hunch, not a specific suspicion) while this run was in
+flight: `speed[i]`'s indexing against `df.iterrows()` was verified correct
+via direct checks on the merged CSV (timestamps strictly monotonic, zero
+duplicate/negative steps; DataFrame index is a plain `0..N-1` RangeIndex),
+and `calibrate_hand_eye.py`'s `quat_to_R` was diffed against
+`wrench_ray.py`'s independent copy — mathematically identical (only
+whitespace differs), same ROS (x,y,z,w) convention, same argument order in
+both call sites. No bug found in either script.
+
+**Two well-tested hypotheses are now rejected** (frame-origin offset,
+2026-09-10 morning; motion blur, this section) **with no bug found in the
+scripts that tested them.** The real hand-eye calibration still cannot beat
+the untrusted, unvalidated CAD candidate's 6/7 on this test. Two honest
+possibilities remain open, neither yet tested: (1) a real, still-unidentified
+error in the hand-eye recovery itself (untested: camera intrinsics, ZED
+left/right lens or rectification convention, board planarity/detection
+bias), or (2) the 7-event wrench-ray test is too thin to reliably distinguish
+a correct transform from a lucky one — this file has said as much about the
+*adopted* candidate before (`mark_sheet_azimuth.py`'s 50-of-360-degree
+plateau), and the same caveat now cuts against trusting either candidate's
+score alone. Do not re-run this calibration again expecting a different
+number from the same recording; the next real move is either a different
+kind of test of the two current candidates (not another candidate search),
+or a second independent calibration recording to check repeatability.
+
 ## The current_pose frame question is now RESOLVED (2026-09-10)
 
 Vlutters confirmed it directly, from Franka Desk's End Effector panel (not a
