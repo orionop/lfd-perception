@@ -26,6 +26,39 @@ Remote collaboration with University of Twente / NAKAMA Robotics Lab. **The sole
   local-flow contrast raised in-sample coverage but collapsed group-separated
   precision to 0.40. Keep the proposal pool, reject that flow cue, seek a
   different identity cue, and do not continue linear weight tuning.
+- **That 7/7 is CONTACT ONLY. Do not generalise it to "proposal generation is
+  not the limiting stage" — that statement is false for the grasped role.**
+  Grasped pool coverage was never measured until 2026-10-05 and is **27/41
+  frames** on the frozen pool: 14 frames were unwinnable by any ranker, so
+  selection was being blamed for a generation failure. Denser automask
+  (`Code/regenerate_dense_proposals.py`: points_per_side 24→48,
+  pred_iou 0.85→0.70, stability 0.90→0.80, crop_n_layers 0→1) raised it to
+  **30/41**, with `t002_cube` 2/12 → 6/12. Measure the ceiling for a role
+  before attributing a failure to ranking.
+- Selection attempts that have now FAILED, with the measurement each produced.
+  Do not propose a variant of any of these against the same 5 grasped cases —
+  that is attempt number seven and repeats the 6,561-rule mistake:
+  6,561-rule search; 19,683-rule flow extension; attachment gate; a
+  17-feature group-held-out logistic fit (`Code/fit_proposal_ranker.py`,
+  FAIL 1/5, then VOID on the dense pool with a +16.7 pt all-data-vs-held-out
+  gap); region-IoU alone (2/5, scale-biased toward large objects);
+  region-containment alone (0/5, every tiny fragment inside the region scores
+  1.0 — a failure already documented in `select_objects.py`'s own comments and
+  re-derived by accident). Best honest hand-written result is **2/5**.
+- External models, all stop-gated, none integrated: HOI-DETR 0/5 grasped and
+  0/7 contact (zero detections ≥0.3 on our frames; human-hand training
+  distribution); DistinctNet 0/5 raw and stabilised (foreground IoU 0.22–0.39
+  vs a 0.50 floor; assumes a world-fixed camera).
+- **Molmo 2 + SAM 2 is the current best direction and is NOT yet validated.**
+  Zero-shot, nothing fitted: Molmo 2 points at the held object in **4/5**
+  cases, and SAM 2 prompted with that point generates a correct mask in
+  **4/5** — including two frames whose cached-pool ceiling (0.245, 0.314) made
+  them impossible. Scored under the pre-registered rule (SAM 2's own
+  top-confidence mask) it is **1/5**: SAM 2's confidence prefers the sub-part.
+  Taking the whole-object mask would give 3/5, but that was spotted *after*
+  seeing the scores, so it is a hypothesis, and 3/5 is still below the 4/5
+  gate. Settling it requires recordings nobody has looked at. Requested from
+  the lab 2026-10-05.
 - `figures/grasp_attachment_study.json` executed the next bounded gate and
   stopped it: at the frozen 20% hold anchor the correct proposal reaches IoU
   0.5 in only 3/5 cases (both t002 exports are about 0.25), and even the
@@ -64,8 +97,19 @@ schemas/     objects.schema.json — the versioned sidecar contract
 tests/       calibration-independent regression suite (unittest discover)
 scripts/     one-shot host-side orchestration (currently the interaction-bakeoff GPU runner)
 docker/      Dockerfiles for isolated external-model containers (bakeoff only)
-archive/     wrench_force_calibration/ and manuscript_b_paper/ — archived, out of scope, kept for reference (see LAB_DELIVERABLE_A.md's Scope section)
+archive/     Nothing deleted — see archive/README.md for the full index
+  wrench_force_calibration/  camera-to-F/T calibration (out of scope)
+  manuscript_b_paper/        paper workstream (not pursued)
+  negative_results/          measured failures kept as evidence
+  superseded_selectors/      replaced by Code/select_objects.py
+  superseded_sidecar/        replaced by Code/build_sidecar_multi.py
+  legacy_extraction/         replaced by the lab's ros2_unbag
+  backup_results_20260830/   historical output snapshot
 ```
+
+**Archived scripts are still importable but need `PYTHONPATH=Code`** — they
+import `event_utils` / `select_objects` / `deliverable_events`, which stay in
+`Code/` (`event_utils` alone is imported by 24 scripts).
 
 Run everything from the repo root — scripts and `writeup.tex` use cwd-relative
 paths to `figures/...` and `Data/...`. Moving `figures/` would break both.
@@ -76,9 +120,9 @@ Different stages need different Python versions / package sets. Each venv is git
 
 | Venv | Python | Used by | Notes |
 |---|---|---|---|
-| `.venv_analysis` | 3.9 (miniforge) | `Code/analyze_demo.py`, `Code/mask_area_plot.py`, `Code/force_overlay.py`, `Code/build_sidecar.py`, `Code/mcap_extract.py` | Pandas/numpy/matplotlib only, plus `mcap`/`mcap-ros2-support` (added for `mcap_extract.py`, pure-Python, no ROS2 needed). The miniforge base had a numpy/pandas ABI mismatch; this venv was created clean to work around it. |
-| `.venv_sam2` | 3.11 | `Code/propagate_demo_bidir.py`, `Code/propagate_object_n.py`, `Code/auto_seed.py`, `Code/prepare_sam2_frames.py` (also the older `propagate_demo.py`/`propagate_cup.py`/`identify_objects.py`) | SAM 2 requires Python ≥3.10. Includes torch 2.12 with MPS, plus `sam2` from GitHub, plus pandas (added late — was the cause of one crash). |
-| `.venv_dado` | 3.11 | `Code/_dado_inference.py` (invoked via `Code/run_dado.py`) | DINOv2 + Depth-Anything-V2 via `transformers`. The DADO orchestrator (`Code/run_dado.py`) creates this venv if missing. |
+| `.venv_analysis` | 3.9 (miniforge) | `Code/analyze_demo.py`, `Code/mask_area_plot.py`, `Code/force_overlay.py`, `archive/superseded_sidecar/build_sidecar.py`, `Code/mcap_extract.py` | Pandas/numpy/matplotlib only, plus `mcap`/`mcap-ros2-support` (added for `mcap_extract.py`, pure-Python, no ROS2 needed). The miniforge base had a numpy/pandas ABI mismatch; this venv was created clean to work around it. |
+| `.venv_sam2` | 3.11 | `Code/propagate_demo_bidir.py`, `Code/propagate_object_n.py`, `archive/superseded_selectors/auto_seed.py`, `Code/prepare_sam2_frames.py` (also the older `propagate_demo.py`/`propagate_cup.py`/`identify_objects.py`) | SAM 2 requires Python ≥3.10. Includes torch 2.12 with MPS, plus `sam2` from GitHub, plus pandas (added late — was the cause of one crash). |
+| `.venv_dado` | 3.11 | `archive/negative_results/_dado_inference.py` (invoked via `archive/negative_results/run_dado.py`) | DINOv2 + Depth-Anything-V2 via `transformers`. The DADO orchestrator (`archive/negative_results/run_dado.py`) creates this venv if missing. |
 
 Do not unify them. Mixing SAM 2 deps into the analysis venv breaks pandas; mixing pandas into the DADO venv is fine but pointless.
 
@@ -130,12 +174,12 @@ Assuming a bag has been exported into `<trial_dir>/` with the standard layout:
 .venv_analysis/bin/python Code/mask_area_plot.py --trial <trial_dir>
 .venv_analysis/bin/python Code/force_overlay.py --trial <trial_dir>
 .venv_sam2/bin/python Code/make_propagation_figure.py
-.venv_dado/bin/python Code/_dado_inference.py    # only after Code/run_dado.py set up .venv_dado
+.venv_dado/bin/python archive/negative_results/_dado_inference.py    # only after archive/negative_results/run_dado.py set up .venv_dado
 .venv_analysis/bin/python Code/trial_report.py --trial <trial_dir> \
     --sidecar_json <fig_dir>/identify/objects.json --fig_dir <fig_dir>   # one diagnostic PDF
 ```
 
-`Code/build_sidecar_multi.py` is the canonical sidecar builder — it takes any number of `--object obj_id:role:summary_csv:bgr_color` entries, so single-object and 4-object trials go through the same tool. `Code/build_sidecar.py` (fixed two-role: grasped + contact_receiver) and `Code/propagate_demo.py`/`Code/propagate_cup.py` (the two scripts it composes) are the earlier iteration — kept for reference/backward compat, not what to reach for on a new trial. `Code/identify_objects.py` was the intended single-script end-to-end but OOMs on M3 Pro (18 GB unified memory) when multiple SAM 2 objects share one model state; the split propagate-per-object pattern above is the working one. The JSON contract is the same across all of them.
+`Code/build_sidecar_multi.py` is the canonical sidecar builder — it takes any number of `--object obj_id:role:summary_csv:bgr_color` entries, so single-object and 4-object trials go through the same tool. `archive/superseded_sidecar/build_sidecar.py` (fixed two-role: grasped + contact_receiver) and `archive/superseded_sidecar/propagate_demo.py`/`archive/superseded_sidecar/propagate_cup.py` (the two scripts it composes) are the earlier iteration — kept for reference/backward compat, not what to reach for on a new trial. `archive/superseded_selectors/identify_objects.py` was the intended single-script end-to-end but OOMs on M3 Pro (18 GB unified memory) when multiple SAM 2 objects share one model state; the split propagate-per-object pattern above is the working one. The JSON contract is the same across all of them.
 
 `auto_seed.py`, constant-pixel prompts, and propagation-script hard-coded
 fallbacks are legacy baselines only. They are never an acceptable substitute
@@ -195,12 +239,12 @@ The merged CSV's image column is the literal PNG filename (without `.png`). Per-
 
 - **Gripper detectors need a minimum-travel guard, or they invent events from noise.** Every copy of the open/closed threshold computes it as the midpoint of the observed width range. On a trial where the gripper never actuates, that midpoint lands *inside* the sensor's own noise band: `lfdws_t001_labexport`'s width spans 0.07999710–0.07999776 m (6.6e-7 m, pure noise) yet produced a "grasp" at 0.06 s and a "release" at 7.66 s. It cascades — because the press search is restricted to the grasp/release window, the contact event was also displaced (reported 3.34 s vs the true 11.15 N peak at 5.08 s). `Code/event_utils.py` now enforces a 1 mm minimum travel (real grasps here span 0.024–0.080 m). Use `gripper_transitions()`/`gripper_closed_window()` from there rather than re-implementing the midpoint rule.
 - **Overlay captions must never be drawn in an object's mask colour.** The sidecar builders reconstruct masks from overlay PNGs by colour-differencing, so a caption drawn in the object's colour is recovered *as object pixels* — a phantom ~1000 px "object" with a fixed bbox at `(10,16)-(159,35)` on frames where the object is genuinely absent (250–511 frames per trial before the fix), plus a silent inflation of every present-frame `mask_px`. All propagation scripts now use `CAPTION_COLOR = (255,255,255)`, which fails the recovery test for every role colour in use. `Code/event_utils.mask_from_overlay()` additionally requires the colour's "off" channels to be *unchanged* (masks are alpha-blended at 0.5 and leave them alone; solid text forces them to 0) and drops any connected component confined to the caption band, so pre-existing overlays are cleaned too. Note this recovery is inherently lossy on bright objects (a 0.5-blend saturates where the source is already near 255) — the authoritative per-frame area is the propagation summary CSV's `mask.sum()`, not the sidecar.
-- **`Code/analyze_demo.py`'s `detect_events()` has no window restriction on the force-peak search** — it reports the single global-maximum force peak across the *whole* recording. This silently attributes the wrong phase's contact to the wrong event on any multi-cycle/multi-phase recording (confirmed on `lfdws_t002_labexport`, whose largest force peak is in an unrelated latch-contact phase, not the cube task). `Code/build_sidecar_multi.py`, `Code/auto_seed.py`, and `Code/multi_event.py` are unaffected — they all restrict the press search to the window between the detected grasp and release events. Don't trust `analyze_demo.py`'s `timeline.png`/`event_frames.png` at face value on a multi-cycle recording; cross-check with `multi_event.py` or by inspecting the seeded frame directly.
+- **`Code/analyze_demo.py`'s `detect_events()` has no window restriction on the force-peak search** — it reports the single global-maximum force peak across the *whole* recording. This silently attributes the wrong phase's contact to the wrong event on any multi-cycle/multi-phase recording (confirmed on `lfdws_t002_labexport`, whose largest force peak is in an unrelated latch-contact phase, not the cube task). `Code/build_sidecar_multi.py`, `archive/superseded_selectors/auto_seed.py`, and `Code/multi_event.py` are unaffected — they all restrict the press search to the window between the detected grasp and release events. Don't trust `analyze_demo.py`'s `timeline.png`/`event_frames.png` at face value on a multi-cycle recording; cross-check with `multi_event.py` or by inspecting the seeded frame directly.
 - **Point vs. box SAM 2 prompts**: a point prompt on a multi-coloured object (e.g. a Rubik's cube) segments only the locally-contiguous coloured region under it, not the physical object. Worse, propagated across a full recording, a point-seeded track that loses the object (goes out of frame) drifts catastrophically onto unrelated background (measured: mean 48% of frame, peaking at 95%) rather than degrading to empty like a box-seeded track does. Use `--seed_box` (supported by `Code/propagate_object_n.py`) instead of `--seed_x`/`--seed_y` for any multi-coloured or irregularly-textured object.
 - **Some trials have MORE THAN ONE propagation run, and the filename does not tell you which is current.** `figures/t002new/` holds both `propagation_grasped_summary.csv` (the superseded point-prompt run, mean 2,350 px — one sticker face) and `propagation_grasped_box_summary.csv` (the corrected box-prompt run, mean 32,522 px — the whole cube). Rebuilding a sidecar from the wrong one silently swaps in a bad track and nothing errors. Before rebuilding any sidecar, check the mask_px stats of every candidate CSV against the existing `objects_summary.csv.bak`, and confirm the ratio is ~1. This mistake was made once during the 2026-08-12 audit and caught only by diffing rebuilds against their backups.
-- **`Code/auto_seed.py` scores 1/6 and should not be relied on.** Quantified 2026-08-29 by `Code/seed_scoreboard.py` (seed-inside-ground-truth-mask, 6 cells with valid ground truth across 4 independent recordings): `auto_seed` 1/6, the constant-pixel seeders 5/6. Its `score_mask` role priors (area fraction cap `< 0.4`, lower-half-of-frame bonus for `contact_receiver`) are tuned to `lfdws_t001`'s object scale and reject a correct contact-receiver larger than 40% of the frame (e.g. a plate rather than a cup), or pick an empty-background mask on a multi-phase recording whose press event isn't near the true object. Its one generalisation attempt is archived in `figures/identify/auto_seeds_VERIFY_generalized.csv` — it took contact_receiver from 64,297 px to 287,734 px, i.e. grabbed background, and was reverted. Reseed manually, or prefer the constant-pixel seeder for the grasped role. **Read the 1/6 vs 5/6 asymmetrically**: `auto_seed` is not fitted to these masks (though its priors are tuned to `lfdws_t001`, and it fails even there), whereas both constant pixels WERE fitted on exactly these tracks, so 5/6 is in-sample and is NOT a validated replacement. The honest held-out numbers are the ones measured separately: contact constant pixel 3/7 leave-one-recording-out (`Code/contact_seed_pixel.py`), grasped constant pixel not held-out-able at all with only two independent carried-object recordings.
+- **`archive/superseded_selectors/auto_seed.py` scores 1/6 and should not be relied on.** Quantified 2026-08-29 by `archive/superseded_selectors/seed_scoreboard.py` (seed-inside-ground-truth-mask, 6 cells with valid ground truth across 4 independent recordings): `auto_seed` 1/6, the constant-pixel seeders 5/6. Its `score_mask` role priors (area fraction cap `< 0.4`, lower-half-of-frame bonus for `contact_receiver`) are tuned to `lfdws_t001`'s object scale and reject a correct contact-receiver larger than 40% of the frame (e.g. a plate rather than a cup), or pick an empty-background mask on a multi-phase recording whose press event isn't near the true object. Its one generalisation attempt is archived in `figures/identify/auto_seeds_VERIFY_generalized.csv` — it took contact_receiver from 64,297 px to 287,734 px, i.e. grabbed background, and was reverted. Reseed manually, or prefer the constant-pixel seeder for the grasped role. **Read the 1/6 vs 5/6 asymmetrically**: `auto_seed` is not fitted to these masks (though its priors are tuned to `lfdws_t001`, and it fails even there), whereas both constant pixels WERE fitted on exactly these tracks, so 5/6 is in-sample and is NOT a validated replacement. The honest held-out numbers are the ones measured separately: contact constant pixel 3/7 leave-one-recording-out (`archive/wrench_force_calibration/contact_seed_pixel.py`), grasped constant pixel not held-out-able at all with only two independent carried-object recordings.
 - **A seed at the mask centroid can still miss, because masks here are not convex.** On `lfdws_t001`'s cup the ground-truth mask is annular (one component, fill 0.777) and its own centroid lies OUTSIDE it — `auto_seed` lands 1.3 px from the centroid and still misses, which is a real failure (SAM 2 prompted in the hole segments the interior, not the cup) but a different one from being 246 px away. Judge seeds by inside/outside, never by distance to centroid alone.
-- **The grasped ground-truth mask is fragmented at the grasp TRANSITION frame** (`lfdws_t001`: 5 connected components, fill 0.321) and is not a fair target for a seeder fitted on the hold window. `Code/grasped_seed_pixel.py` fits over `gripper_closed_window()`, so score it there; `Code/seed_scoreboard.py` currently judges every seeder on `auto_seed`'s event frame, which is harsh on the constant-pixel seeder and is noted in its output.
+- **The grasped ground-truth mask is fragmented at the grasp TRANSITION frame** (`lfdws_t001`: 5 connected components, fill 0.321) and is not a fair target for a seeder fitted on the hold window. `archive/superseded_selectors/grasped_seed_pixel.py` fits over `gripper_closed_window()`, so score it there; `archive/superseded_selectors/seed_scoreboard.py` currently judges every seeder on `auto_seed`'s event frame, which is harsh on the constant-pixel seeder and is noted in its output.
 - **`calibration.yaml`'s `bota_to_camera` extrinsic and the whole CAD/hand-eye/wrench-ray calibration effort are archived** (`archive/wrench_force_calibration/`, 2026-09-10) — not required for A's scope, not blocking anything active. `bota_to_camera.filled` stays `false`. Full history (CAD-mesh-mining exhausted, a real ChArUco hand-eye calibration scoring 3/7 against an untrusted CAD candidate's 6/7, six independently-rejected hypotheses for the gap, zero bugs found): `archive/wrench_force_calibration/CALIBRATION_LOG.md`.
 - The Franka Research 3 arm URDF is vendored at `Data/fr3.urdf` (arm-only, flange `fr3_link8`); the stock Franka Hand TCP is `+0.1034 m` z past the flange, but this rig's TCP was reconfigured. `current_pose` is published in the base frame. **Which frame it reports is resolved** (2026-09-10): Vlutters confirmed via Franka Desk's End Effector panel that Flange→TCP is `(0, 0, 0.035)` m with zero rotation and coincides with the Bota SensONE's own F/T measurement frame — `current_pose` already reports that frame directly. `calibration.yaml`'s `end_effector` block reflects this (`current_pose_is: bota_origin`, `bota_to_tcp: [0,0,0]`). This fact stays live even though the broader calibration effort is archived.
 

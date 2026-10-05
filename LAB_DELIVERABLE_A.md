@@ -234,17 +234,73 @@ A is complete only when all of the following are demonstrated:
 calibration, is archived — see the Scope section above and
 `archive/wrench_force_calibration/`. It is not required for A.)
 
-## Current stop and next authorized decision
+## Current stop and next authorized decision (updated 2026-10-05)
 
-The bounded local selector plan reached its stop condition. Production remains
-at grasped 0/5 and contact 2/7; no failed feasibility cue was promoted and there
-are no new accepted cases to propagate. Do not continue feature or weight
-tuning automatically.
+**The deliverable is blocked on data, not on method.** Production remains at
+grasped 0/5 and contact 2/7. Nothing was promoted. Do not continue feature or
+weight tuning.
 
-The next work must begin with one explicit change of evidence, not another
-ranking variation: either revise the grasp proposal timing and re-freeze the
-evaluation before inspecting results, or obtain diverse unseen recordings.
-Actual downstream ROS 2 integration remains an external final gate.
+Two changes of evidence were executed since the last revision, and both are
+closed:
+
+1. **External models (2026-09-30, RTX 4080).** HOI-DETR 0/5 grasped and 0/7
+   contact — zero detections at or above 0.3 on any of our frames, consistent
+   with its human-hand training distribution. DistinctNet 0/5 raw and
+   stabilised — foreground IoU 0.22–0.39 against a 0.50 floor, consistent with
+   its world-fixed-camera assumption. Neither integrated.
+2. **VLM pointing + SAM 2 (2026-10-05).** See the section below. Best scored
+   result 1/5 under a pre-registered rule; the components work but the final
+   selection step is unvalidated.
+
+**One statement in the earlier text of this file and in `CLAUDE.md` was wrong
+and is corrected here:** the 7/7 proposal-pool coverage is a **contact-role**
+result. It was generalised to "proposal generation is not the limiting stage",
+which is false for the grasped role. Grasped pool coverage, measured for the
+first time on 2026-10-05, is **27/41 frames** — 14 frames were unwinnable by
+any ranker. Denser automask raised it to **30/41** (`t002_cube` 2/12 → 6/12).
+Selection had been carrying blame for a generation failure.
+
+### The authorized next step is obtaining recordings
+
+Requested from the lab on 2026-10-05: **20–30 demonstrations with varied
+objects, sizes and scene layouts.** Rationale, stated plainly: with 5 grasped
+cases across 4 independent groups, a fitted rule cannot be distinguished from a
+lucky one, and any rule chosen after inspecting those 5 is fitted by
+definition. Seven selection approaches have now failed in exactly that pattern.
+
+Until those arrive, **do not propose another selector variant against the same
+5 cases.** Actual downstream ROS 2 integration remains an external final gate.
+
+## VLM pointing + SAM 2 (2026-10-05) — best direction, not validated
+
+Zero-shot, nothing fitted to our data, prompt frozen before execution.
+
+| Measurement | Result |
+|---|---|
+| Molmo 2 points at the held object | **4/5** cases |
+| SAM 2 prompted with that point produces a correct mask | **4/5** cases |
+| Scored under the pre-registered rule (SAM 2's own top-confidence mask) | **1/5** |
+
+The first two numbers involve no mapping or tuning choice of ours and include
+both nut recordings, where every hand-written rule scored zero. Two of the
+frames had cached-pool ceilings of 0.245 and 0.314 — impossible before — and
+SAM 2 prompting generates 0.736 and 0.605 on them. The generation problem is
+solved.
+
+The remaining failure is granularity: SAM 2's confidence ranks the sub-part
+above the whole object. Taking the whole-object mask would score 3/5 — but that
+was identified **after** seeing the scores, so it is a hypothesis and not a
+result, and 3/5 is still below the 4/5 gate. One case (t001) fails because the
+point missed the object entirely, which no mask rule fixes.
+
+Scripts: `Code/run_vlm_grasped_bakeoff.py` (GPU host, predictions only),
+`Code/score_vlm_grasped_bakeoff.py` and `Code/score_vlm_sam2_prompt.py`
+(scored where the references live). Handoff: `plan_5oct.md`.
+
+**Known defect in the shipped runner:** it maps a point to the *smallest*
+cached proposal containing it, chosen to avoid the whole-scene blob. That
+overshoots into the part-vs-whole failure and cost 2 of 5 cases outright. Do
+not reuse that rule; prompt SAM 2 instead.
 
 ## In progress: bounded external-model compatibility test (2026-09-03 → )
 

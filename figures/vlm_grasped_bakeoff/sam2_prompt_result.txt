@@ -1,0 +1,22 @@
+
+==========================================================================
+VLM POINT -> SAM 2 PROMPT, grasped role, 5 cases / 4 groups
+==========================================================================
+case                                  group               IoU  verdict
+lfdws_t001__grasped__c1               t001_original     0.000  wrong
+lfdws_t002_new__grasped__c1           t002_cube         0.100  wrong
+lfdws_t002_labexport__grasped__c1     t002_cube         0.087  wrong
+lfdws_t004__grasped__c2               t004              0.431  wrong
+lfdws_t005__grasped__c1               t005              0.989  CORRECT
+
+CORRECT: 1/5
+
+Comparison, same 5 cases:
+  hand-written rule (best of everything tried)   2/5
+  VLM point -> smallest cached proposal          0/5
+  VLM point -> SAM 2 prompt (this run)           1/5
+
+VERDICT: FAIL 1/5 - no better than the hand-written rule.
+
+Ceiling was 4/5 by construction: on lfdws_t001 the point is not on the object, so that case was unwinnable here.
+Standing caveat: 4 independent groups. This shows whether the method works on THIS data. It is not evidence of generalisation to new objects or scenes - that is what more recordings are for.

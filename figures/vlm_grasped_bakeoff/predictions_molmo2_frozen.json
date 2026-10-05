@@ -1,0 +1,90 @@
+{
+ "schema_version": "1.0",
+ "backend": "molmo2er+molmo2_8b (identical selections)",
+ "model": "allenai/Molmo2-ER (4B) and allenai/Molmo2-8B",
+ "pool": "frozen",
+ "prompt": "\n    \"This image is from a camera mounted on a robot's wrist, looking out past \"\n    \"its two-finger gripper. The gripper is currently holding one object. \"\n    \"Point at the object that the gripper is holding. \"\n    \"Point at the object itself, not at the gripper or the fingers.\"\n",
+ "note": "Reconstructed on the Mac from RESULTS.md Round 2 table; areas verified against the frozen cache.",
+ "predictions": [
+  {
+   "case_id": "lfdws_t001__grasped__c1",
+   "recording_id": "lfdws_t001",
+   "img_id": "1779192192926879163",
+   "independent_group": "t001_original",
+   "pool": "frozen",
+   "selected_index": 1,
+   "selection_mode": "contains",
+   "points": [
+    [
+     635.5,
+     77.8
+    ]
+   ],
+   "selected_area": 19349
+  },
+  {
+   "case_id": "lfdws_t002_new__grasped__c1",
+   "recording_id": "lfdws_t002_new",
+   "img_id": "1783420612921812562",
+   "independent_group": "t002_cube",
+   "pool": "frozen",
+   "selected_index": 4,
+   "selection_mode": "contains",
+   "points": [
+    [
+     462.7,
+     199.3
+    ]
+   ],
+   "selected_area": 5040
+  },
+  {
+   "case_id": "lfdws_t002_labexport__grasped__c1",
+   "recording_id": "lfdws_t002_labexport",
+   "img_id": "1783420612943357476",
+   "independent_group": "t002_cube",
+   "pool": "frozen",
+   "selected_index": 4,
+   "selection_mode": "contains",
+   "points": [
+    [
+     462.7,
+     192.2
+    ]
+   ],
+   "selected_area": 5047
+  },
+  {
+   "case_id": "lfdws_t004__grasped__c2",
+   "recording_id": "lfdws_t004",
+   "img_id": "1782993022322830673",
+   "independent_group": "t004",
+   "pool": "frozen",
+   "selected_index": 13,
+   "selection_mode": "contains",
+   "points": [
+    [
+     481.0,
+     76.1
+    ]
+   ],
+   "selected_area": 1690
+  },
+  {
+   "case_id": "lfdws_t005__grasped__c1",
+   "recording_id": "lfdws_t005",
+   "img_id": "1782993185795050907",
+   "independent_group": "t005",
+   "pool": "frozen",
+   "selected_index": 20,
+   "selection_mode": "contains",
+   "points": [
+    [
+     481.0,
+     84.2
+    ]
+   ],
+   "selected_area": 1751
+  }
+ ]
+}

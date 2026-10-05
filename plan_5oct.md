@@ -6,6 +6,16 @@ No manual file transfer, no scp, no USB stick.
 
 ---
 
+> **STATUS 2026-10-05 — this plan was executed. Read before reusing.**
+> Molmo 2 ran and located the held object in 4/5 cases. But the point→mask
+> mapping in `Code/run_vlm_grasped_bakeoff.py` takes the *smallest* cached
+> proposal containing the point, which grabs sub-part fragments and cost 2 of
+> 5 cases. Scored result was 0/5. Prompting SAM 2 with the point instead
+> (`Code/score_vlm_sam2_prompt.py`) generates a correct mask in 4/5 and removes
+> the cached-pool ceiling entirely. **If you re-run this, use the SAM 2
+> prompt path, not the cached-pool lookup.** Full outcome in
+> `LAB_DELIVERABLE_A.md`.
+
 ## 0. Read this first — what the job is and is not
 
 **The job:** run one or more open-weights VLMs on 5 images. Ask each model to
