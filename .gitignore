@@ -108,6 +108,11 @@ Docs/10aug_update.out
 Docs/twente-paper.aux
 Docs/twente-paper.log
 Docs/twente-paper.out
+Docs/vision-recognition-paper.tex
+Docs/vision-recognition-paper.pdf
+Docs/vision-recognition-paper.aux
+Docs/vision-recognition-paper.log
+Docs/vision-recognition-paper.out
 Docs/extrinsic_summary.aux
 Docs/extrinsic_summary.log
 Docs/extrinsic_summary.out
@@ -127,6 +132,9 @@ Docs/reports/*.log
 Docs/reports/*.out
 Docs/reports/*.tex
 
+# ----- RA-L LaTeX template + paper draft (working copies, deliberately untracked) -----
+IEEE-LRA-latex-template/
+
 # ----- per-trial CSVs (large; produced by the lab's export, kept off git) -----
 # (Existing trial_002 CSVs were committed before this rule and are kept.)
 *.csv
@@ -135,3 +143,7 @@ Docs/reports/*.tex
 # ----- interaction bakeoff GPU staging (cloned repos, checkpoints; see
 # scripts/run_interaction_bakeoff_gpu.sh and Docs/MONDAY_INTERACTION_BAKEOFF.md) -----
 .external/
+
+# ----- local-only VLM/ranker working data (kept off git; see plan_5oct.md) -----
+figures/proposal_dataset/
+figures/vlm_grasped_bakeoff/*.log
