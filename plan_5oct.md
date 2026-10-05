@@ -44,8 +44,8 @@ worth nothing. The prompt is frozen in the script. Leave it alone.
 ## 2. Get the code and data
 
 ```bash
-git clone https://github.com/orionop/utwente.git   # if not already there
-cd utwente
+git clone https://github.com/orionop/lfd-perception.git   # if not already there
+cd lfd-perception
 git checkout interaction-bakeoff-prep              # NOT main
 git pull
 ```
@@ -249,8 +249,6 @@ Do **not** report a verdict. You cannot compute one without the references.
 - Failed ranker fits: `figures/proposal_dataset/ranker_fit_report.txt`,
   `ranker_fit_dense.txt`
 - Earlier external-model bakeoff: `Docs/UBUNTU.md`
-  (note: that file's clone URL is stale — it says `lfd-perception`; the real
-  remote is `orionop/utwente`. Use the URL in section 2 above.)
 
 The honest standing position: the pipeline runs end to end, the candidate-pool
 blocker was found and measured and partly fixed, and the picking stage cannot
