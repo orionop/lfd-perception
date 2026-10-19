@@ -147,6 +147,26 @@ so nobody has to make this trip twice. Running several models is *not*
 prompt-shopping: the prompt stays fixed, each model is reported separately,
 and all results get reported including the bad ones.
 
+### Method E — object naming (added 2026-10-19, run this too)
+
+Closes a real gap: every run so far asked *where*, never *what*. The sidecar
+therefore carries a role-tagged mask with no object identity, so two
+recordings of the same object cannot be related to each other.
+
+```bash
+python Code/run_vlm_object_label.py --backend molmo2
+```
+
+Covers all 12 cases (5 grasped + 7 contact), one extra prompt per image
+against the same model. Acceptable answers are pre-registered inside the
+script from CLAUDE.md's trial table, so correctness is decided before the run,
+not after seeing the replies.
+
+This one **does** self-score, unlike the pointing runs — it needs no reference
+masks, only the object names, which are not ground truth that could leak into
+a selection decision. Output: `figures/vlm_object_label/labels_molmo2.json`.
+Commit and push it with the predictions.
+
 ### Do not use `--pool dense`
 
 `--pool dense` exists in the runner but the dense cache is **deliberately not
