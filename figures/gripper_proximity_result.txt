@@ -1,0 +1,30 @@
+3D GRIPPER-PROXIMITY SELECTION (SPARC cue, eye-in-hand adaptation)
+pre-registered: r=0.15 m, g=centroid of nearest 2.0% depth, min 50 pts, IoU>=0.5
+
+lfdws_t001__grasped__c1                  SKIP no usable metric depth
+lfdws_t002_new__grasped__c1              g=(-0.00,-0.03,0.15)m  P=1.000  IoU=0.000  wrong
+lfdws_t002_labexport__grasped__c1        SKIP no usable metric depth
+lfdws_t004__grasped__c2                  g=(+0.00,-0.03,0.17)m  P=1.000  IoU=0.000  wrong
+lfdws_t005__grasped__c1                  g=(-0.00,-0.05,0.17)m  P=1.000  IoU=0.000  wrong
+
+========================================================================
+RESULT (pre-registered r=0.15 m): 0/3 correct
+
+Comparison on the same grasped role:
+  region-IoU alone (all 5 cases)              2/5
+  region-containment alone                    0/5
+  17-feature fitted, group-held-out           1/5
+  Molmo 2 -> SAM 2, pre-registered rule       1/5
+  gripper proximity (this, depth cases only)  0/3
+
+SENSITIVITY DIAGNOSTIC - not the result, not evidence:
+  r=0.05  m  0/3
+  r=0.1   m  0/3
+  r=0.15  m  0/3   <- pre-registered
+  r=0.2   m  0/3
+  r=0.3   m  0/3
+  r=0.5   m  0/3
+
+VERDICT: FAIL 0/3 - the cue does not transfer to this rig. Record it and stop.
+
+Standing caveat: 3 depth-bearing cases across 3 independent groups. A pass says the cue is worth porting, not that it generalises.

@@ -1,0 +1,17 @@
+ABSTENTION AUDIT - grasped role, frozen selector
+An abstention is correct when the pool contains no valid answer.
+
+case                                      ceiling  answer?        did  verdict
+lfdws_t001__grasped__c1                     0.568      yes  abstained  MISS - answer was there
+lfdws_t002_new__grasped__c1                 0.245       NO  abstained  CORRECT - no answer existed
+lfdws_t002_labexport__grasped__c1           0.314       NO  abstained  CORRECT - no answer existed
+lfdws_t004__grasped__c2                     0.948      yes  abstained  MISS - answer was there
+lfdws_t005__grasped__c1                     0.974      yes  abstained  MISS - answer was there
+
+correct abstentions: 2
+missed opportunities: 3
+wrong accepts:        0   (the selector accepted nothing)
+
+Reading: '0/5 accepted' measures COVERAGE. The safety property - never publish a confident wrong label - held on every case tested. The failure is coverage, not correctness.
+
+Caveat: this shows declining was right, not that the selector declined BECAUSE it detected the absence. Five cases cannot separate those.
